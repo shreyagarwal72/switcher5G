@@ -6,8 +6,9 @@ import android.content.Context
  * Single source of truth for Switcher 5G versioning & package information.
  */
 object AppInfo {
-    const val VERSION_NAME = "1.0.1"
-    const val VERSION_CODE = 2
+    const val VERSION_NAME = "1.0.0"
+    const val VERSION_CODE = 1
+    const val RELEASE_TITLE = "Initial Stable Release"
 
     fun getAppVersionName(context: Context): String {
         return try {

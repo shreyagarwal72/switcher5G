@@ -182,13 +182,11 @@ fun HomeScreenContent(prefs: AppPreferences) {
             .padding(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (isSwitching || isScanningSims) {
-            LinearRipplingWavyProgressIndicator(
-                progress = null,
-                label = if (isSwitching) "Executing network mode switch…" else "Scanning active SIM cards…",
-                modifier = Modifier.entrance(0),
-            )
-        }
+        RefreshProgressBar(
+            isRefreshing = isSwitching || isScanningSims,
+            label = if (isSwitching) "Executing network mode switch…" else "Scanning active SIM cards…",
+            modifier = Modifier.entrance(0),
+        )
 
         // Top Header
         Row(

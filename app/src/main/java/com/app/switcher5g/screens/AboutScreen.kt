@@ -138,8 +138,8 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                             ),
                         )
                         Text(
-                            text = "Version $appVersion",
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "Version $appVersion — Initial Stable Release",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.primary,
                         )
                     }
