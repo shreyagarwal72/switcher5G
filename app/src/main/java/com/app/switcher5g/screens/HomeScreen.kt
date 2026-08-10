@@ -262,7 +262,7 @@ fun HomeScreenContent() {
                             tint = MaterialTheme.colorScheme.primary,
                         )
                         Text(
-                            text = "Auto Update Facility",
+                            text = "GitHub Auto Update Checker",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         )
                     }
@@ -286,27 +286,36 @@ fun HomeScreenContent() {
                 }
 
                 updateInfo?.let { info ->
-                    if (info.hasUpdate) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.fillMaxWidth(),
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (info.hasUpdate) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
-                                    text = "Update Available: v${info.latestVersion}",
+                                    text = if (info.hasUpdate) "🚀 Update Available: v${info.latestVersion}" else "✅ Switcher 5G is up to date (v${info.latestVersion})",
                                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    color = if (info.hasUpdate) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                                 )
+                            }
+
+                            if (info.releaseNotes.isNotBlank()) {
                                 Text(
                                     text = info.releaseNotes,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    color = if (info.hasUpdate) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
+                            }
 
+                            if (info.isAvailable) {
                                 if (isDownloadingUpdate) {
                                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                         FancyLiquidProgressBar(progress = downloadProgress, modifier = Modifier.fillMaxWidth())
@@ -330,18 +339,24 @@ fun HomeScreenContent() {
                                             }
                                         },
                                         modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (info.hasUpdate) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                                        ),
                                     ) {
-                                        Text("Download & Install Update")
+                                        Icon(
+                                            imageVector = Icons.Default.Download,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (info.hasUpdate) "Download & Install Update (v${info.latestVersion})" else "Re-download & Install Latest Release APK",
+                                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                        )
                                     }
                                 }
                             }
                         }
-                    } else {
-                        Text(
-                            text = "✅ Switcher 5G is up to date (v1.0.0)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
                     }
                 }
             }

@@ -19,6 +19,7 @@ data class UpdateInfo(
     val latestVersion: String,
     val releaseNotes: String,
     val apkUrl: String,
+    val isAvailable: Boolean = false,
 )
 
 /**
@@ -28,20 +29,27 @@ data class UpdateInfo(
 object UpdateManager {
 
     private const val GITHUB_RELEASES_API = "https://api.github.com/repos/shreyagarwal72/switcher5G/releases/latest"
+    private const val USER_AGENT = "Switcher5G-Android-App"
 
     suspend fun checkForUpdates(currentVersion: String): UpdateInfo = withContext(Dispatchers.IO) {
         try {
-            AppLogger.i("UpdateManager", "Checking for updates against $GITHUB_RELEASES_API (current=$currentVersion)")
+            AppLogger.i("UpdateManager", "Checking for updates via $GITHUB_RELEASES_API (currentAppVersion=$currentVersion)")
             val url = URL(GITHUB_RELEASES_API)
             val conn = url.openConnection() as HttpURLConnection
             conn.requestMethod = "GET"
+            conn.setRequestProperty("User-Agent", USER_AGENT)
             conn.setRequestProperty("Accept", "application/vnd.github.v3+json")
-            conn.connectTimeout = 10000
-            conn.readTimeout = 10000
+            conn.connectTimeout = 12000
+            conn.readTimeout = 12000
+            conn.instanceFollowRedirects = true
 
-            if (conn.responseCode != 200) {
-                AppLogger.w("UpdateManager", "GitHub API returned code ${conn.responseCode}")
-                return@withContext UpdateInfo(false, currentVersion, "No releases found.", "")
+            val responseCode = conn.responseCode
+            AppLogger.i("UpdateManager", "GitHub API HTTP response code: $responseCode")
+
+            if (responseCode != 200) {
+                val errText = conn.errorStream?.bufferedReader()?.readText() ?: ""
+                AppLogger.w("UpdateManager", "GitHub API non-200 response ($responseCode): $errText")
+                return@withContext UpdateInfo(false, currentVersion, "GitHub API HTTP $responseCode: $errText", "", false)
             }
 
             val jsonStr = conn.inputStream.bufferedReader().readText()
@@ -49,7 +57,7 @@ object UpdateManager {
 
             val rawTag = json.optString("tag_name", "")
             val latestVersion = rawTag.removePrefix("v").trim()
-            val body = json.optString("body", "Bug fixes and performance improvements.")
+            val body = json.optString("body", "Latest release from GitHub Actions CI/CD.")
             val assets = json.optJSONArray("assets")
 
             var apkUrl = ""
@@ -65,17 +73,18 @@ object UpdateManager {
             }
 
             val isNewer = isVersionNewer(latestVersion, currentVersion)
-            AppLogger.i("UpdateManager", "Check finished: latest=$latestVersion, isNewer=$isNewer, apkUrl=$apkUrl")
+            AppLogger.i("UpdateManager", "Check success: latestVersion=$latestVersion, isNewer=$isNewer, apkUrl=$apkUrl")
 
             UpdateInfo(
                 hasUpdate = isNewer && apkUrl.isNotBlank(),
                 latestVersion = if (latestVersion.isBlank()) currentVersion else latestVersion,
-                releaseNotes = body,
+                releaseNotes = body.ifBlank { "Latest release from GitHub." },
                 apkUrl = apkUrl,
+                isAvailable = apkUrl.isNotBlank(),
             )
         } catch (t: Throwable) {
             AppLogger.e("UpdateManager", "Failed to check for updates", t)
-            UpdateInfo(false, currentVersion, "Error checking updates: ${t.message}", "")
+            UpdateInfo(false, currentVersion, "Error checking updates: ${t.message}", "", false)
         }
     }
 
@@ -85,14 +94,42 @@ object UpdateManager {
         onProgress: (Float) -> Unit,
     ): Boolean = withContext(Dispatchers.IO) {
         try {
-            AppLogger.i("UpdateManager", "Downloading APK from $apkUrl")
-            val url = URL(apkUrl)
-            val conn = url.openConnection() as HttpURLConnection
-            conn.connectTimeout = 15000
-            conn.readTimeout = 30000
-            conn.connect()
+            AppLogger.i("UpdateManager", "Starting download from $apkUrl")
 
-            val fileLength = conn.contentLength
+            var currentUrl = apkUrl
+            var conn: HttpURLConnection
+            var redirectCount = 0
+            val maxRedirects = 5
+
+            // Follow HTTP 301/302 redirects manually for GitHub asset CDN links
+            while (true) {
+                val url = URL(currentUrl)
+                conn = url.openConnection() as HttpURLConnection
+                conn.setRequestProperty("User-Agent", USER_AGENT)
+                conn.connectTimeout = 15000
+                conn.readTimeout = 30000
+                conn.instanceFollowRedirects = false
+                conn.connect()
+
+                val code = conn.responseCode
+                if (code == HttpURLConnection.HTTP_MOVED_PERM ||
+                    code == HttpURLConnection.HTTP_MOVED_TEMP ||
+                    code == 307 || code == 308
+                ) {
+                    val loc = conn.getHeaderField("Location")
+                    if (!loc.isNullOrBlank() && redirectCount < maxRedirects) {
+                        currentUrl = loc
+                        redirectCount++
+                        AppLogger.i("UpdateManager", "Following download redirect ($redirectCount) -> $currentUrl")
+                        continue
+                    }
+                }
+                break
+            }
+
+            val fileLength = conn.contentLengthLong
+            AppLogger.i("UpdateManager", "Downloading APK size: $fileLength bytes")
+
             val cacheDir = context.externalCacheDir ?: context.cacheDir
             val apkFile = File(cacheDir, "switcher5g-update.apk")
             if (apkFile.exists()) apkFile.delete()
@@ -113,7 +150,7 @@ object UpdateManager {
                 }
             }
 
-            AppLogger.i("UpdateManager", "APK download complete. Size: ${apkFile.length()} bytes")
+            AppLogger.i("UpdateManager", "APK download complete. Saved file size: ${apkFile.length()} bytes")
             withContext(Dispatchers.Main) {
                 installApk(context, apkFile)
             }
@@ -132,7 +169,7 @@ object UpdateManager {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (!context.packageManager.canRequestPackageInstalls()) {
-                AppLogger.w("UpdateManager", "Permission REQUEST_INSTALL_PACKAGES not granted. Prompting user...")
+                AppLogger.w("UpdateManager", "Permission REQUEST_INSTALL_PACKAGES not granted. Opening settings...")
                 val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
                     data = Uri.parse("package:${context.packageName}")
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -145,7 +182,7 @@ object UpdateManager {
         try {
             val authority = "${context.packageName}.fileprovider"
             val uri = FileProvider.getUriForFile(context, authority, apkFile)
-            AppLogger.i("UpdateManager", "Launching Package Installer with URI: $uri")
+            AppLogger.i("UpdateManager", "Launching Package Installer with FileProvider URI: $uri")
 
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(uri, "application/vnd.android.package-archive")
@@ -159,6 +196,7 @@ object UpdateManager {
     }
 
     private fun isVersionNewer(latest: String, current: String): Boolean {
+        if (latest.isBlank()) return false
         val latestParts = latest.split(".").mapNotNull { it.toIntOrNull() }
         val currentParts = current.split(".").mapNotNull { it.toIntOrNull() }
 
