@@ -216,7 +216,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
                                     tint = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
                                 )
                                 Text(
-                                    text = if (shizukuReady) "Shizuku Ready" else "No Permission",
+                                    text = if (shizukuReady) "Shizuku Ready" else "Disconnected",
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                                     color = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
                                 )
@@ -233,50 +233,11 @@ fun HomeScreenContent(prefs: AppPreferences) {
             }
         }
 
-        // Shizuku Permission Card
-        if (!shizukuReady) {
-            ElevatedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .entrance(2)
-                    .border(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f), RoundedCornerShape(20.dp)),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
-                ),
-                shape = RoundedCornerShape(20.dp),
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        FancyPulseLoader(size = 28.dp, color = MaterialTheme.colorScheme.error)
-                        Text(
-                            text = "Shizuku Permission Required",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                    Text(
-                        text = "Ensure Shizuku app is running (via Wireless Debugging ADB or Root), then authorize Switcher 5G.",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Button(
-                        onClick = {
-                            ShizukuHelper.requestPermission()
-                            shizukuReady = ShizukuHelper.hasPermission()
-                        },
-                        modifier = Modifier.bouncyClickable {},
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                    ) {
-                        Text("Grant Shizuku Permission")
-                    }
-                }
-            }
-        }
+        // Interactive Shizuku Activation & ADB Command Card
+        ShizukuActivationCard(
+            modifier = Modifier.entrance(2),
+            onStatusChanged = { shizukuReady = it },
+        )
 
         // Active SIM Card Selector Section
         ElevatedCard(

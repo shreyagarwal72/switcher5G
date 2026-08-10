@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -27,7 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.switcher5g.network.NetworkMode
-import com.app.switcher5g.network.ShizukuHelper
+import com.app.switcher5g.ui.components.ShizukuActivationCard
 import com.app.switcher5g.ui.components.bouncyClickable
 import com.app.switcher5g.ui.components.entrance
 import com.app.switcher5g.util.AppPreferences
@@ -45,7 +44,6 @@ fun SettingsScreen(
     var autoCheckUpdates by remember { mutableStateOf(prefs.autoCheckUpdates) }
     var useDynamicTheme by remember { mutableStateOf(prefs.useDynamicTheme) }
     var enableAnimations by remember { mutableStateOf(prefs.enableAnimations) }
-    var shizukuReady by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
 
     Column(
         modifier = modifier
@@ -250,76 +248,10 @@ fun SettingsScreen(
             }
         }
 
-        // 3. Shizuku Privileged Status Card
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(3)
-                .border(
-                    1.dp,
-                    if (shizukuReady) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) else MaterialTheme.colorScheme.error.copy(alpha = 0.5f),
-                    RoundedCornerShape(24.dp),
-                ),
-            shape = RoundedCornerShape(24.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            Icons.Default.Security,
-                            contentDescription = null,
-                            tint = if (shizukuReady) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                        )
-                        Text(
-                            text = "Shizuku Privileged Status",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        )
-                    }
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (shizukuReady) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
-                    ) {
-                        Text(
-                            text = if (shizukuReady) "GRANTED" else "DISCONNECTED",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                            color = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        )
-                    }
-                }
-
-                Text(
-                    text = "Switcher 5G uses Shizuku IPC to invoke TelephonyManager.setPreferredNetworkType() directly via Android Shell privileges.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                if (!shizukuReady) {
-                    Button(
-                        onClick = {
-                            ShizukuHelper.requestPermission()
-                            shizukuReady = ShizukuHelper.hasPermission()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .bouncyClickable {},
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                    ) {
-                        Text("Grant Shizuku Permission")
-                    }
-                }
-            }
-        }
+        // 3. Interactive Shizuku Activation & ADB Command Card
+        ShizukuActivationCard(
+            modifier = Modifier.entrance(3),
+        )
 
         // 4. Automation & CLI Triggers Card
         ElevatedCard(
