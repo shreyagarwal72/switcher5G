@@ -5,12 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.network.NetworkModeManager
 import com.app.switcher5g.screens.MainScreen
 import com.app.switcher5g.ui.theme.Switcher5GTheme
 import com.app.switcher5g.util.AppLogger
+import com.app.switcher5g.util.AppPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,6 +21,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppLogger.i("MainActivity", "Activity onCreate triggered")
+
+        val prefs = AppPreferences(applicationContext)
 
         // Handle deep link intent:
         // adb shell am start -a android.intent.action.VIEW -d "switcher5g://switch?mode=NR_ONLY"
@@ -37,9 +41,10 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            Switcher5GTheme {
+            val appPrefs = remember { AppPreferences(applicationContext) }
+            Switcher5GTheme(useDynamicColor = appPrefs.useDynamicTheme) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    MainScreen()
+                    MainScreen(prefs = appPrefs)
                 }
             }
         }

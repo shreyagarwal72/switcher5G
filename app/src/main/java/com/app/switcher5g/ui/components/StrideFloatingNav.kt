@@ -12,8 +12,9 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CellTower
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -25,8 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -38,7 +39,8 @@ data class NavDestination(
 
 val switcherDestinations = listOf(
     NavDestination(route = "home", label = "Switcher", icon = Icons.Default.CellTower),
-    NavDestination(route = "logs", label = "Dev Logs", icon = Icons.Default.BugReport),
+    NavDestination(route = "settings", label = "Settings", icon = Icons.Default.Settings),
+    NavDestination(route = "about", label = "About", icon = Icons.Default.Info),
 )
 
 /**
@@ -57,9 +59,9 @@ fun StrideFloatingNav(
         modifier = modifier,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             switcherDestinations.forEach { dest ->
                 val selected = currentRoute == dest.route
@@ -88,18 +90,18 @@ fun StrideFloatingNav(
                 ) {
                     Row(
                         modifier = Modifier.padding(
-                            horizontal = if (selected) 18.dp else 12.dp,
-                            vertical = 12.dp,
+                            horizontal = if (selected) 16.dp else 10.dp,
+                            vertical = 10.dp,
                         ),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         Icon(
                             imageVector = dest.icon,
                             contentDescription = dest.label,
                             tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
-                                .size(24.dp)
+                                .size(22.dp)
                                 .graphicsLayer {
                                     scaleX = pop.value
                                     scaleY = pop.value
