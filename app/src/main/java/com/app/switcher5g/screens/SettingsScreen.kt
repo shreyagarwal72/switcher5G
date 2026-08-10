@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.switcher5g.network.NetworkMode
+import com.app.switcher5g.ui.components.IconSwitch
 import com.app.switcher5g.ui.components.ShizukuSetupDialog
 import com.app.switcher5g.ui.components.bouncyClickable
 import com.app.switcher5g.ui.components.entrance
@@ -452,10 +453,10 @@ private fun SettingToggleRow(
                 )
             }
         }
-        Switch(
+        IconSwitch(
             checked = checked,
+            icon = icon,
             onCheckedChange = onCheckedChange,
-            modifier = Modifier.scale(0.85f),
         )
     }
 }
