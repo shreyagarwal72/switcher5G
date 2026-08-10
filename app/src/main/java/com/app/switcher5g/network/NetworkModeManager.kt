@@ -148,12 +148,12 @@ class NetworkModeManager(private val context: Context) {
 
     private fun tryRootSwitch(mode: NetworkMode, subId: Int): SwitchResult {
         val modeId = when (mode) {
-            NetworkMode.NR_ONLY -> 26
-            NetworkMode.NR_LTE -> 27
-            NetworkMode.LTE_ONLY -> 11
+            NetworkMode.NR_ONLY -> 28 // NETWORK_MODE_NR_ONLY (5G SA)
+            NetworkMode.NR_LTE -> 26  // NETWORK_MODE_NR_LTE_GSM_WCDMA (5G NSA)
+            NetworkMode.LTE_ONLY -> 11 // NETWORK_MODE_LTE_ONLY (4G LTE)
         }
         return try {
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd phone set-preferred-network-mode $modeId"))
+            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd phone set-preferred-network-mode -s $subId $modeId || cmd phone set-preferred-network-mode $modeId"))
             val exitCode = process.waitFor()
             if (exitCode == 0) {
                 AppLogger.i("NetworkModeManager", "Successfully set network mode $mode via Root shell")
@@ -173,20 +173,7 @@ class NetworkModeManager(private val context: Context) {
     }
 
     fun launchRadioInfo(context: Context): Boolean {
-        val intents = listOf(
-            Intent().setClassName("com.android.settings", "com.android.settings.RadioInfo"),
-            Intent().setClassName("com.android.settings", "com.android.settings.Settings\$TestingSettingsActivity"),
-            Intent(Intent.ACTION_VIEW, Uri.parse("tel:*#*#4636#*#*")),
-        )
-        for (intent in intents) {
-            try {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(intent)
-                return true
-            } catch (_: Throwable) {
-            }
-        }
-        return false
+        return Manual5gSwitchHelper.openRadioInfo(context)
     }
 
     fun unbind() {

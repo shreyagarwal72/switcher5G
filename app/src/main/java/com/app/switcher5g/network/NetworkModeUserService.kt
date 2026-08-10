@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException
 
 /**
  * Hosted by Shizuku in a separate `shell`-UID process.
+ * Provides multi-strategy network mode switching for 5G SA (NR_ONLY), 5G NSA (NR_LTE), and 4G (LTE_ONLY).
  */
 class NetworkModeUserService : IUserService.Stub() {
 
@@ -23,12 +24,21 @@ class NetworkModeUserService : IUserService.Stub() {
         }
     }
 
-    private val reasonUser = 0 // ALLOWED_NETWORK_TYPES_REASON_USER
+    private val REASON_USER = 0
+    private val REASON_CARRIER = 2
 
-    private fun bitmaskFor(networkType: Int): Long = 1L shl (networkType - 1)
+    // Bitmasks for AOSP Telephony allowed network types
+    private val BITMASK_NR = 1L shl (TelephonyManager.NETWORK_TYPE_NR - 1)       // 1L shl 19 = 524288L
+    private val BITMASK_LTE = 1L shl (TelephonyManager.NETWORK_TYPE_LTE - 1)     // 1L shl 12 = 4096L
+    private val BITMASK_UMTS = 1L shl (TelephonyManager.NETWORK_TYPE_UMTS - 1)   // 1L shl 2 = 4L
+    private val BITMASK_GSM = 1L shl (TelephonyManager.NETWORK_TYPE_GSM - 1)     // 1L shl 16 or 1L shl 0
 
-    private val bitmaskNr = bitmaskFor(TelephonyManager.NETWORK_TYPE_NR)     // 20 -> 1L shl 19
-    private val bitmaskLte = bitmaskFor(TelephonyManager.NETWORK_TYPE_LTE)   // 13 -> 1L shl 12
+    // Mode Constants (RILConstants / TelephonyManager)
+    private val NETWORK_MODE_NR_ONLY = 28                 // 5G SA Only
+    private val NETWORK_MODE_NR_LTE_GSM_WCDMA = 26       // 5G NSA (NR + LTE + 3G + 2G)
+    private val NETWORK_MODE_NR_LTE = 24                 // 5G NSA (NR + LTE)
+    private val NETWORK_MODE_LTE_ONLY = 11               // 4G LTE Only
+    private val NETWORK_MODE_LTE_GSM_WCDMA = 9           // 4G LTE + 3G + 2G
 
     private fun unwrapThrowable(t: Throwable): Throwable {
         var current: Throwable = t
@@ -49,10 +59,22 @@ class NetworkModeUserService : IUserService.Stub() {
             subId
         }
 
-        val allowedMask: Long = when (mode) {
-            "NR_ONLY" -> bitmaskNr
-            "NR_LTE" -> bitmaskNr or bitmaskLte
-            "LTE_ONLY" -> bitmaskLte
+        val preferredModeInt: Int
+        val allowedMask: Long
+
+        when (mode.uppercase()) {
+            "NR_ONLY" -> {
+                preferredModeInt = NETWORK_MODE_NR_ONLY // 28
+                allowedMask = BITMASK_NR // 524288L
+            }
+            "NR_LTE" -> {
+                preferredModeInt = NETWORK_MODE_NR_LTE_GSM_WCDMA // 26
+                allowedMask = BITMASK_NR or BITMASK_LTE or BITMASK_UMTS or BITMASK_GSM // 528391L
+            }
+            "LTE_ONLY" -> {
+                preferredModeInt = NETWORK_MODE_LTE_ONLY // 11
+                allowedMask = BITMASK_LTE // 4096L
+            }
             else -> {
                 val err = "ERROR: Unknown mode '$mode'"
                 AppLogger.e("UserService", err)
@@ -62,55 +84,54 @@ class NetworkModeUserService : IUserService.Stub() {
 
         val errors = mutableListOf<String>()
 
-        // Approach 1: TelephonyManager instance via Constructor reflection
+        // ---------------------------------------------------------------------
+        // Strategy 1: TelephonyManager reflective invocation
+        // ---------------------------------------------------------------------
         try {
-            AppLogger.i("UserService", "Attempting Approach 1: TelephonyManager constructor reflection")
             val tm = getTelephonyManagerForSubId(targetSubId)
             if (tm != null) {
-                // Try setAllowedNetworkTypesForReason(reason, mask)
-                try {
-                    val m = tm.javaClass.getMethod(
-                        "setAllowedNetworkTypesForReason",
-                        Int::class.javaPrimitiveType,
-                        Long::class.javaPrimitiveType,
-                    )
-                    m.invoke(tm, reasonUser, allowedMask)
-                    val msg = "OK: Mode set to $mode (mask=$allowedMask) on subId=$targetSubId via TelephonyManager"
-                    AppLogger.i("UserService", msg)
-                    return msg
-                } catch (t: Throwable) {
-                    val u = unwrapThrowable(t)
-                    AppLogger.d("UserService", "Approach 1a failed: ${u.javaClass.simpleName}: ${u.message}")
-                    errors.add("Approach 1a (${u.javaClass.simpleName}: ${u.message})")
+                // 1a: setAllowedNetworkTypesForReason(reason, mask)
+                for (reason in intArrayOf(REASON_USER, REASON_CARRIER)) {
+                    try {
+                        val m = tm.javaClass.getMethod(
+                            "setAllowedNetworkTypesForReason",
+                            Int::class.javaPrimitiveType,
+                            Long::class.javaPrimitiveType,
+                        )
+                        m.invoke(tm, reason, allowedMask)
+                        AppLogger.i("UserService", "Successfully set allowed network types reason $reason = $allowedMask")
+                    } catch (t: Throwable) {
+                        errors.add("TM.setAllowedNetworkTypesForReason($reason): ${unwrapThrowable(t).message}")
+                    }
                 }
 
-                // Try setAllowedNetworkTypesForReason(subId, reason, mask)
+                // 1b: setPreferredNetworkType(subId, modeInt) / setPreferredNetworkType(modeInt)
                 try {
-                    val m = tm.javaClass.getMethod(
-                        "setAllowedNetworkTypesForReason",
-                        Int::class.javaPrimitiveType,
-                        Int::class.javaPrimitiveType,
-                        Long::class.javaPrimitiveType,
-                    )
-                    m.invoke(tm, targetSubId, reasonUser, allowedMask)
-                    val msg = "OK: Mode set to $mode on subId=$targetSubId via TelephonyManager(subId)"
+                    val m = tm.javaClass.getMethod("setPreferredNetworkType", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
+                    m.invoke(tm, targetSubId, preferredModeInt)
+                    val msg = "OK: Mode set to $mode (modeInt=$preferredModeInt) on subId=$targetSubId via TelephonyManager.setPreferredNetworkType"
                     AppLogger.i("UserService", msg)
                     return msg
-                } catch (t: Throwable) {
-                    val u = unwrapThrowable(t)
-                    AppLogger.d("UserService", "Approach 1b failed: ${u.javaClass.simpleName}: ${u.message}")
-                    errors.add("Approach 1b (${u.javaClass.simpleName}: ${u.message})")
+                } catch (_: Throwable) {
+                    try {
+                        val m = tm.javaClass.getMethod("setPreferredNetworkType", Int::class.javaPrimitiveType)
+                        m.invoke(tm, preferredModeInt)
+                        val msg = "OK: Mode set to $mode (modeInt=$preferredModeInt) via TelephonyManager.setPreferredNetworkType"
+                        AppLogger.i("UserService", msg)
+                        return msg
+                    } catch (t: Throwable) {
+                        errors.add("TM.setPreferredNetworkType: ${unwrapThrowable(t).message}")
+                    }
                 }
             }
         } catch (t: Throwable) {
-            val u = unwrapThrowable(t)
-            AppLogger.d("UserService", "Approach 1 instantiation failed: ${u.javaClass.simpleName}: ${u.message}")
-            errors.add("Approach 1 init (${u.javaClass.simpleName}: ${u.message})")
+            errors.add("TM init: ${unwrapThrowable(t).message}")
         }
 
-        // Approach 2: ITelephony ServiceManager binder
+        // ---------------------------------------------------------------------
+        // Strategy 2: ITelephony ServiceManager Binder
+        // ---------------------------------------------------------------------
         try {
-            AppLogger.i("UserService", "Attempting Approach 2: ITelephony binder reflection")
             val smClass = Class.forName("android.os.ServiceManager")
             val getService = smClass.getMethod("getService", String::class.java)
             val binder = getService.invoke(null, "phone") as? IBinder
@@ -120,45 +141,60 @@ class NetworkModeUserService : IUserService.Stub() {
                 val iTelephony = asInterface.invoke(null, binder)
 
                 if (iTelephony != null) {
-                    val methods = iTelephony.javaClass.methods
-                    val targetMethod = methods.firstOrNull {
+                    // Try setPreferredNetworkType(subId, modeInt)
+                    val setPrefMethod = iTelephony.javaClass.methods.firstOrNull {
+                        it.name == "setPreferredNetworkType" && it.parameterCount == 2
+                    }
+                    if (setPrefMethod != null) {
+                        setPrefMethod.invoke(iTelephony, targetSubId, preferredModeInt)
+                        val msg = "OK: Mode set to $mode (modeInt=$preferredModeInt) via ITelephony.setPreferredNetworkType"
+                        AppLogger.i("UserService", msg)
+                        return msg
+                    }
+
+                    // Try setAllowedNetworkTypesForReason(subId, reason, allowedMask)
+                    val setAllowedMethod = iTelephony.javaClass.methods.firstOrNull {
                         it.name == "setAllowedNetworkTypesForReason" && it.parameterCount == 3
                     }
-                    if (targetMethod != null) {
-                        targetMethod.invoke(iTelephony, targetSubId, reasonUser, allowedMask)
-                        val msg = "OK: Mode set to $mode via ITelephony binder"
+                    if (setAllowedMethod != null) {
+                        setAllowedMethod.invoke(iTelephony, targetSubId, REASON_USER, allowedMask)
+                        val msg = "OK: Mode set to $mode (mask=$allowedMask) via ITelephony.setAllowedNetworkTypesForReason"
                         AppLogger.i("UserService", msg)
                         return msg
                     }
                 }
             }
         } catch (t: Throwable) {
-            val u = unwrapThrowable(t)
-            AppLogger.d("UserService", "Approach 2 failed: ${u.javaClass.simpleName}: ${u.message}")
-            errors.add("Approach 2 (${u.javaClass.simpleName}: ${u.message})")
+            errors.add("ITelephony binder: ${unwrapThrowable(t).message}")
         }
 
-        // Approach 3: Shell `cmd phone` command execution
-        try {
-            AppLogger.i("UserService", "Attempting Approach 3: cmd phone shell command")
-            val cmd = arrayOf("cmd", "phone", "set-allowed-network-types", "-s", targetSubId.toString(), "-r", reasonUser.toString(), allowedMask.toString())
-            val process = Runtime.getRuntime().exec(cmd)
-            val output = process.inputStream.bufferedReader().readText().trim()
-            val errOutput = process.errorStream.bufferedReader().readText().trim()
-            val exitCode = process.waitFor()
+        // ---------------------------------------------------------------------
+        // Strategy 3: Shell `cmd phone` commands
+        // ---------------------------------------------------------------------
+        val shellCommands = listOf(
+            arrayOf("cmd", "phone", "set-preferred-network-mode", "-s", targetSubId.toString(), preferredModeInt.toString()),
+            arrayOf("cmd", "phone", "set-preferred-network-mode", preferredModeInt.toString()),
+            arrayOf("cmd", "phone", "set-allowed-network-types", "-s", targetSubId.toString(), "-r", "0", allowedMask.toString()),
+            arrayOf("cmd", "phone", "set-allowed-network-types", "-r", "0", allowedMask.toString()),
+            arrayOf("settings", "put", "global", "preferred_network_mode$targetSubId", preferredModeInt.toString()),
+            arrayOf("settings", "put", "global", "preferred_network_mode", preferredModeInt.toString()),
+        )
 
-            if (exitCode == 0) {
-                val msg = "OK: Mode set to $mode via cmd phone"
-                AppLogger.i("UserService", msg)
-                return msg
-            } else {
-                AppLogger.w("UserService", "cmd phone exit $exitCode: out='$output', err='$errOutput'")
-                errors.add("Approach 3 (exit $exitCode: $errOutput)")
+        for (cmd in shellCommands) {
+            try {
+                val process = Runtime.getRuntime().exec(cmd)
+                val exitCode = process.waitFor()
+                if (exitCode == 0) {
+                    val msg = "OK: Mode set to $mode via '${cmd.joinToString(" ")}'"
+                    AppLogger.i("UserService", msg)
+                    return msg
+                } else {
+                    val errOut = process.errorStream.bufferedReader().readText().trim()
+                    errors.add("'${cmd.joinToString(" ")}' (exit $exitCode: $errOut)")
+                }
+            } catch (t: Throwable) {
+                errors.add("'${cmd.joinToString(" ")}': ${unwrapThrowable(t).message}")
             }
-        } catch (t: Throwable) {
-            val u = unwrapThrowable(t)
-            AppLogger.d("UserService", "Approach 3 failed: ${u.javaClass.simpleName}: ${u.message}")
-            errors.add("Approach 3 (${u.javaClass.simpleName}: ${u.message})")
         }
 
         val finalError = "ERROR: All switch attempts failed:\n" + errors.joinToString("\n")
