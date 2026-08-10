@@ -180,6 +180,68 @@ class AppPreferences(context: Context) {
 
     private fun readEnableAnimations(): Boolean = prefs.getBoolean(KEY_ENABLE_ANIMATIONS, true)
 
+    fun exportToJsonString(): String {
+        val json = org.json.JSONObject()
+        json.put("activationMethod", activationMethod.name)
+        json.put("defaultNetworkMode", defaultNetworkMode.name)
+        json.put("themeMode", themeMode.name)
+        json.put("amoled", amoled)
+        json.put("paletteId", paletteId)
+        json.put("colorStyle", colorStyle.name)
+        json.put("appFont", appFont.name)
+        json.put("autoScanSims", autoScanSims)
+        json.put("hasDismissedSetupCard", hasDismissedSetupCard)
+        json.put("autoCheckUpdates", autoCheckUpdates)
+        json.put("useDynamicTheme", useDynamicTheme)
+        json.put("enableAnimations", enableAnimations)
+        return json.toString(2)
+    }
+
+    fun importFromJsonString(jsonString: String): Boolean {
+        return try {
+            val json = org.json.JSONObject(jsonString)
+            if (json.has("activationMethod")) {
+                runCatching { activationMethod = ActivationMethod.valueOf(json.getString("activationMethod")) }
+            }
+            if (json.has("defaultNetworkMode")) {
+                runCatching { defaultNetworkMode = NetworkMode.valueOf(json.getString("defaultNetworkMode")) }
+            }
+            if (json.has("themeMode")) {
+                runCatching { themeMode = AppThemeMode.valueOf(json.getString("themeMode")) }
+            }
+            if (json.has("amoled")) {
+                amoled = json.getBoolean("amoled")
+            }
+            if (json.has("paletteId")) {
+                paletteId = json.getString("paletteId")
+            }
+            if (json.has("colorStyle")) {
+                runCatching { colorStyle = ColorStyle.valueOf(json.getString("colorStyle")) }
+            }
+            if (json.has("appFont")) {
+                runCatching { appFont = AppFont.valueOf(json.getString("appFont")) }
+            }
+            if (json.has("autoScanSims")) {
+                autoScanSims = json.getBoolean("autoScanSims")
+            }
+            if (json.has("hasDismissedSetupCard")) {
+                hasDismissedSetupCard = json.getBoolean("hasDismissedSetupCard")
+            }
+            if (json.has("autoCheckUpdates")) {
+                autoCheckUpdates = json.getBoolean("autoCheckUpdates")
+            }
+            if (json.has("useDynamicTheme")) {
+                useDynamicTheme = json.getBoolean("useDynamicTheme")
+            }
+            if (json.has("enableAnimations")) {
+                enableAnimations = json.getBoolean("enableAnimations")
+            }
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
     companion object {
         private const val KEY_ACTIVATION_METHOD = "activation_method"
         private const val KEY_DEFAULT_MODE = "default_network_mode"

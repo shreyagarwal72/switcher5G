@@ -260,11 +260,116 @@ fun SettingsScreen(
             }
         }
 
-        // 3. Setup Dialog Trigger Card
+        // 3. Backup & Restore Settings Card
+        var showRestoreDialog by remember { mutableStateOf(false) }
+        var restoreJsonInput by remember { mutableStateOf("") }
+
+        if (showRestoreDialog) {
+            AlertDialog(
+                onDismissRequest = { showRestoreDialog = false },
+                title = { Text("Restore Settings JSON", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Paste your exported settings JSON configuration below:", style = MaterialTheme.typography.bodySmall)
+                        OutlinedTextField(
+                            value = restoreJsonInput,
+                            onValueChange = { restoreJsonInput = it },
+                            placeholder = { Text("{ \"amoled\": true, ... }") },
+                            modifier = Modifier.fillMaxWidth().height(140.dp),
+                            textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            val success = prefs.importFromJsonString(restoreJsonInput)
+                            if (success) {
+                                Toast.makeText(context, "✅ Settings restored successfully!", Toast.LENGTH_SHORT).show()
+                                showRestoreDialog = false
+                            } else {
+                                Toast.makeText(context, "❌ Invalid JSON format", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                    ) {
+                        Text("Restore")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showRestoreDialog = false }) {
+                        Text("Cancel")
+                    }
+                },
+            )
+        }
+
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .entrance(3)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        Icons.Rounded.Backup,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = "Backup & Restore Settings",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    )
+                }
+
+                Text(
+                    text = "Export your app preferences as a JSON backup or restore a previously saved backup.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(
+                        onClick = {
+                            val json = prefs.exportToJsonString()
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            clipboard.setPrimaryClip(ClipData.newPlainText("Switcher5G Settings Backup", json))
+                            Toast.makeText(context, "✅ Settings exported & copied to clipboard!", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.weight(1f).bouncyClickable {},
+                    ) {
+                        Icon(Icons.Rounded.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Backup Settings")
+                    }
+
+                    OutlinedButton(
+                        onClick = { showRestoreDialog = true },
+                        modifier = Modifier.weight(1f).bouncyClickable {},
+                    ) {
+                        Icon(Icons.Rounded.Restore, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Restore Settings")
+                    }
+                }
+            }
+        }
+
+        // 4. Setup Dialog Trigger Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .entrance(4)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {

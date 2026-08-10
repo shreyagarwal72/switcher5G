@@ -519,10 +519,6 @@ fun HomeScreenContent(prefs: AppPreferences) {
             }
         }
 
-        // OEM & Execution Strategy Diagnostics Matrix Card
-        OemDiagnosticsCard(
-            modifier = Modifier.entrance(8),
-        )
     }
 }
 
