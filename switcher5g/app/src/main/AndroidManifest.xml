@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- MODIFY_PHONE_STATE is a signature|privileged permission. We never hold it
+         ourselves — Shizuku's shell process holds it and performs the call for us. -->
+
+    <!-- Custom permission so only intentional callers (e.g. Termux/ADB, or the user
+         themself) can trigger a mode switch. Termux must request this permission or
+         call via `adb shell am broadcast`, which runs as shell and is allowed. -->
+    <permission
+        android:name="com.app.switcher5g.SET_NETWORK_MODE"
+        android:protectionLevel="signature|privileged" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="Switcher5G"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar"
+        android:supportsRtl="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Deep link kept for parity with the earlier RN spec, e.g.
+                 adb shell am start -a android.intent.action.VIEW -d "switcher5g://switch?mode=NR_ONLY" -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="switcher5g" android:host="switch" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".tile.NetworkTileService"
+            android:label="5G Switcher"
+            android:icon="@drawable/ic_5g_tile"
+            android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- Termux/ADB entry point. Real security here comes from ADB running as
+             shell, not from the permission tag (a normal 3rd-party app can't hold a
+             signature|privileged permission it wasn't signed for). Do not treat this
+             as safe to leave wide open — see README "Security notes". -->
+        <receiver
+            android:name=".receiver.TermuxReceiver"
+            android:exported="true"
+            android:permission="com.app.switcher5g.SET_NETWORK_MODE">
+            <intent-filter>
+                <action android:name="com.app.switcher5g.SET_NETWORK_MODE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Shizuku's manifest-declared provider used for permission handshake on
+             Shizuku API >= 11 (sui/starter compatible). -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
+    </application>
+</manifest>
