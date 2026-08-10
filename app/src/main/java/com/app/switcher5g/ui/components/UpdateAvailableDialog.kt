@@ -30,7 +30,7 @@ fun UpdateAvailableDialog(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var isDownloading by remember { mutableStateOf(false) }
-    var downloadProgress by remember { FloatStateOption(0f) }
+    var downloadProgress by remember { mutableFloatStateOf(0f) }
 
     AlertDialog(
         onDismissRequest = { if (!isDownloading) onDismissRequest() },
@@ -128,6 +128,3 @@ fun UpdateAvailableDialog(
         },
     )
 }
-
-@Composable
-private fun FloatStateOption(initial: Float): MutableState<Float> = remember { mutableStateOf(initial) }
