@@ -134,53 +134,42 @@ fun SettingsScreen(
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
-                Text(text = "Typography & Font Family", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    AppFont.entries.forEach { font ->
-                        FilterChip(
-                            selected = prefs.appFont == font,
-                            onClick = { prefs.appFont = font },
-                            label = { Text(font.name.replace("_", " "), style = MaterialTheme.typography.labelSmall) },
-                        )
-                    }
-                }
+                // Typography & Font Family StrideSlider
+                val fontOptions = remember { AppFont.entries.map { it.name.replace("_", " ") } }
+                val selectedFontIndex = AppFont.entries.indexOf(prefs.appFont).coerceAtLeast(0)
+                SettingStrideSlider(
+                    title = "Typography & Font Family",
+                    currentLabel = fontOptions.getOrElse(selectedFontIndex) { "" },
+                    options = fontOptions,
+                    selectedIndex = selectedFontIndex,
+                    onSelectIndex = { idx -> prefs.appFont = AppFont.entries[idx] },
+                )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
-                Text(text = "Color Palette", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    AppPalettes.forEach { palette ->
-                        FilterChip(
-                            selected = prefs.paletteId == palette.id,
-                            onClick = { prefs.paletteId = palette.id },
-                            label = { Text(palette.label) },
-                        )
-                    }
-                }
+                // Color Palette StrideSlider
+                val paletteOptions = remember { AppPalettes.map { it.label } }
+                val selectedPaletteIndex = AppPalettes.indexOfFirst { it.id == prefs.paletteId }.coerceAtLeast(0)
+                SettingStrideSlider(
+                    title = "Color Palette",
+                    currentLabel = paletteOptions.getOrElse(selectedPaletteIndex) { "" },
+                    options = paletteOptions,
+                    selectedIndex = selectedPaletteIndex,
+                    onSelectIndex = { idx -> prefs.paletteId = AppPalettes[idx].id },
+                )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
-                Text(text = "Color Style", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    ColorStyle.entries.forEach { style ->
-                        FilterChip(
-                            selected = prefs.colorStyle == style,
-                            onClick = { prefs.colorStyle = style },
-                            label = { Text(style.name.replace("_", " "), style = MaterialTheme.typography.labelSmall) },
-                        )
-                    }
-                }
+                // Color Style StrideSlider
+                val styleOptions = remember { ColorStyle.entries.map { it.name.replace("_", " ") } }
+                val selectedStyleIndex = ColorStyle.entries.indexOf(prefs.colorStyle).coerceAtLeast(0)
+                SettingStrideSlider(
+                    title = "Color Style",
+                    currentLabel = styleOptions.getOrElse(selectedStyleIndex) { "" },
+                    options = styleOptions,
+                    selectedIndex = selectedStyleIndex,
+                    onSelectIndex = { idx -> prefs.colorStyle = ColorStyle.entries[idx] },
+                )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
@@ -457,6 +446,51 @@ private fun SettingToggleRow(
             checked = checked,
             icon = icon,
             onCheckedChange = onCheckedChange,
+        )
+    }
+}
+
+@Composable
+private fun SettingStrideSlider(
+    title: String,
+    currentLabel: String,
+    options: List<String>,
+    selectedIndex: Int,
+    onSelectIndex: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val maxIndex = (options.size - 1).coerceAtLeast(1)
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = currentLabel,
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.ExtraBold),
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+
+        com.app.switcher5g.ui.components.StrideSlider(
+            value = selectedIndex.coerceIn(0, maxIndex).toFloat(),
+            onValueChange = { floatVal ->
+                val idx = kotlin.math.roundToInt(floatVal).coerceIn(0, options.size - 1)
+                if (idx != selectedIndex) {
+                    onSelectIndex(idx)
+                }
+            },
+            valueRange = 0f..maxIndex.toFloat(),
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

@@ -42,7 +42,7 @@ jobs:
       - name: Create or Update GitHub Release with Signed APK
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v1.0.0"
-          name: "Switcher 5G Release v1.0.0 (Final Release)"
+          tag_name: "v1.0.1"
+          name: "Switcher 5G Release v1.0.1"
           files: app/build/outputs/apk/release/*.apk
           generate_release_notes: true

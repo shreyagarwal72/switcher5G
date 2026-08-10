@@ -69,12 +69,24 @@ object UpdateManager {
 
             var apkUrl = ""
             if (assets != null) {
+                // First attempt: find explicit release APK asset
                 for (i in 0 until assets.length()) {
                     val asset = assets.getJSONObject(i)
                     val name = asset.optString("name", "")
-                    if (name.endsWith(".apk", ignoreCase = true)) {
+                    if (name.endsWith(".apk", ignoreCase = true) && name.contains("release", ignoreCase = true)) {
                         apkUrl = asset.optString("browser_download_url", "")
                         break
+                    }
+                }
+                // Fallback: non-debug APK asset
+                if (apkUrl.isBlank()) {
+                    for (i in 0 until assets.length()) {
+                        val asset = assets.getJSONObject(i)
+                        val name = asset.optString("name", "")
+                        if (name.endsWith(".apk", ignoreCase = true) && !name.contains("debug", ignoreCase = true)) {
+                            apkUrl = asset.optString("browser_download_url", "")
+                            break
+                        }
                     }
                 }
             }
