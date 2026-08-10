@@ -13,8 +13,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,6 +29,7 @@ import com.app.switcher5g.network.SwitchResult
 import com.app.switcher5g.ui.components.BottomBarItem
 import com.app.switcher5g.ui.components.FancyCircularOrbLoader
 import com.app.switcher5g.ui.components.FancyLiquidProgressBar
+import com.app.switcher5g.ui.components.FancyModeSlideBar
 import com.app.switcher5g.ui.components.FancyPulseLoader
 import com.app.switcher5g.ui.components.FancyWheelScroller
 import com.app.switcher5g.ui.components.FloatingDepthBottomBar
@@ -82,6 +85,7 @@ fun HomeScreenContent() {
     var isSwitching by remember { mutableStateOf(false) }
     var isScanningSims by remember { mutableStateOf(false) }
     var shizukuReady by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
+    var useWheelPicker by remember { mutableStateOf(false) }
 
     var isCheckingUpdate by remember { mutableStateOf(false) }
     var isDownloadingUpdate by remember { mutableStateOf(false) }
@@ -397,10 +401,11 @@ fun HomeScreenContent() {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                // SIM Slot Choice Chips
+                // SIM Slot Choice Chips with Row Wrap alignment
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     InputChip(
                         selected = selectedSubId == null,
@@ -418,13 +423,7 @@ fun HomeScreenContent() {
             }
         }
 
-        // FancyWheelScroller Network Mode Selector
-        Text(
-            text = "Select Preferred Network Mode",
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-
+        // Network Mode Selector Section (Material 3 Fancy Slide Bar + Wheel Scroller Toggle)
         ElevatedCard(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
@@ -432,23 +431,57 @@ fun HomeScreenContent() {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                val modes = NetworkMode.entries
-                val labels = remember { modes.map { it.label() } }
-                val selectedIndex = modes.indexOf(selectedMode).coerceAtLeast(0)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Preferred Network Mode",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = if (useWheelPicker) "Wheel" else "Slide Bar",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Switch(
+                            checked = useWheelPicker,
+                            onCheckedChange = { useWheelPicker = it },
+                            modifier = Modifier.scale(0.8f),
+                        )
+                    }
+                }
 
-                FancyWheelScroller(
-                    items = labels,
-                    selectedIndex = selectedIndex,
-                    onSelectedIndexChange = { index ->
-                        if (index in modes.indices) {
-                            selectedMode = modes[index]
-                        }
-                    },
-                )
+                if (useWheelPicker) {
+                    val modes = NetworkMode.entries
+                    val labels = remember { modes.map { it.label() } }
+                    val selectedIndex = modes.indexOf(selectedMode).coerceAtLeast(0)
+
+                    FancyWheelScroller(
+                        items = labels,
+                        selectedIndex = selectedIndex,
+                        onSelectedIndexChange = { index ->
+                            if (index in modes.indices) {
+                                selectedMode = modes[index]
+                            }
+                        },
+                    )
+                } else {
+                    FancyModeSlideBar(
+                        selectedMode = selectedMode,
+                        onModeSelected = { selectedMode = it },
+                    )
+                }
 
                 // Description for current centered/selected mode
                 Text(
