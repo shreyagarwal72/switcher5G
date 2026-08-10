@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # needed to publish/update GitHub Releases on every run
+      contents: write   # needed to publish/update GitHub Releases and commit locked signing key
 
     steps:
       - name: Checkout
@@ -28,6 +28,27 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.7"
+
+      - name: Ensure Permanent Release Keystore
+        run: |
+          if [ ! -f app/release.keystore ]; then
+            echo "Generating permanent release keystore to lock signature..."
+            keytool -genkeypair -v \
+              -keystore app/release.keystore \
+              -alias switcher5g \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass switcher5gpass \
+              -keypass switcher5gpass \
+              -dname "CN=Switcher5G, OU=Mobile, O=OpenSource, L=City, ST=State, C=US"
+            
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add app/release.keystore
+            git commit -m "chore: lock release.keystore binary in repository to preserve APK signing signature forever"
+            git push origin main || true
+          fi
 
       - name: Build Release APK
         run: gradle assembleRelease --no-daemon

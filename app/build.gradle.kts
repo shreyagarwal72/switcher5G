@@ -16,18 +16,30 @@ android {
     }
 
     signingConfigs {
-        getByName("debug") {
-            // Guarantees consistent signing key configuration
+        create("release") {
+            val ksFile = rootProject.file("app/release.keystore")
+            if (ksFile.exists()) {
+                storeFile = ksFile
+                storePassword = "switcher5gpass"
+                keyAlias = "switcher5g"
+                keyPassword = "switcher5gpass"
+            } else {
+                val debugKs = getByName("debug")
+                storeFile = debugKs.storeFile
+                storePassword = debugKs.storePassword
+                keyAlias = debugKs.keyAlias
+                keyPassword = debugKs.keyPassword
+            }
         }
     }
 
     buildTypes {
         debug {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
