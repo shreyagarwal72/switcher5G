@@ -66,6 +66,7 @@ fun Switcher5GTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = appTypography(prefs.appFont),
         content = content
     )
 }

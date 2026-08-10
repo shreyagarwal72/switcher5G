@@ -31,6 +31,7 @@ import com.app.switcher5g.ui.components.bouncyClickable
 import com.app.switcher5g.ui.components.entrance
 import com.app.switcher5g.ui.theme.AppPalettes
 import com.app.switcher5g.ui.theme.ColorStyle
+import com.app.switcher5g.util.AppFont
 import com.app.switcher5g.util.AppPreferences
 import com.app.switcher5g.util.AppThemeMode
 
@@ -41,16 +42,6 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var defaultMode by remember { mutableStateOf(prefs.defaultNetworkMode) }
-    var themeMode by remember { mutableStateOf(prefs.themeMode) }
-    var amoled by remember { mutableStateOf(prefs.amoled) }
-    var paletteId by remember { mutableStateOf(prefs.paletteId) }
-    var colorStyle by remember { mutableStateOf(prefs.colorStyle) }
-    var autoScanSims by remember { mutableStateOf(prefs.autoScanSims) }
-    var useWheelPicker by remember { mutableStateOf(prefs.useWheelPicker) }
-    var autoCheckUpdates by remember { mutableStateOf(prefs.autoCheckUpdates) }
-    var useDynamicTheme by remember { mutableStateOf(prefs.useDynamicTheme) }
-    var enableAnimations by remember { mutableStateOf(prefs.enableAnimations) }
     var showSetupDialog by remember { mutableStateOf(false) }
 
     if (showSetupDialog) {
@@ -65,7 +56,7 @@ fun SettingsScreen(
             .padding(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Clean Professional Top Header
+        // Top Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -88,7 +79,7 @@ fun SettingsScreen(
             )
         }
 
-        // 1. Theme & Appearance (Stride Theme Engine: AMOLED, Palettes, Styles)
+        // 1. Theme & Appearance (Live Auto-Refreshing: Theme Mode, AMOLED, Palettes, Styles, Fonts)
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
@@ -123,11 +114,8 @@ fun SettingsScreen(
                 ) {
                     AppThemeMode.entries.forEach { mode ->
                         FilterChip(
-                            selected = themeMode == mode,
-                            onClick = {
-                                themeMode = mode
-                                prefs.themeMode = mode
-                            },
+                            selected = prefs.themeMode == mode,
+                            onClick = { prefs.themeMode = mode },
                             label = { Text(mode.name) },
                         )
                     }
@@ -138,18 +126,33 @@ fun SettingsScreen(
                 // Pure AMOLED Black Mode
                 SettingToggleRow(
                     title = "Pure AMOLED Black",
-                    subtitle = "Use pure #000000 background for AMOLED display power saving",
+                    subtitle = "Use pure #000000 black background for AMOLED displays",
                     icon = Icons.Rounded.Contrast,
-                    checked = amoled,
-                    onCheckedChange = {
-                        amoled = it
-                        prefs.amoled = it
-                    },
+                    checked = prefs.amoled,
+                    onCheckedChange = { prefs.amoled = it },
                 )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
-                // Palette Selection (Tide, Zen, Ember, Forest)
+                // Typography & Font Selector (Nunito, Inter, Outfit, Lexend, Manrope, Space Grotesk)
+                Text(text = "Typography & Font Family", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    AppFont.entries.forEach { font ->
+                        FilterChip(
+                            selected = prefs.appFont == font,
+                            onClick = { prefs.appFont = font },
+                            label = { Text(font.name.replace("_", " "), style = MaterialTheme.typography.labelSmall) },
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+
+                // Color Palette Selection (Tide, Zen, Ember, Forest)
                 Text(text = "Color Palette", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -157,11 +160,8 @@ fun SettingsScreen(
                 ) {
                     AppPalettes.forEach { palette ->
                         FilterChip(
-                            selected = paletteId == palette.id,
-                            onClick = {
-                                paletteId = palette.id
-                                prefs.paletteId = palette.id
-                            },
+                            selected = prefs.paletteId == palette.id,
+                            onClick = { prefs.paletteId = palette.id },
                             label = { Text(palette.label) },
                         )
                     }
@@ -178,11 +178,8 @@ fun SettingsScreen(
                 ) {
                     ColorStyle.entries.forEach { style ->
                         FilterChip(
-                            selected = colorStyle == style,
-                            onClick = {
-                                colorStyle = style
-                                prefs.colorStyle = style
-                            },
+                            selected = prefs.colorStyle == style,
+                            onClick = { prefs.colorStyle = style },
                             label = { Text(style.name.replace("_", " "), style = MaterialTheme.typography.labelSmall) },
                         )
                     }
@@ -192,13 +189,10 @@ fun SettingsScreen(
 
                 SettingToggleRow(
                     title = "Material You Dynamic Colors",
-                    subtitle = "Adapt accent colors from system wallpaper (Android 12+)",
+                    subtitle = "Adapt accent colors from wallpaper (Android 12+)",
                     icon = Icons.Rounded.ColorLens,
-                    checked = useDynamicTheme,
-                    onCheckedChange = {
-                        useDynamicTheme = it
-                        prefs.useDynamicTheme = it
-                    },
+                    checked = prefs.useDynamicTheme,
+                    onCheckedChange = { prefs.useDynamicTheme = it },
                 )
             }
         }
@@ -242,11 +236,8 @@ fun SettingsScreen(
                 ) {
                     NetworkMode.entries.forEach { mode ->
                         FilterChip(
-                            selected = defaultMode == mode,
-                            onClick = {
-                                defaultMode = mode
-                                prefs.defaultNetworkMode = mode
-                            },
+                            selected = prefs.defaultNetworkMode == mode,
+                            onClick = { prefs.defaultNetworkMode = mode },
                             label = {
                                 Text(
                                     text = when (mode) {
@@ -267,11 +258,8 @@ fun SettingsScreen(
                     title = "Auto-scan SIMs on Launch",
                     subtitle = "Automatically detect active Dual-SIM subscriptions on open",
                     icon = Icons.Rounded.SimCard,
-                    checked = autoScanSims,
-                    onCheckedChange = {
-                        autoScanSims = it
-                        prefs.autoScanSims = it
-                    },
+                    checked = prefs.autoScanSims,
+                    onCheckedChange = { prefs.autoScanSims = it },
                 )
             }
         }
