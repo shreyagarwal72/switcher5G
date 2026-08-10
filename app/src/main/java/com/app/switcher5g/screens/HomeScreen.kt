@@ -138,7 +138,13 @@ fun HomeScreenContent(prefs: AppPreferences) {
     }
 
     DisposableEffect(Unit) {
-        onDispose { manager.unbind() }
+        val unregisterShizuku = ShizukuHelper.registerListeners { _, permission ->
+            shizukuReady = permission
+        }
+        onDispose {
+            unregisterShizuku()
+            manager.unbind()
+        }
     }
 
     if (showSetupDialog) {

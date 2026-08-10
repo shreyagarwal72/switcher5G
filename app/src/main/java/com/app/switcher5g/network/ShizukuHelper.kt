@@ -6,7 +6,7 @@ import android.net.Uri
 import rikka.shizuku.Shizuku
 
 /**
- * Wrapper around Shizuku's static permission API and setup helpers.
+ * Wrapper around Shizuku's static permission API and live event listeners.
  */
 object ShizukuHelper {
 
@@ -34,6 +34,45 @@ object ShizukuHelper {
     fun requestPermission() {
         if (isAvailable() && !hasPermission()) {
             Shizuku.requestPermission(REQUEST_CODE)
+        }
+    }
+
+    /**
+     * Registers live Shizuku binder and permission state listeners.
+     * Fires immediately on state changes (e.g. user grants permission or starts Shizuku service).
+     * Returns an unregister cleanup function.
+     */
+    fun registerListeners(
+        onStateChanged: (isAvailable: Boolean, hasPermission: Boolean) -> Unit,
+    ): () -> Unit {
+        val binderReceivedListener = Shizuku.OnBinderReceivedListener {
+            onStateChanged(isAvailable(), hasPermission())
+        }
+        val binderDeadListener = Shizuku.OnBinderDeadListener {
+            onStateChanged(false, false)
+        }
+        val permissionResultListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
+            if (requestCode == REQUEST_CODE) {
+                val granted = grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED
+                onStateChanged(isAvailable(), granted)
+            }
+        }
+
+        try {
+            Shizuku.addBinderReceivedListener(binderReceivedListener)
+            Shizuku.addBinderDeadListener(binderDeadListener)
+            Shizuku.addRequestPermissionResultListener(permissionResultListener)
+        } catch (_: Throwable) {}
+
+        // Initial callback invocation
+        onStateChanged(isAvailable(), hasPermission())
+
+        return {
+            try {
+                Shizuku.removeBinderReceivedListener(binderReceivedListener)
+                Shizuku.removeBinderDeadListener(binderDeadListener)
+                Shizuku.removeRequestPermissionResultListener(permissionResultListener)
+            } catch (_: Throwable) {}
         }
     }
 

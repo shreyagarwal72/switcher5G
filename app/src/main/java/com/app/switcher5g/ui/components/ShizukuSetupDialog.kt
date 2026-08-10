@@ -45,6 +45,15 @@ fun ShizukuSetupDialog(
         else -> ShizukuHelper.ADB_PC_USER
     }
 
+    DisposableEffect(Unit) {
+        val unregister = ShizukuHelper.registerListeners { available, permission ->
+            isAvailable = available
+            hasPermission = permission
+            onStatusUpdated(permission)
+        }
+        onDispose { unregister() }
+    }
+
     AlertDialog(
         onDismissRequest = onDismissRequest,
         confirmButton = {
