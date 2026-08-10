@@ -15,9 +15,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CellularGood
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Router
 import androidx.compose.material.icons.rounded.SignalCellularAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*

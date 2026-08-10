@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,8 +17,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bolt
-import androidx.compose.material.icons.rounded.CellularGood
 import androidx.compose.material.icons.rounded.SignalCellular4Bar
+import androidx.compose.material.icons.rounded.SignalCellularAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -80,7 +81,7 @@ fun getNetworkModeSpec(mode: NetworkMode): NetworkModeSpec = when (mode) {
         subtitle = "Hybrid 5G+4G",
         fullTitle = "NR / LTE (5G Non-Standalone)",
         badge = "🌐 Auto Hybrid",
-        icon = Icons.Rounded.CellularGood,
+        icon = Icons.Rounded.SignalCellularAlt,
         primaryColor = Color(0xFF00E676),
         secondaryColor = Color(0xFF00B0FF),
         description = "Uses 5G data radio with 4G LTE anchor control channel. Recommended default mode.",

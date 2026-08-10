@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.cos
-import kotlin.math.minOf
+import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
@@ -60,7 +60,7 @@ class ScallopedShape(
         val path = Path()
         val cx = size.width / 2f
         val cy = size.height / 2f
-        val outerR = minOf(size.width, size.height) / 2f
+        val outerR = min(size.width, size.height) / 2f
         val innerR = outerR * innerRadiusRatio
 
         val anglePerLobe = (2.0 * Math.PI / points).toFloat()
