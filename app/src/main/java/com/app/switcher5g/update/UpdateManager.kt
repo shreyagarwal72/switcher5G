@@ -1,17 +1,23 @@
 package com.app.switcher5g.update
 
+import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import com.app.switcher5g.util.AppLogger
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.ProtocolException
 import java.net.URL
 
 data class UpdateInfo(
@@ -23,8 +29,8 @@ data class UpdateInfo(
 )
 
 /**
- * Handles checking for updates from GitHub Releases, downloading update APKs,
- * and prompting the Android package installer.
+ * Handles checking for updates from GitHub Releases, downloading update APKs with
+ * byte-range resumption & retry mechanism, and prompting the Android package installer.
  */
 object UpdateManager {
 
@@ -39,6 +45,7 @@ object UpdateManager {
             conn.requestMethod = "GET"
             conn.setRequestProperty("User-Agent", USER_AGENT)
             conn.setRequestProperty("Accept", "application/vnd.github.v3+json")
+            conn.setRequestProperty("Accept-Encoding", "identity")
             conn.connectTimeout = 12000
             conn.readTimeout = 12000
             conn.instanceFollowRedirects = true
@@ -93,70 +100,143 @@ object UpdateManager {
         apkUrl: String,
         onProgress: (Float) -> Unit,
     ): Boolean = withContext(Dispatchers.IO) {
-        try {
-            AppLogger.i("UpdateManager", "Starting download from $apkUrl")
+        val cacheDir = context.externalCacheDir ?: context.cacheDir
+        val apkFile = File(cacheDir, "switcher5g-update.apk")
 
-            var currentUrl = apkUrl
-            var conn: HttpURLConnection
-            var redirectCount = 0
-            val maxRedirects = 5
-
-            // Follow HTTP 301/302 redirects manually for GitHub asset CDN links
-            while (true) {
-                val url = URL(currentUrl)
-                conn = url.openConnection() as HttpURLConnection
-                conn.setRequestProperty("User-Agent", USER_AGENT)
-                conn.connectTimeout = 15000
-                conn.readTimeout = 30000
-                conn.instanceFollowRedirects = false
-                conn.connect()
-
-                val code = conn.responseCode
-                if (code == HttpURLConnection.HTTP_MOVED_PERM ||
-                    code == HttpURLConnection.HTTP_MOVED_TEMP ||
-                    code == 307 || code == 308
-                ) {
-                    val loc = conn.getHeaderField("Location")
-                    if (!loc.isNullOrBlank() && redirectCount < maxRedirects) {
-                        currentUrl = loc
-                        redirectCount++
-                        AppLogger.i("UpdateManager", "Following download redirect ($redirectCount) -> $currentUrl")
-                        continue
-                    }
-                }
-                break
-            }
-
-            val fileLength = conn.contentLengthLong
-            AppLogger.i("UpdateManager", "Downloading APK size: $fileLength bytes")
-
-            val cacheDir = context.externalCacheDir ?: context.cacheDir
-            val apkFile = File(cacheDir, "switcher5g-update.apk")
-            if (apkFile.exists()) apkFile.delete()
-
-            conn.inputStream.use { input ->
-                apkFile.outputStream().use { output ->
-                    val data = ByteArray(8192)
-                    var total = 0L
-                    var count: Int
-                    while (input.read(data).also { count = it } != -1) {
-                        total += count
-                        output.write(data, 0, count)
-                        if (fileLength > 0) {
-                            val progress = total.toFloat() / fileLength.toFloat()
-                            onProgress(progress)
-                        }
-                    }
-                }
-            }
-
-            AppLogger.i("UpdateManager", "APK download complete. Saved file size: ${apkFile.length()} bytes")
+        // Try HTTP connection with byte-range resumption first
+        val success = downloadWithResumption(apkUrl, apkFile, onProgress)
+        if (success && apkFile.exists() && apkFile.length() > 0) {
+            AppLogger.i("UpdateManager", "HTTP download succeeded (${apkFile.length()} bytes). Prompting installer...")
             withContext(Dispatchers.Main) {
                 installApk(context, apkFile)
             }
+            return@withContext true
+        }
+
+        // Fallback to System DownloadManager if HTTP stream drops repeatedly
+        AppLogger.w("UpdateManager", "Direct stream download incomplete. Launching System DownloadManager fallback...")
+        downloadWithDownloadManager(context, apkUrl)
+    }
+
+    private suspend fun downloadWithResumption(
+        apkUrl: String,
+        apkFile: File,
+        onProgress: (Float) -> Unit,
+    ): Boolean = withContext(Dispatchers.IO) {
+        if (apkFile.exists()) apkFile.delete()
+
+        var attempts = 0
+        val maxAttempts = 6
+        var totalBytesDownloaded = 0L
+        var expectedTotalSize = -1L
+
+        while (attempts < maxAttempts) {
+            attempts++
+            try {
+                var currentUrl = apkUrl
+                var conn: HttpURLConnection
+                var redirectCount = 0
+                val maxRedirects = 5
+
+                // Resolve redirects manually
+                while (true) {
+                    val url = URL(currentUrl)
+                    conn = url.openConnection() as HttpURLConnection
+                    conn.setRequestProperty("User-Agent", USER_AGENT)
+                    conn.setRequestProperty("Accept-Encoding", "identity")
+                    conn.setRequestProperty("Connection", "close")
+                    conn.connectTimeout = 15000
+                    conn.readTimeout = 30000
+                    conn.instanceFollowRedirects = false
+
+                    if (totalBytesDownloaded > 0) {
+                        conn.setRequestProperty("Range", "bytes=$totalBytesDownloaded-")
+                        AppLogger.i("UpdateManager", "Resuming download attempt $attempts at byte $totalBytesDownloaded")
+                    }
+
+                    conn.connect()
+                    val code = conn.responseCode
+
+                    if (code in listOf(HttpURLConnection.HTTP_MOVED_PERM, HttpURLConnection.HTTP_MOVED_TEMP, 307, 308)) {
+                        val loc = conn.getHeaderField("Location")
+                        if (!loc.isNullOrBlank() && redirectCount < maxRedirects) {
+                            currentUrl = loc
+                            redirectCount++
+                            continue
+                        }
+                    }
+                    break
+                }
+
+                val responseCode = conn.responseCode
+                AppLogger.i("UpdateManager", "Download response code: $responseCode (Attempt $attempts)")
+
+                if (responseCode != 200 && responseCode != 206) {
+                    AppLogger.w("UpdateManager", "Unexpected HTTP status $responseCode on attempt $attempts")
+                    delay(1000)
+                    continue
+                }
+
+                val contentLength = conn.contentLengthLong
+                if (contentLength > 0 && expectedTotalSize <= 0) {
+                    expectedTotalSize = if (responseCode == 206) contentLength + totalBytesDownloaded else contentLength
+                }
+
+                val append = responseCode == 206 && totalBytesDownloaded > 0
+                val outputStream = FileOutputStream(apkFile, append)
+
+                conn.inputStream.use { input ->
+                    outputStream.use { output ->
+                        val buffer = ByteArray(16384)
+                        var bytesRead: Int
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            output.write(buffer, 0, bytesRead)
+                            totalBytesDownloaded += bytesRead
+                            if (expectedTotalSize > 0) {
+                                val progress = (totalBytesDownloaded.toFloat() / expectedTotalSize.toFloat()).coerceIn(0f, 1f)
+                                onProgress(progress)
+                            }
+                        }
+                    }
+                }
+
+                if (expectedTotalSize > 0 && totalBytesDownloaded >= expectedTotalSize) {
+                    AppLogger.i("UpdateManager", "Download fully completed ($totalBytesDownloaded / $expectedTotalSize bytes)")
+                    return@withContext true
+                } else if (expectedTotalSize <= 0 && totalBytesDownloaded > 1000000) {
+                    AppLogger.i("UpdateManager", "Stream closed naturally after $totalBytesDownloaded bytes")
+                    return@withContext true
+                }
+            } catch (e: Exception) {
+                AppLogger.w("UpdateManager", "Download attempt $attempts interrupted (${e.javaClass.simpleName}: ${e.message}). Bytes saved: $totalBytesDownloaded")
+                totalBytesDownloaded = if (apkFile.exists()) apkFile.length() else 0L
+                delay(1200)
+            }
+        }
+
+        return@withContext apkFile.exists() && apkFile.length() > 5000000
+    }
+
+    private fun downloadWithDownloadManager(context: Context, apkUrl: String): Boolean {
+        return try {
+            val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
+            if (dm == null) return false
+
+            val uri = Uri.parse(apkUrl)
+            val request = DownloadManager.Request(uri).apply {
+                setTitle("Switcher 5G Update")
+                setDescription("Downloading latest release APK…")
+                setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, "switcher5g-update.apk")
+                setAllowedOverMetered(true)
+                setAllowedOverRoaming(true)
+            }
+
+            dm.enqueue(request)
+            AppLogger.i("UpdateManager", "Enqueued System DownloadManager request for $apkUrl")
             true
         } catch (t: Throwable) {
-            AppLogger.e("UpdateManager", "Failed to download update APK", t)
+            AppLogger.e("UpdateManager", "DownloadManager fallback failed", t)
             false
         }
     }
