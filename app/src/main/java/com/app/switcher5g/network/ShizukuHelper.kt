@@ -52,13 +52,6 @@ object ShizukuHelper {
         }
     }
 
-    const val ADB_ACCESSIBILITY_COMMAND = "adb shell settings put secure enabled_accessibility_services com.app.switcher5g/.service.AccessibilitySwitchService"
-
-    fun isAccessibilityEnabled(context: Context): Boolean {
-        val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? android.view.accessibility.AccessibilityManager
-        return am?.isEnabled == true
-    }
-
     fun openPlayStore(context: Context) {
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$SHIZUKU_PACKAGE_NAME")).apply {
