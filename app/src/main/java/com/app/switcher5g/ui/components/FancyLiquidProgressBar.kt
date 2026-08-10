@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -65,7 +66,9 @@ fun FancyLiquidProgressBar(
                 lineTo(0f, waveAmplitude)
                 var x = 0f
                 while (x <= fillWidth) {
-                    val y = waveAmplitude + waveAmplitude * sin((x / waveLength) + phase)
+                    val angle = (x / waveLength) + phase
+                    val waveOffset = waveAmplitude * sin(angle.toDouble()).toFloat()
+                    val y = waveAmplitude + waveOffset
                     lineTo(x, y.coerceIn(0f, size.height))
                     x += 4f
                 }
