@@ -13,51 +13,62 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.dp
 import kotlin.math.sin
 
 /**
- * Horizontal progress indicator with a Primary->Tertiary gradient fill and a
- * continuously oscillating wave at the fill's leading edge.
- *
- * @param progress 0f..1f
+ * Modern fluid liquid progress bar with an oscillating sine wave leading edge
+ * and glowing gradient fill. Supports fixed progress (0f..1f) or dynamic loading.
  */
 @Composable
 fun FancyLiquidProgressBar(
     progress: Float,
     modifier: Modifier = Modifier,
+    isIndeterminate: Boolean = false,
 ) {
-    val infinite = rememberInfiniteTransition(label = "wave")
+    val infinite = rememberInfiniteTransition(label = "waveTransition")
     val phase by infinite.animateFloat(
         initialValue = 0f,
         targetValue = (2 * Math.PI).toFloat(),
         animationSpec = infiniteRepeatable(
-            animation = tween(1400, easing = LinearEasing),
+            animation = tween(1200, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "phase",
     )
 
+    val indeterminateOffset by infinite.animateFloat(
+        initialValue = 0.1f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1600, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "indeterminateOffset",
+    )
+
     val primary = MaterialTheme.colorScheme.primary
     val tertiary = MaterialTheme.colorScheme.tertiary
-    val track = MaterialTheme.colorScheme.surfaceVariant
+    val track = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
 
     Canvas(
         modifier = modifier
             .fillMaxWidth()
-            .height(18.dp),
+            .height(20.dp),
     ) {
-        val fillWidth = size.width * progress.coerceIn(0f, 1f)
-        val waveAmplitude = 4.dp.toPx()
-        val waveLength = 40.dp.toPx()
+        val effectiveProgress = if (isIndeterminate) indeterminateOffset else progress.coerceIn(0f, 1f)
+        val fillWidth = size.width * effectiveProgress
+        val waveAmplitude = 5.dp.toPx()
+        val waveLength = 45.dp.toPx()
 
-        // background track
+        // Background track pill
         drawRoundRect(
             color = track,
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2),
+            cornerRadius = CornerRadius(size.height / 2),
         )
 
         if (fillWidth > 0f) {
@@ -75,10 +86,11 @@ fun FancyLiquidProgressBar(
                 lineTo(fillWidth, size.height)
                 close()
             }
+
             drawPath(
                 path = path,
                 brush = Brush.horizontalGradient(
-                    colors = listOf(primary, tertiary),
+                    colors = listOf(primary, tertiary, primary),
                     startX = 0f,
                     endX = fillWidth.coerceAtLeast(1f),
                 ),

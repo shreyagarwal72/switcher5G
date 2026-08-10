@@ -11,5 +11,8 @@ interface IUserService {
     // subId of the default data SIM, or -1 if it couldn't be determined.
     int getDefaultDataSubId();
 
+    // Returns array of active subscription IDs detected on the device.
+    int[] getAvailableSubIds();
+
     void destroy();
 }

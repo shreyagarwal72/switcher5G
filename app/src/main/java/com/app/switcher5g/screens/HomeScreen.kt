@@ -1,61 +1,330 @@
 package com.app.switcher5g.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.network.NetworkModeManager
 import com.app.switcher5g.network.ShizukuHelper
 import com.app.switcher5g.network.SwitchResult
+import com.app.switcher5g.ui.components.BottomBarItem
+import com.app.switcher5g.ui.components.FancyCircularOrbLoader
 import com.app.switcher5g.ui.components.FancyLiquidProgressBar
+import com.app.switcher5g.ui.components.FancyPulseLoader
+import com.app.switcher5g.ui.components.FloatingDepthBottomBar
+import com.app.switcher5g.util.AppLogger
 import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun MainScreen(modifier: Modifier = Modifier) {
+    var selectedTab by remember { mutableIntStateOf(0) }
+
+    val navItems = remember {
+        listOf(
+            BottomBarItem(label = "Switcher", icon = Icons.Default.CellTower),
+            BottomBarItem(label = "Dev Logs", icon = Icons.Default.BugReport),
+        )
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.weight(1f)) {
+                if (selectedTab == 0) {
+                    HomeScreenContent()
+                } else {
+                    DevLogsScreen()
+                }
+            }
+            // Space for floating bottom bar
+            Spacer(modifier = Modifier.height(72.dp))
+        }
+
+        FloatingDepthBottomBar(
+            items = navItems,
+            selectedIndex = selectedTab,
+            onSelect = { selectedTab = it },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 8.dp),
+        )
+    }
+}
+
+@Composable
+fun HomeScreenContent() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val manager = remember { NetworkModeManager(context.applicationContext) }
 
     var selectedMode by remember { mutableStateOf(NetworkMode.NR_LTE) }
-    var statusText by remember { mutableStateOf("Idle") }
+    var availableSubIds by remember { mutableStateOf<List<Int>>(listOf(1)) }
+    var selectedSubId by remember { mutableStateOf<Int?>(null) }
+    var statusText by remember { mutableStateOf("Ready to switch network mode.") }
     var isSwitching by remember { mutableStateOf(false) }
+    var isScanningSims by remember { mutableStateOf(false) }
     var shizukuReady by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
+
+    LaunchedEffect(Unit) {
+        AppLogger.i("HomeScreen", "Initial SIM scan triggered")
+        if (ShizukuHelper.hasPermission()) {
+            isScanningSims = true
+            val ids = manager.getAvailableSubIds()
+            availableSubIds = ids
+            if (ids.isNotEmpty()) selectedSubId = ids[0]
+            isScanningSims = false
+        }
+    }
 
     DisposableEffect(Unit) {
         onDispose { manager.unbind() }
     }
 
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("5G Switcher", style = MaterialTheme.typography.headlineMedium)
-
-        if (!shizukuReady) {
-            ElevatedCard {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Shizuku permission required", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "Install/start Shizuku (ADB pairing or root), then grant permission here.",
-                        style = MaterialTheme.typography.bodySmall,
+        // Top Header Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(8.dp, RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surfaceContainerHigh,
+                                MaterialTheme.colorScheme.surfaceVariant,
+                            ),
+                        ),
                     )
-                    Button(onClick = {
-                        ShizukuHelper.requestPermission()
-                        shizukuReady = ShizukuHelper.hasPermission()
-                    }) { Text("Grant Shizuku permission") }
+                    .padding(20.dp),
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                Icons.Default.NetworkCheck,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp),
+                            )
+                            Text(
+                                text = "5G Switcher",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 22.sp,
+                                ),
+                            )
+                        }
+
+                        // Shizuku connection badge
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (shizukuReady) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = if (shizukuReady) Icons.Default.CheckCircle else Icons.Default.Warning,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
+                                )
+                                Text(
+                                    text = if (shizukuReady) "Shizuku Ready" else "No Permission",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = "Switch between 5G SA (NR), 5G NSA (NR/LTE), and 4G (LTE) instantly using privileged Shizuku shell IPC.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }
 
-        NetworkMode.entries.forEach { mode ->
+        // Shizuku Permission Card
+        if (!shizukuReady) {
             ElevatedCard(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f), RoundedCornerShape(20.dp)),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
+                ),
+                shape = RoundedCornerShape(20.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        FancyPulseLoader(size = 28.dp, color = MaterialTheme.colorScheme.error)
+                        Text(
+                            text = "Shizuku Permission Required",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                    Text(
+                        text = "Ensure Shizuku app is running (via Wireless Debugging ADB or Root), then authorize Switcher 5G.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Button(
+                        onClick = {
+                            AppLogger.i("HomeScreen", "Requesting Shizuku permission")
+                            ShizukuHelper.requestPermission()
+                            shizukuReady = ShizukuHelper.hasPermission()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    ) {
+                        Text("Grant Shizuku Permission")
+                    }
+                }
+            }
+        }
+
+        // Active SIM Card Selector Section
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Default.SimCard,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.tertiary,
+                        )
+                        Text(
+                            text = "Target SIM Subscription",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        )
+                    }
+
+                    if (isScanningSims) {
+                        FancyCircularOrbLoader(size = 24.dp)
+                    } else {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    isScanningSims = true
+                                    AppLogger.i("HomeScreen", "Scanning SIM subscriptions...")
+                                    val ids = manager.getAvailableSubIds()
+                                    availableSubIds = ids
+                                    if (ids.isNotEmpty() && selectedSubId == null) selectedSubId = ids[0]
+                                    isScanningSims = false
+                                }
+                            },
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Scan SIMs")
+                        }
+                    }
+                }
+
+                Text(
+                    text = "Selected Sub ID: ${selectedSubId ?: "Auto-Detect"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                // SIM Slot Choice Chips
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    InputChip(
+                        selected = selectedSubId == null,
+                        onClick = { selectedSubId = null },
+                        label = { Text("Auto-Detect Active SIM") },
+                    )
+                    availableSubIds.forEach { subId ->
+                        InputChip(
+                            selected = selectedSubId == subId,
+                            onClick = { selectedSubId = subId },
+                            label = { Text("SIM (Sub ID $subId)") },
+                        )
+                    }
+                }
+            }
+        }
+
+        // Network Mode Options
+        Text(
+            text = "Select Preferred Network Mode",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+
+        NetworkMode.entries.forEach { mode ->
+            val isSelected = selectedMode == mode
+            val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+
+            ElevatedCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(2.dp, borderColor, RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable { selectedMode = mode },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = if (isSelected) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surface,
+                ),
             ) {
                 Row(
                     modifier = Modifier
@@ -64,29 +333,79 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column {
-                        Text(mode.label(), style = MaterialTheme.typography.titleMedium)
-                        Text(mode.description(), style = MaterialTheme.typography.bodySmall)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = when (mode) {
+                                    NetworkMode.NR_ONLY -> Icons.Default.Speed
+                                    NetworkMode.NR_LTE -> Icons.Default.CellTower
+                                    NetworkMode.LTE_ONLY -> Icons.Default.SignalCellular4Bar
+                                },
+                                contentDescription = null,
+                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+
+                        Column {
+                            Text(
+                                text = mode.label(),
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            )
+                            Text(
+                                text = mode.description(),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
+
                     RadioButton(
-                        selected = selectedMode == mode,
+                        selected = isSelected,
                         onClick = { selectedMode = mode },
                     )
                 }
             }
         }
 
-        if (isSwitching) {
-            FancyLiquidProgressBar(progress = 0.6f, modifier = Modifier.fillMaxWidth())
+        // Animated Fancy Loader during mode switch
+        AnimatedVisibility(visible = isSwitching) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                FancyLiquidProgressBar(progress = 0f, isIndeterminate = true, modifier = Modifier.fillMaxWidth())
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    FancyCircularOrbLoader(size = 20.dp)
+                    Text("Applying ${selectedMode.name} via Shizuku shell IPC…", style = MaterialTheme.typography.bodySmall)
+                }
+            }
         }
 
+        // Apply Button
         Button(
             enabled = !isSwitching,
             onClick = {
                 isSwitching = true
-                statusText = "Switching…"
+                statusText = "Connecting to Shizuku IPC service…"
+                AppLogger.i("HomeScreen", "Apply clicked for mode: $selectedMode (subId=$selectedSubId)")
                 scope.launch {
-                    val result = manager.switchTo(selectedMode)
+                    val result = manager.switchTo(selectedMode, selectedSubId)
                     statusText = when (result) {
                         is SwitchResult.Success -> "✅ ${result.message}"
                         is SwitchResult.Failure -> "⚠️ ${result.reason}"
@@ -94,11 +413,49 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     isSwitching = false
                 }
             },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(16.dp),
         ) {
-            Text("Apply mode")
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (isSwitching) {
+                    FancyCircularOrbLoader(size = 20.dp)
+                } else {
+                    Icon(Icons.Default.Bolt, contentDescription = null)
+                }
+                Text(
+                    text = if (isSwitching) "Applying Network Mode…" else "Apply Network Mode",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                )
+            }
         }
 
-        Text(statusText, style = MaterialTheme.typography.bodyMedium)
+        // Status Card
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ) {
+            Row(
+                modifier = Modifier.padding(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = if (statusText.startsWith("✅")) Icons.Default.CheckCircle else Icons.Default.Info,
+                    contentDescription = null,
+                    tint = if (statusText.startsWith("✅")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary,
+                )
+                Text(
+                    text = statusText,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                )
+            }
+        }
     }
 }
 
@@ -109,7 +466,7 @@ private fun NetworkMode.label(): String = when (this) {
 }
 
 private fun NetworkMode.description(): String = when (this) {
-    NetworkMode.NR_ONLY -> "Pure 5G standalone. Falls back poorly where SA coverage is thin."
-    NetworkMode.NR_LTE -> "5G with LTE anchor — most compatible, closest to default."
-    NetworkMode.LTE_ONLY -> "Locks to 4G. Useful for battery testing or poor 5G areas."
+    NetworkMode.NR_ONLY -> "Pure 5G Standalone. Forces 5G NR band locking."
+    NetworkMode.NR_LTE -> "5G NSA with LTE anchor. Most compatible mode."
+    NetworkMode.LTE_ONLY -> "Locks to 4G LTE. Preserves battery life."
 }

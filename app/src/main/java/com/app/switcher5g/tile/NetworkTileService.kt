@@ -6,14 +6,13 @@ import android.service.quicksettings.TileService
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.network.NetworkModeManager
 import com.app.switcher5g.network.SwitchResult
+import com.app.switcher5g.util.AppLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
  * Cycles NR_ONLY -> NR_LTE -> LTE_ONLY -> NR_ONLY... on each tap.
- * Does the switch in-process (no activity launch, so no BAL restrictions apply)
- * by calling NetworkModeManager directly from the tile's own process.
  */
 class NetworkTileService : TileService() {
 
@@ -25,6 +24,7 @@ class NetworkTileService : TileService() {
         super.onCreate()
         prefs = getSharedPreferences("switcher5g_tile", MODE_PRIVATE)
         manager = NetworkModeManager(applicationContext)
+        AppLogger.i("NetworkTileService", "Tile service created")
     }
 
     override fun onStartListening() {
@@ -35,15 +35,16 @@ class NetworkTileService : TileService() {
     override fun onClick() {
         super.onClick()
         val next = nextMode(currentMode())
+        AppLogger.i("NetworkTileService", "Tile clicked; switching to $next")
         scope.launch {
             when (val result = manager.switchTo(next)) {
                 is SwitchResult.Success -> {
+                    AppLogger.i("NetworkTileService", "Tile switch success: ${result.message}")
                     prefs.edit().putString(KEY_MODE, next.name).apply()
                     renderTile(next)
                 }
                 is SwitchResult.Failure -> {
-                    // Tile has no room for error text; state reflects failure so the
-                    // user knows to open the app for details.
+                    AppLogger.e("NetworkTileService", "Tile switch failed: ${result.reason}")
                     qsTile?.state = Tile.STATE_UNAVAILABLE
                     qsTile?.subtitle = result.reason.take(40)
                     qsTile?.updateTile()

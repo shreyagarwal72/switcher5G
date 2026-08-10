@@ -2,65 +2,61 @@ package com.app.switcher5g.network
 
 import android.telephony.TelephonyManager
 import com.app.switcher5g.IUserService
+import com.app.switcher5g.util.AppLogger
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 
 /**
- * Hosted by Shizuku in a separate `shell`-UID process (NOT our normal app
- * process). Because Shizuku launches this via `app_process` rather than
- * through Zygote/the framework, ART's hidden-API enforcement does not apply
- * here the way it would in a normal app process — that's what makes calling
- * TelephonyManager's SystemApi methods via reflection viable without root.
- *
- * ⚠️ THIS IS THE LEAST PORTABLE PART OF THE APP. Method names/signatures here
- * are the AOSP telephony API surface, which OEMs (OneUI, HyperOS, ColorOS,
- * MIUI) have been known to alter or gate behind extra permission checks.
- * Verify on real hardware per-OEM before shipping — do not assume this
- * behaves identically across skins from a single test device.
+ * Hosted by Shizuku in a separate `shell`-UID process.
  */
 class NetworkModeUserService : IUserService.Stub() {
 
     init {
-        // Best-effort: reflectively unlocks non-SDK interfaces on API 28+.
-        // No-op (and harmless) in the shell-UID process where this usually
-        // isn't even required, but kept as a defensive fallback for OEMs
-        // that partially enforce the restriction outside Zygote too.
         try {
             HiddenApiBypass.addHiddenApiExemptions("L")
-        } catch (_: Throwable) {
-            // non-fatal — fall through and let the reflective call itself fail loudly if needed
+            AppLogger.i("UserService", "HiddenApiBypass initialized successfully")
+        } catch (t: Throwable) {
+            AppLogger.w("UserService", "HiddenApiBypass exemption failed", t)
         }
     }
 
-    // Reason constant from TelephonyManager (@SystemApi, hidden):
-    // ALLOWED_NETWORK_TYPES_REASON_USER = 0
     private val reasonUser = 0
 
-    // NETWORK_TYPE_* are public constants; the *_BITMASK_* hidden equivalents are
-    // just `1L shl (networkType - 1)`, so we compute them instead of reflecting.
     private fun bitmaskFor(networkType: Int): Long = 1L shl (networkType - 1)
 
     private val bitmaskNr = bitmaskFor(TelephonyManager.NETWORK_TYPE_NR)     // 20
     private val bitmaskLte = bitmaskFor(TelephonyManager.NETWORK_TYPE_LTE)   // 13
 
     override fun setNetworkMode(subId: Int, mode: String): String {
+        AppLogger.i("UserService", "setNetworkMode requested: subId=$subId, mode=$mode")
+        
+        // If subId is invalid, resolve active subId dynamically
+        val targetSubId = if (subId <= 0 || subId == 2147483647) {
+            val resolved = getDefaultDataSubId()
+            AppLogger.i("UserService", "Invalid subId $subId passed; auto-resolved to $resolved")
+            resolved
+        } else {
+            subId
+        }
+
         return try {
             val allowedMask: Long = when (mode) {
                 "NR_ONLY" -> bitmaskNr
                 "NR_LTE" -> bitmaskNr or bitmaskLte
                 "LTE_ONLY" -> bitmaskLte
-                else -> return "ERROR: unknown mode '$mode'"
+                else -> {
+                    val err = "ERROR: unknown mode '$mode'"
+                    AppLogger.e("UserService", err)
+                    return err
+                }
             }
 
             val tmClass = TelephonyManager::class.java
             val createForSubscription = tmClass.getMethod("createForSubscriptionId", Int::class.javaPrimitiveType)
-            // NOTE: getSystemContext() is not real API — see README for how MainActivity
-            // supplies a Context into this service via IUserService if createForSubscriptionId
-            // needs an instance rather than a static call on some OS versions.
             val baseTm = android.telephony.TelephonyManager::class.java
                 .getMethod("getDefault")
                 .invoke(null) as TelephonyManager
 
-            val tm = createForSubscription.invoke(baseTm, subId) as TelephonyManager
+            val tm = createForSubscription.invoke(baseTm, targetSubId) as TelephonyManager
 
             val method = tmClass.getMethod(
                 "setAllowedNetworkTypesForReason",
@@ -68,23 +64,118 @@ class NetworkModeUserService : IUserService.Stub() {
                 Long::class.javaPrimitiveType,
             )
             method.invoke(tm, reasonUser, allowedMask)
-            "OK: mode set to $mode (mask=$allowedMask) on subId=$subId"
+
+            val successMsg = "OK: mode set to $mode (mask=$allowedMask) on subId=$targetSubId"
+            AppLogger.i("UserService", successMsg)
+            successMsg
         } catch (t: Throwable) {
-            "ERROR: ${t.javaClass.simpleName}: ${t.message}"
+            val errorMsg = "ERROR: ${t.javaClass.simpleName}: ${t.message}"
+            AppLogger.e("UserService", errorMsg, t)
+            errorMsg
         }
     }
 
     override fun getDefaultDataSubId(): Int {
-        return try {
-            val cls = Class.forName("android.telephony.SubscriptionManager")
-            val method = cls.getMethod("getDefaultDataSubscriptionId")
-            method.invoke(null) as Int
-        } catch (_: Throwable) {
-            -1
+        val activeIds = getAvailableSubIds()
+        if (activeIds.isNotEmpty()) {
+            AppLogger.i("UserService", "getDefaultDataSubId returning first active subId: ${activeIds[0]}")
+            return activeIds[0]
         }
+
+        // Multi-tier fallback resolution
+        val strategies = listOf(
+            "getDefaultDataSubscriptionId",
+            "getDefaultSubscriptionId",
+            "getDefaultSmsSubscriptionId"
+        )
+
+        for (strategy in strategies) {
+            try {
+                val cls = Class.forName("android.telephony.SubscriptionManager")
+                val method = cls.getMethod(strategy)
+                val res = method.invoke(null) as? Int ?: -1
+                if (res > 0 && res != 2147483647) {
+                    AppLogger.i("UserService", "Resolved subId via $strategy: $res")
+                    return res
+                }
+            } catch (t: Throwable) {
+                AppLogger.d("UserService", "$strategy check failed: ${t.message}")
+            }
+        }
+
+        AppLogger.w("UserService", "Defaulting to fallback subId 1")
+        return 1
+    }
+
+    override fun getAvailableSubIds(): IntArray {
+        val subIds = mutableListOf<Int>()
+        try {
+            val cls = Class.forName("android.telephony.SubscriptionManager")
+            
+            // Method 1: getActiveSubscriptionInfoList
+            try {
+                val getActiveList = cls.methods.firstOrNull { it.name == "getActiveSubscriptionInfoList" && it.parameterCount == 0 }
+                if (getActiveList != null) {
+                    val list = getActiveList.invoke(null) as? List<*>
+                    if (!list.isNullOrEmpty()) {
+                        for (info in list) {
+                            if (info != null) {
+                                val getSubId = info.javaClass.getMethod("getSubscriptionId")
+                                val id = getSubId.invoke(info) as? Int ?: -1
+                                if (id > 0 && id != 2147483647 && !subIds.contains(id)) {
+                                    subIds.add(id)
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (t: Throwable) {
+                AppLogger.d("UserService", "getActiveSubscriptionInfoList failed: ${t.message}")
+            }
+
+            // Method 2: getSubId for slots 0 and 1
+            if (subIds.isEmpty()) {
+                for (slot in 0..1) {
+                    try {
+                        val getSubId = cls.getMethod("getSubId", Int::class.javaPrimitiveType)
+                        val res = getSubId.invoke(null, slot)
+                        if (res is IntArray && res.isNotEmpty()) {
+                            for (id in res) {
+                                if (id > 0 && id != 2147483647 && !subIds.contains(id)) {
+                                    subIds.add(id)
+                                }
+                            }
+                        }
+                    } catch (_: Throwable) {}
+                }
+            }
+        } catch (t: Throwable) {
+            AppLogger.e("UserService", "Failed to retrieve available subscription IDs", t)
+        }
+
+        if (subIds.isEmpty()) {
+            // Check default data sub ID as last resort
+            try {
+                val cls = Class.forName("android.telephony.SubscriptionManager")
+                val method = cls.getMethod("getDefaultDataSubscriptionId")
+                val id = method.invoke(null) as? Int ?: -1
+                if (id > 0 && id != 2147483647) {
+                    subIds.add(id)
+                }
+            } catch (_: Throwable) {}
+        }
+
+        // Fallback to SIM 1 default if empty
+        if (subIds.isEmpty()) {
+            subIds.add(1)
+        }
+
+        AppLogger.i("UserService", "Available Sub IDs resolved: $subIds")
+        return subIds.toIntArray()
     }
 
     override fun destroy() {
+        AppLogger.i("UserService", "UserService destroying process")
         android.os.Process.killProcess(android.os.Process.myPid())
     }
 }
