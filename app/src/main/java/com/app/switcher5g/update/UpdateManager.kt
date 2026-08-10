@@ -288,9 +288,13 @@ object UpdateManager {
     }
 
     private fun isVersionNewer(latest: String, current: String): Boolean {
-        if (latest.isBlank()) return false
-        val latestParts = latest.split(".").mapNotNull { it.toIntOrNull() }
-        val currentParts = current.split(".").mapNotNull { it.toIntOrNull() }
+        val cleanLatest = latest.removePrefix("v").trim()
+        val cleanCurrent = current.removePrefix("v").trim()
+        if (cleanLatest.isBlank() || cleanLatest.equals(cleanCurrent, ignoreCase = true)) {
+            return false
+        }
+        val latestParts = cleanLatest.split(".").mapNotNull { it.toIntOrNull() }
+        val currentParts = cleanCurrent.split(".").mapNotNull { it.toIntOrNull() }
 
         val length = maxOf(latestParts.size, currentParts.size)
         for (i in 0 until length) {
