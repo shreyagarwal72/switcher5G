@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val appPrefs = remember { AppPreferences(applicationContext) }
-            Switcher5GTheme(useDynamicColor = appPrefs.useDynamicTheme) {
+            Switcher5GTheme(prefs = appPrefs) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     MainScreen(prefs = appPrefs)
                 }

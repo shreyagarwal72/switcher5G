@@ -2,13 +2,12 @@ package com.app.switcher5g.util
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.app.switcher5g.network.NetworkMode
+import com.app.switcher5g.ui.theme.ColorStyle
+
+enum class AppThemeMode { SYSTEM, DARK, LIGHT }
 
 /**
-import android.content.Context
  * SharedPreferences wrapper for persisting user settings across app sessions.
  */
 class AppPreferences(context: Context) {
@@ -23,6 +22,34 @@ class AppPreferences(context: Context) {
         }
         set(value) {
             prefs.edit().putString(KEY_DEFAULT_MODE, value.name).apply()
+        }
+
+    var themeMode: AppThemeMode
+        get() {
+            val name = prefs.getString(KEY_THEME_MODE, AppThemeMode.SYSTEM.name)
+            return runCatching { AppThemeMode.valueOf(name ?: AppThemeMode.SYSTEM.name) }
+                .getOrDefault(AppThemeMode.SYSTEM)
+        }
+        set(value) {
+            prefs.edit().putString(KEY_THEME_MODE, value.name).apply()
+        }
+
+    var amoled: Boolean
+        get() = prefs.getBoolean(KEY_AMOLED, false)
+        set(value) = prefs.edit().putBoolean(KEY_AMOLED, value).apply()
+
+    var paletteId: String
+        get() = prefs.getString(KEY_PALETTE_ID, "tide") ?: "tide"
+        set(value) = prefs.edit().putString(KEY_PALETTE_ID, value).apply()
+
+    var colorStyle: ColorStyle
+        get() {
+            val name = prefs.getString(KEY_COLOR_STYLE, ColorStyle.TONAL_SPOT.name)
+            return runCatching { ColorStyle.valueOf(name ?: ColorStyle.TONAL_SPOT.name) }
+                .getOrDefault(ColorStyle.TONAL_SPOT)
+        }
+        set(value) {
+            prefs.edit().putString(KEY_COLOR_STYLE, value.name).apply()
         }
 
     var autoScanSims: Boolean
@@ -47,6 +74,10 @@ class AppPreferences(context: Context) {
 
     companion object {
         private const val KEY_DEFAULT_MODE = "default_network_mode"
+        private const val KEY_THEME_MODE = "theme_mode"
+        private const val KEY_AMOLED = "amoled"
+        private const val KEY_PALETTE_ID = "palette_id"
+        private const val KEY_COLOR_STYLE = "color_style"
         private const val KEY_AUTO_SCAN_SIMS = "auto_scan_sims"
         private const val KEY_USE_WHEEL_PICKER = "use_wheel_picker"
         private const val KEY_AUTO_CHECK_UPDATES = "auto_check_updates"

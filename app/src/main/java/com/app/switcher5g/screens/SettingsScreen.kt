@@ -26,12 +26,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.switcher5g.network.NetworkMode
-import com.app.switcher5g.ui.components.ShizukuActivationCard
+import com.app.switcher5g.ui.components.ShizukuSetupDialog
 import com.app.switcher5g.ui.components.bouncyClickable
 import com.app.switcher5g.ui.components.entrance
+import com.app.switcher5g.ui.theme.AppPalettes
+import com.app.switcher5g.ui.theme.ColorStyle
 import com.app.switcher5g.util.AppPreferences
+import com.app.switcher5g.util.AppThemeMode
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     prefs: AppPreferences,
@@ -39,11 +42,20 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     var defaultMode by remember { mutableStateOf(prefs.defaultNetworkMode) }
+    var themeMode by remember { mutableStateOf(prefs.themeMode) }
+    var amoled by remember { mutableStateOf(prefs.amoled) }
+    var paletteId by remember { mutableStateOf(prefs.paletteId) }
+    var colorStyle by remember { mutableStateOf(prefs.colorStyle) }
     var autoScanSims by remember { mutableStateOf(prefs.autoScanSims) }
     var useWheelPicker by remember { mutableStateOf(prefs.useWheelPicker) }
     var autoCheckUpdates by remember { mutableStateOf(prefs.autoCheckUpdates) }
     var useDynamicTheme by remember { mutableStateOf(prefs.useDynamicTheme) }
     var enableAnimations by remember { mutableStateOf(prefs.enableAnimations) }
+    var showSetupDialog by remember { mutableStateOf(false) }
+
+    if (showSetupDialog) {
+        ShizukuSetupDialog(onDismissRequest = { showSetupDialog = false })
+    }
 
     Column(
         modifier = modifier
@@ -53,12 +65,13 @@ fun SettingsScreen(
             .padding(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Stride-style Header
+        // Clean Professional Top Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(0)
-                .padding(top = 4.dp),
+                .statusBarsPadding()
+                .padding(top = 4.dp)
+                .entrance(0),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -68,31 +81,134 @@ fun SettingsScreen(
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp),
             )
-            Column {
-                Text(
-                    text = "Preferences & Options",
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-                Text(
-                    text = "Configure app defaults, UI controls, and automation triggers",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text = "Settings",
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
+            )
         }
 
-        // 1. Preferred Network Mode Defaults Card
+        // 1. Theme & Appearance (Stride Theme Engine: AMOLED, Palettes, Styles)
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .entrance(1)
-                .border(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                    RoundedCornerShape(24.dp),
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        Icons.Rounded.Palette,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.tertiary,
+                    )
+                    Text(
+                        text = "Theme & Appearance",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    )
+                }
+
+                // Theme Mode Selector (System / Dark / Light)
+                Text(text = "Theme Mode", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    AppThemeMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = themeMode == mode,
+                            onClick = {
+                                themeMode = mode
+                                prefs.themeMode = mode
+                            },
+                            label = { Text(mode.name) },
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+
+                // Pure AMOLED Black Mode
+                SettingToggleRow(
+                    title = "Pure AMOLED Black",
+                    subtitle = "Use pure #000000 background for AMOLED display power saving",
+                    icon = Icons.Rounded.Contrast,
+                    checked = amoled,
+                    onCheckedChange = {
+                        amoled = it
+                        prefs.amoled = it
+                    },
                 )
-                .shadow(4.dp, RoundedCornerShape(24.dp)),
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+
+                // Palette Selection (Tide, Zen, Ember, Forest)
+                Text(text = "Color Palette", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    AppPalettes.forEach { palette ->
+                        FilterChip(
+                            selected = paletteId == palette.id,
+                            onClick = {
+                                paletteId = palette.id
+                                prefs.paletteId = palette.id
+                            },
+                            label = { Text(palette.label) },
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+
+                // Color Style Selection
+                Text(text = "Color Style", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    ColorStyle.entries.forEach { style ->
+                        FilterChip(
+                            selected = colorStyle == style,
+                            onClick = {
+                                colorStyle = style
+                                prefs.colorStyle = style
+                            },
+                            label = { Text(style.name.replace("_", " "), style = MaterialTheme.typography.labelSmall) },
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+
+                SettingToggleRow(
+                    title = "Material You Dynamic Colors",
+                    subtitle = "Adapt accent colors from system wallpaper (Android 12+)",
+                    icon = Icons.Rounded.ColorLens,
+                    checked = useDynamicTheme,
+                    onCheckedChange = {
+                        useDynamicTheme = it
+                        prefs.useDynamicTheme = it
+                    },
+                )
+            }
+        }
+
+        // 2. Network Defaults
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .entrance(2)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(
@@ -115,7 +231,7 @@ fun SettingsScreen(
                 }
 
                 Text(
-                    text = "Set default network mode preselected on launch:",
+                    text = "Default network mode preselected on launch:",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -125,13 +241,11 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     NetworkMode.entries.forEach { mode ->
-                        val selected = defaultMode == mode
                         FilterChip(
-                            selected = selected,
+                            selected = defaultMode == mode,
                             onClick = {
                                 defaultMode = mode
                                 prefs.defaultNetworkMode = mode
-                                Toast.makeText(context, "Default mode set to ${mode.name}", Toast.LENGTH_SHORT).show()
                             },
                             label = {
                                 Text(
@@ -143,20 +257,15 @@ fun SettingsScreen(
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                                 )
                             },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            ),
                         )
                     }
                 }
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
-                // Toggle Auto-scan SIMs
                 SettingToggleRow(
                     title = "Auto-scan SIMs on Launch",
-                    subtitle = "Automatically detect active Dual-SIM subscriptions when app opens",
+                    subtitle = "Automatically detect active Dual-SIM subscriptions on open",
                     icon = Icons.Rounded.SimCard,
                     checked = autoScanSims,
                     onCheckedChange = {
@@ -167,104 +276,12 @@ fun SettingsScreen(
             }
         }
 
-        // 2. UI & Appearance Settings
+        // 3. Shizuku & ADB Setup Card
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(2)
-                .border(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                    RoundedCornerShape(24.dp),
-                ),
-            shape = RoundedCornerShape(24.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon(
-                        Icons.Rounded.Palette,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.tertiary,
-                    )
-                    Text(
-                        text = "Appearance & Interface",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    )
-                }
-
-                SettingToggleRow(
-                    title = "Material You Dynamic Colors",
-                    subtitle = "Adapt theme and app icon dynamically to device system wallpaper",
-                    icon = Icons.Rounded.ColorLens,
-                    checked = useDynamicTheme,
-                    onCheckedChange = {
-                        useDynamicTheme = it
-                        prefs.useDynamicTheme = it
-                    },
-                )
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-
-                SettingToggleRow(
-                    title = "Wheel Scroller Picker UI",
-                    subtitle = "Use 3D wheel scroller instead of slide bar for mode selection",
-                    icon = Icons.Rounded.UnfoldMore,
-                    checked = useWheelPicker,
-                    onCheckedChange = {
-                        useWheelPicker = it
-                        prefs.useWheelPicker = it
-                    },
-                )
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-
-                SettingToggleRow(
-                    title = "Auto-Check for Updates",
-                    subtitle = "Automatically check GitHub releases for app updates on startup",
-                    icon = Icons.Rounded.SystemUpdate,
-                    checked = autoCheckUpdates,
-                    onCheckedChange = {
-                        autoCheckUpdates = it
-                        prefs.autoCheckUpdates = it
-                    },
-                )
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
-
-                SettingToggleRow(
-                    title = "Micro-Animations",
-                    subtitle = "Enable bouncy spring interactions and entrance motion transitions",
-                    icon = Icons.Rounded.Animation,
-                    checked = enableAnimations,
-                    onCheckedChange = {
-                        enableAnimations = it
-                        prefs.enableAnimations = it
-                    },
-                )
-            }
-        }
-
-        // 3. Interactive Shizuku Activation & ADB Command Card
-        ShizukuActivationCard(
-            modifier = Modifier.entrance(3),
-        )
-
-        // 4. Automation & CLI Triggers Card
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(4)
-                .border(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                    RoundedCornerShape(24.dp),
-                ),
+                .entrance(3)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(
@@ -276,34 +293,72 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Icon(
-                        Icons.Rounded.Terminal,
+                        Icons.Rounded.Security,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.secondary,
                     )
                     Text(
-                        text = "Automation & ADB Command Triggers",
+                        text = "Shizuku & ADB Service",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
 
                 Text(
-                    text = "Trigger network mode switching programmatically via Termux, Tasker, Automate, or ADB commands:",
+                    text = "Configure Shizuku service, permission authorizations, and copy ADB start commands.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                // Deep Link Command
+                OutlinedButton(
+                    onClick = { showSetupDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .bouncyClickable {},
+                ) {
+                    Icon(Icons.Rounded.Terminal, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Open Shizuku & ADB Setup Dialog")
+                }
+            }
+        }
+
+        // 4. Automation Commands
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .entrance(4)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        Icons.Rounded.Code,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = "Automation Commands",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    )
+                }
+
                 val deepLinkCmd = "adb shell am start -a android.intent.action.VIEW -d \"switcher5g://switch?mode=NR_ONLY\""
                 CommandSnippetBox(
-                    label = "Deep Link Intent (ADB / Tasker)",
+                    label = "Deep Link Intent (Tasker / ADB)",
                     command = deepLinkCmd,
                     context = context,
                 )
 
-                // Broadcast Receiver Command
                 val broadcastCmd = "adb shell am broadcast -a com.app.switcher5g.SET_NETWORK_MODE --es mode NR_ONLY"
                 CommandSnippetBox(
-                    label = "Privileged Broadcast Intent",
+                    label = "Broadcast Intent",
                     command = broadcastCmd,
                     context = context,
                 )

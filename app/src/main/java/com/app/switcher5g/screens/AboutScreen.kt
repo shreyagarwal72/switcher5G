@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Build
 import android.telephony.TelephonyManager
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -19,10 +18,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -63,12 +60,13 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             .padding(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Stride-style Header
+        // Clean Professional Top Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(0)
-                .padding(top = 4.dp),
+                .statusBarsPadding()
+                .padding(top = 4.dp)
+                .entrance(0),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -78,18 +76,11 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp),
             )
-            Column {
-                Text(
-                    text = "About Switcher 5G",
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-                Text(
-                    text = "Version $appVersion • Material 3 Expressive",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text = "About",
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
+            )
         }
 
         // App Header Banner
@@ -123,7 +114,6 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    // App Logo Ring
                     Surface(
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.primaryContainer,
@@ -148,14 +138,14 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                             ),
                         )
                         Text(
-                            text = "Version $appVersion • Material 3 Expressive",
+                            text = "Version $appVersion",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                         )
                     }
 
                     Text(
-                        text = "Instant 5G Standalone (SA), 5G Non-Standalone (NSA), and 4G LTE network mode switcher powered by privileged Shizuku IPC.",
+                        text = "5G Standalone (SA), 5G Non-Standalone (NSA), and 4G LTE network mode switcher for Android.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -164,7 +154,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        // GitHub Auto Update Checker Card
+        // Updates Card
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
@@ -195,7 +185,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                             tint = MaterialTheme.colorScheme.primary,
                         )
                         Text(
-                            text = "App Update Checker",
+                            text = "Updates",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         )
                     }
@@ -222,7 +212,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                 if (isCheckingUpdate) {
                     FancyLinearLoadingBar(
                         progress = null,
-                        label = "Querying GitHub Releases API…",
+                        label = "Checking for updates…",
                     )
                 }
 
@@ -237,7 +227,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Text(
-                                text = if (info.hasUpdate) "🚀 Update Available: v${info.latestVersion}" else "✅ Switcher 5G is up to date (v${info.latestVersion})",
+                                text = if (info.hasUpdate) "Update Available: v${info.latestVersion}" else "App is up to date (v${info.latestVersion})",
                                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                                 color = if (info.hasUpdate) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                             )
@@ -255,7 +245,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                                     FancyLinearLoadingBar(
                                         progress = downloadProgress,
                                         showPercentage = true,
-                                        label = "Downloading Update APK…",
+                                        label = "Downloading update…",
                                     )
                                 } else {
                                     Button(
@@ -285,7 +275,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = if (info.hasUpdate) "Download & Install Update (v${info.latestVersion})" else "Re-download Latest Release APK",
+                                            text = if (info.hasUpdate) "Download Update (v${info.latestVersion})" else "Download Release APK",
                                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                                         )
                                     }
@@ -297,7 +287,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        // Device & Network System Diagnostics Card
+        // System Info Card
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
@@ -323,20 +313,19 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                         tint = MaterialTheme.colorScheme.tertiary,
                     )
                     Text(
-                        text = "System & Hardware Diagnostics",
+                        text = "System Info",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
 
-                InfoRow(label = "Device Hardware", value = deviceModel)
-                InfoRow(label = "Android OS", value = androidVersion)
-                InfoRow(label = "Carrier Radio", value = networkOperatorName)
-                InfoRow(label = "Shizuku Shell Privileges", value = if (ShizukuHelper.hasPermission()) "Active & Authorized" else "Disconnected")
-                InfoRow(label = "Material You Dynamic Theme", value = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) "Supported (Android 12+)" else "Fallback Dark Theme")
+                InfoRow(label = "Device", value = deviceModel)
+                InfoRow(label = "Android", value = androidVersion)
+                InfoRow(label = "Carrier", value = networkOperatorName)
+                InfoRow(label = "Shizuku Status", value = if (ShizukuHelper.hasPermission()) "Active & Authorized" else "Disconnected")
             }
         }
 
-        // Developer Page & Project Links Card
+        // Open Source Card
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
@@ -362,18 +351,11 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                         tint = MaterialTheme.colorScheme.primary,
                     )
                     Text(
-                        text = "Developer Page & Open Source",
+                        text = "Open Source & Links",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
 
-                Text(
-                    text = "Switcher 5G is an open-source utility designed to unlock hidden cellular radio band configurations without requiring full device root.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                // Links
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -389,7 +371,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     ) {
                         Icon(Icons.Rounded.Code, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("GitHub Repo", style = MaterialTheme.typography.labelMedium)
+                        Text("GitHub", style = MaterialTheme.typography.labelMedium)
                     }
 
                     OutlinedButton(
@@ -403,7 +385,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     ) {
                         Icon(Icons.Rounded.Security, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Shizuku Project", style = MaterialTheme.typography.labelMedium)
+                        Text("Shizuku", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }

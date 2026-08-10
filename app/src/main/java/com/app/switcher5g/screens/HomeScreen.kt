@@ -34,11 +34,7 @@ import com.app.switcher5g.network.ShizukuHelper
 import com.app.switcher5g.network.SwitchResult
 import com.app.switcher5g.ui.components.*
 import com.app.switcher5g.util.AppPreferences
-import com.app.switcher5g.util.MarkdownUtils
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @Composable
 fun MainScreen(
@@ -113,14 +109,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
     var isScanningSims by remember { mutableStateOf(false) }
     var shizukuReady by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
     var useWheelPicker by remember { mutableStateOf(prefs.useWheelPicker) }
-
-    val formattedDate = remember {
-        try {
-            LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMM", Locale.getDefault()))
-        } catch (_: Throwable) {
-            "5G Network Controller"
-        }
-    }
+    var showSetupDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (prefs.autoScanSims && ShizukuHelper.hasPermission()) {
@@ -134,6 +123,14 @@ fun HomeScreenContent(prefs: AppPreferences) {
 
     DisposableEffect(Unit) {
         onDispose { manager.unbind() }
+    }
+
+    // Modal Shizuku & ADB Setup Dialog
+    if (showSetupDialog) {
+        ShizukuSetupDialog(
+            onDismissRequest = { showSetupDialog = false },
+            onStatusUpdated = { shizukuReady = it },
+        )
     }
 
     // Modal Expressive loading overlay during network mode switch via Shizuku
@@ -159,33 +156,29 @@ fun HomeScreenContent(prefs: AppPreferences) {
             )
         }
 
-        // Stride-style App Header
+        // Clean Professional Top Header (No day/date text, aligned to status bar)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(0)
-                .padding(top = 4.dp),
+                .statusBarsPadding()
+                .padding(top = 4.dp)
+                .entrance(0),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
-                Text(
-                    text = formattedDate,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = "Switcher 5G",
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-            }
+            Text(
+                text = "Switcher 5G",
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground,
+            )
 
-            // Shizuku Connection Status Pill (matching Stride streak badge style)
+            // Shizuku Status Pill Badge (Tap opens Shizuku & ADB Setup Dialog)
             Surface(
                 shape = CircleShape,
                 color = if (shizukuReady) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
-                modifier = Modifier.shadow(4.dp, CircleShape),
+                modifier = Modifier
+                    .bouncyClickable(scaleDown = 0.92f) { showSetupDialog = true }
+                    .shadow(4.dp, CircleShape),
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
@@ -199,7 +192,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
                         tint = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
                     )
                     Text(
-                        text = if (shizukuReady) "Shizuku Ready" else "Disconnected",
+                        text = if (shizukuReady) "Shizuku Ready" else "Setup Shizuku",
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
                     )
@@ -207,78 +200,11 @@ fun HomeScreenContent(prefs: AppPreferences) {
             }
         }
 
-        // Stride Hero Card Banner
+        // Target SIM Subscription Card
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .entrance(1)
-                .border(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                    RoundedCornerShape(28.dp),
-                )
-                .shadow(6.dp, RoundedCornerShape(28.dp)),
-            shape = RoundedCornerShape(28.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.surfaceContainerHigh,
-                                MaterialTheme.colorScheme.surfaceVariant,
-                            ),
-                        ),
-                    )
-                    .padding(20.dp),
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                Icons.Rounded.CellTower,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(28.dp),
-                            )
-                            Text(
-                                text = "Privileged Band Control",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                ),
-                            )
-                        }
-                    }
-
-                    Text(
-                        text = MarkdownUtils.parseMarkdown("Switch between **5G SA (NR)**, **5G NSA (NR/LTE)**, and **4G (LTE)** instantly using privileged Shizuku shell IPC."),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-
-        // Interactive Shizuku Activation & ADB Command Card
-        ShizukuActivationCard(
-            modifier = Modifier.entrance(2),
-            onStatusChanged = { shizukuReady = it },
-        )
-
-        // Active SIM Card Selector Section
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(3)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -301,7 +227,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
                             tint = MaterialTheme.colorScheme.tertiary,
                         )
                         Text(
-                            text = "Target SIM Subscription",
+                            text = "SIM Subscription",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         )
                     }
@@ -326,12 +252,12 @@ fun HomeScreenContent(prefs: AppPreferences) {
                 }
 
                 Text(
-                    text = "Selected Sub ID: ${selectedSubId ?: "Auto-Detect"}",
+                    text = "Active Subscription ID: ${selectedSubId ?: "Auto-Detect"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                // SIM Slot Choice Chips with Mobile Wrapping Row
+                // SIM Slot Choice Chips
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -340,13 +266,13 @@ fun HomeScreenContent(prefs: AppPreferences) {
                     InputChip(
                         selected = selectedSubId == null,
                         onClick = { selectedSubId = null },
-                        label = { Text("Auto-Detect Active SIM") },
+                        label = { Text("Auto-Detect SIM") },
                     )
                     availableSubIds.forEach { subId ->
                         InputChip(
                             selected = selectedSubId == subId,
                             onClick = { selectedSubId = subId },
-                            label = { Text("SIM (Sub ID $subId)") },
+                            label = { Text("SIM (Sub $subId)") },
                         )
                     }
                 }
@@ -357,7 +283,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(4)
+                .entrance(2)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -374,7 +300,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Preferred Network Mode",
+                        text = "Network Mode",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface,
                     )
@@ -419,7 +345,6 @@ fun HomeScreenContent(prefs: AppPreferences) {
                     )
                 }
 
-                // Description for current mode
                 Text(
                     text = selectedMode.description(),
                     style = MaterialTheme.typography.bodyMedium,
@@ -430,10 +355,14 @@ fun HomeScreenContent(prefs: AppPreferences) {
             }
         }
 
-        // Apply Button with bouncyClickable spring animation
+        // Apply Button
         Button(
             enabled = !isSwitching,
             onClick = {
+                if (!shizukuReady) {
+                    showSetupDialog = true
+                    return@Button
+                }
                 isSwitching = true
                 statusText = "Connecting to Shizuku IPC service…"
                 scope.launch {
@@ -448,6 +377,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp)
+                .entrance(3)
                 .bouncyClickable(scaleDown = 0.94f) {},
             shape = RoundedCornerShape(16.dp),
         ) {
@@ -471,7 +401,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(5),
+                .entrance(4),
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
@@ -501,7 +431,7 @@ private fun NetworkMode.label(): String = when (this) {
 }
 
 private fun NetworkMode.description(): String = when (this) {
-    NetworkMode.NR_ONLY -> "Pure 5G Standalone. Forces 5G NR band locking."
-    NetworkMode.NR_LTE -> "5G NSA with LTE anchor. Most compatible mode."
-    NetworkMode.LTE_ONLY -> "Locks to 4G LTE. Preserves battery life."
+    NetworkMode.NR_ONLY -> "Forces pure 5G Standalone mode."
+    NetworkMode.NR_LTE -> "5G NSA with LTE anchor band."
+    NetworkMode.LTE_ONLY -> "Locks to 4G LTE mode."
 }
