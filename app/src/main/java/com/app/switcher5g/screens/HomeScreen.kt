@@ -176,13 +176,14 @@ fun HomeScreenContent(prefs: AppPreferences) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp)
             .padding(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (isSwitching || isScanningSims) {
-            FancyLinearLoadingBar(
+            LinearRipplingWavyProgressIndicator(
                 progress = null,
                 label = if (isSwitching) "Executing network mode switch…" else "Scanning active SIM cards…",
                 modifier = Modifier.entrance(0),
@@ -193,8 +194,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(top = 4.dp)
+                .padding(top = 2.dp)
                 .entrance(0),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
