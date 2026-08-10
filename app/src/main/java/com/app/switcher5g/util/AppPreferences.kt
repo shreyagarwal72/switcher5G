@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.ui.theme.ColorStyle
 
+enum class ActivationMethod { SHIZUKU, DIRECT_ADB }
 enum class AppThemeMode { SYSTEM, DARK, LIGHT }
 enum class AppFont { SYSTEM, NUNITO, INTER, OUTFIT, LEXEND, MANROPE, GROTESK }
 
@@ -18,6 +19,13 @@ enum class AppFont { SYSTEM, NUNITO, INTER, OUTFIT, LEXEND, MANROPE, GROTESK }
 class AppPreferences(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("switcher5g_settings", Context.MODE_PRIVATE)
+
+    var activationMethod: ActivationMethod
+        get() = activationMethodState
+        set(value) {
+            activationMethodState = value
+            prefs.edit().putString(KEY_ACTIVATION_METHOD, value.name).apply()
+        }
 
     var defaultNetworkMode: NetworkMode
         get() = defaultNetworkModeState
@@ -97,6 +105,9 @@ class AppPreferences(context: Context) {
         }
 
     // Reactive Compose States
+    var activationMethodState by mutableStateOf(readActivationMethod())
+        private set
+
     var defaultNetworkModeState by mutableStateOf(readDefaultNetworkMode())
         private set
 
@@ -129,6 +140,11 @@ class AppPreferences(context: Context) {
 
     var enableAnimationsState by mutableStateOf(readEnableAnimations())
         private set
+
+    private fun readActivationMethod(): ActivationMethod {
+        val name = prefs.getString(KEY_ACTIVATION_METHOD, ActivationMethod.SHIZUKU.name)
+        return runCatching { ActivationMethod.valueOf(name ?: ActivationMethod.SHIZUKU.name) }.getOrDefault(ActivationMethod.SHIZUKU)
+    }
 
     private fun readDefaultNetworkMode(): NetworkMode {
         val name = prefs.getString(KEY_DEFAULT_MODE, NetworkMode.NR_LTE.name)
@@ -165,6 +181,7 @@ class AppPreferences(context: Context) {
     private fun readEnableAnimations(): Boolean = prefs.getBoolean(KEY_ENABLE_ANIMATIONS, true)
 
     companion object {
+        private const val KEY_ACTIVATION_METHOD = "activation_method"
         private const val KEY_DEFAULT_MODE = "default_network_mode"
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_AMOLED = "amoled"

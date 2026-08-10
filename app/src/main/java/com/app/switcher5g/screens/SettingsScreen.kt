@@ -31,6 +31,7 @@ import com.app.switcher5g.ui.components.bouncyClickable
 import com.app.switcher5g.ui.components.entrance
 import com.app.switcher5g.ui.theme.AppPalettes
 import com.app.switcher5g.ui.theme.ColorStyle
+import com.app.switcher5g.util.ActivationMethod
 import com.app.switcher5g.util.AppFont
 import com.app.switcher5g.util.AppPreferences
 import com.app.switcher5g.util.AppThemeMode
@@ -79,11 +80,66 @@ fun SettingsScreen(
             )
         }
 
-        // 1. Theme & Appearance (Live Auto-Refreshing: Theme Mode, AMOLED, Palettes, Styles, Fonts)
+        // 0. Activation Method Selector (Shizuku vs Direct ADB)
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .entrance(1)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        Icons.Rounded.Build,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = "Activation & Execution Method",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    )
+                }
+
+                Text(
+                    text = "Choose how network mode changes are executed on your device:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    FilterChip(
+                        selected = prefs.activationMethod == ActivationMethod.SHIZUKU,
+                        onClick = { prefs.activationMethod = ActivationMethod.SHIZUKU },
+                        leadingIcon = { Icon(Icons.Rounded.Security, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                        label = { Text("Shizuku Service") },
+                        modifier = Modifier.weight(1f),
+                    )
+                    FilterChip(
+                        selected = prefs.activationMethod == ActivationMethod.DIRECT_ADB,
+                        onClick = { prefs.activationMethod = ActivationMethod.DIRECT_ADB },
+                        leadingIcon = { Icon(Icons.Rounded.Terminal, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                        label = { Text("Direct ADB") },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+
+        // 1. Theme & Appearance
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .entrance(2)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -106,7 +162,6 @@ fun SettingsScreen(
                     )
                 }
 
-                // Theme Mode Selector (System / Dark / Light)
                 Text(text = "Theme Mode", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -123,7 +178,6 @@ fun SettingsScreen(
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
-                // Pure AMOLED Black Mode
                 SettingToggleRow(
                     title = "Pure AMOLED Black",
                     subtitle = "Use pure #000000 black background for AMOLED displays",
@@ -134,7 +188,6 @@ fun SettingsScreen(
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
-                // Typography & Font Selector (Nunito, Inter, Outfit, Lexend, Manrope, Space Grotesk)
                 Text(text = "Typography & Font Family", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -152,7 +205,6 @@ fun SettingsScreen(
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
-                // Color Palette Selection (Tide, Zen, Ember, Forest)
                 Text(text = "Color Palette", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -169,7 +221,6 @@ fun SettingsScreen(
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
-                // Color Style Selection
                 Text(text = "Color Style", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -201,7 +252,7 @@ fun SettingsScreen(
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(2)
+                .entrance(3)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -264,11 +315,11 @@ fun SettingsScreen(
             }
         }
 
-        // 3. Shizuku & ADB Setup Card
+        // 3. Setup Dialog Trigger Card
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(3)
+                .entrance(4)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -286,13 +337,13 @@ fun SettingsScreen(
                         tint = MaterialTheme.colorScheme.secondary,
                     )
                     Text(
-                        text = "Shizuku & ADB Service",
+                        text = "Shizuku & ADB Commands Guide",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
 
                 Text(
-                    text = "Configure Shizuku service, permission authorizations, and copy ADB start commands.",
+                    text = "Configure Shizuku service, permission authorizations, and copy direct ADB switch commands.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -305,51 +356,8 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Rounded.Terminal, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Open Shizuku & ADB Setup Dialog")
+                    Text("Open Activation & ADB Setup Dialog")
                 }
-            }
-        }
-
-        // 4. Automation Commands
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(4)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
-            shape = RoundedCornerShape(24.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon(
-                        Icons.Rounded.Code,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                    Text(
-                        text = "Automation Commands",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    )
-                }
-
-                val deepLinkCmd = "adb shell am start -a android.intent.action.VIEW -d \"switcher5g://switch?mode=NR_ONLY\""
-                CommandSnippetBox(
-                    label = "Deep Link Intent (Tasker / ADB)",
-                    command = deepLinkCmd,
-                    context = context,
-                )
-
-                val broadcastCmd = "adb shell am broadcast -a com.app.switcher5g.SET_NETWORK_MODE --es mode NR_ONLY"
-                CommandSnippetBox(
-                    label = "Broadcast Intent",
-                    command = broadcastCmd,
-                    context = context,
-                )
             }
         }
     }
@@ -399,55 +407,5 @@ private fun SettingToggleRow(
             onCheckedChange = onCheckedChange,
             modifier = Modifier.scale(0.85f),
         )
-    }
-}
-
-@Composable
-private fun CommandSnippetBox(
-    label: String,
-    command: String,
-    context: Context,
-) {
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(
-            modifier = Modifier.padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                IconButton(
-                    onClick = {
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        clipboard.setPrimaryClip(ClipData.newPlainText("Command", command))
-                        Toast.makeText(context, "Command copied to clipboard", Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier.size(24.dp),
-                ) {
-                    Icon(
-                        Icons.Rounded.ContentCopy,
-                        contentDescription = "Copy command",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-            }
-            Text(
-                text = command,
-                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp),
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
     }
 }
