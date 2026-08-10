@@ -26,12 +26,12 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        # Using this action instead of ./gradlew means we don't need a
-        # committed gradle-wrapper.jar for CI to work. Locally in Android
-        # Studio, the wrapper jar gets generated automatically on first sync.
+
+      - name: Generate Gradle wrapper (pins the exact Gradle version for the build step)
+        run: gradle wrapper --gradle-version 8.7 --distribution-type bin
 
       - name: Build debug APK
-        run: gradle assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
