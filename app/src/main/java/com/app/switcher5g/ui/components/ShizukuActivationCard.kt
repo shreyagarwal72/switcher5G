@@ -37,11 +37,11 @@ fun ShizukuActivationCard(
     var showGuide by remember { mutableStateOf(false) }
     var selectedCommandIndex by remember { mutableIntStateOf(0) }
 
-    val commands = remember {
+    val commands = remember<List<Pair<String, String>>> {
         listOf(
-            "Standard ADB" to ShizukuHelper.ADB_START_COMMAND_SDCARD,
-            "User Dir ADB" to ShizukuHelper.ADB_START_COMMAND_USER,
-            "Local Shell" to ShizukuHelper.ADB_START_COMMAND_DIRECT,
+            "Standard ADB" to ShizukuHelper.ADB_PC_SDCARD,
+            "User Dir ADB" to ShizukuHelper.ADB_PC_USER,
+            "Local Shell" to ShizukuHelper.SHELL_SDCARD,
         )
     }
 

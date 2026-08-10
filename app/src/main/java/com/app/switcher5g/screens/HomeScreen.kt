@@ -326,7 +326,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
 
                 if (useWheelPicker) {
                     val modes = NetworkMode.entries
-                    val labels = remember { modes.map { it.label() } }
+                    val labels = remember<List<String>> { modes.map { it.label() } }
                     val selectedIndex = modes.indexOf(selectedMode).coerceAtLeast(0)
 
                     FancyWheelScroller(
