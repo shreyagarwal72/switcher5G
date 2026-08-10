@@ -12,7 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -49,20 +49,21 @@ fun SettingsScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
             .padding(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Header
+        // Stride-style Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(0),
+                .entrance(0)
+                .padding(top = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Icon(
-                imageVector = Icons.Default.Settings,
+                imageVector = Icons.Rounded.Settings,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp),
@@ -70,11 +71,12 @@ fun SettingsScreen(
             Column {
                 Text(
                     text = "Preferences & Options",
-                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground,
                 )
                 Text(
                     text = "Configure app defaults, UI controls, and automation triggers",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -102,7 +104,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Icon(
-                        Icons.Default.NetworkCheck,
+                        Icons.Rounded.NetworkCheck,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                     )
@@ -155,7 +157,7 @@ fun SettingsScreen(
                 SettingToggleRow(
                     title = "Auto-scan SIMs on Launch",
                     subtitle = "Automatically detect active Dual-SIM subscriptions when app opens",
-                    icon = Icons.Default.SimCard,
+                    icon = Icons.Rounded.SimCard,
                     checked = autoScanSims,
                     onCheckedChange = {
                         autoScanSims = it
@@ -186,7 +188,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Icon(
-                        Icons.Default.Palette,
+                        Icons.Rounded.Palette,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.tertiary,
                     )
@@ -199,7 +201,7 @@ fun SettingsScreen(
                 SettingToggleRow(
                     title = "Material You Dynamic Colors",
                     subtitle = "Adapt theme and app icon dynamically to device system wallpaper",
-                    icon = Icons.Default.ColorLens,
+                    icon = Icons.Rounded.ColorLens,
                     checked = useDynamicTheme,
                     onCheckedChange = {
                         useDynamicTheme = it
@@ -212,7 +214,7 @@ fun SettingsScreen(
                 SettingToggleRow(
                     title = "Wheel Scroller Picker UI",
                     subtitle = "Use 3D wheel scroller instead of slide bar for mode selection",
-                    icon = Icons.Default.UnfoldMore,
+                    icon = Icons.Rounded.UnfoldMore,
                     checked = useWheelPicker,
                     onCheckedChange = {
                         useWheelPicker = it
@@ -225,7 +227,7 @@ fun SettingsScreen(
                 SettingToggleRow(
                     title = "Auto-Check for Updates",
                     subtitle = "Automatically check GitHub releases for app updates on startup",
-                    icon = Icons.Default.SystemUpdate,
+                    icon = Icons.Rounded.SystemUpdate,
                     checked = autoCheckUpdates,
                     onCheckedChange = {
                         autoCheckUpdates = it
@@ -238,7 +240,7 @@ fun SettingsScreen(
                 SettingToggleRow(
                     title = "Micro-Animations",
                     subtitle = "Enable bouncy spring interactions and entrance motion transitions",
-                    icon = Icons.Default.Animation,
+                    icon = Icons.Rounded.Animation,
                     checked = enableAnimations,
                     onCheckedChange = {
                         enableAnimations = it
@@ -274,7 +276,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Icon(
-                        Icons.Default.Terminal,
+                        Icons.Rounded.Terminal,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.secondary,
                     )
@@ -391,7 +393,7 @@ private fun CommandSnippetBox(
                     modifier = Modifier.size(24.dp),
                 ) {
                     Icon(
-                        Icons.Default.ContentCopy,
+                        Icons.Rounded.ContentCopy,
                         contentDescription = "Copy command",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(16.dp),

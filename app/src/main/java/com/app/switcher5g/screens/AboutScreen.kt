@@ -14,7 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,12 +24,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.app.switcher5g.R
 import com.app.switcher5g.network.ShizukuHelper
 import com.app.switcher5g.ui.components.FancyCircularOrbLoader
 import com.app.switcher5g.ui.components.FancyLinearLoadingBar
@@ -52,8 +50,8 @@ fun AboutScreen(modifier: Modifier = Modifier) {
     var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
 
     val appVersion = "1.0.0"
-    val deviceModel = "${Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} ${Build.MODEL}"
-    val androidVersion = "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})"
+    val deviceModel = remember { "${Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} ${Build.MODEL}" }
+    val androidVersion = remember { "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})" }
     val telephonyManager = remember { context.getSystemService(TelephonyManager::class.java) }
     val networkOperatorName = remember { telephonyManager?.networkOperatorName.orEmpty().ifBlank { "Cellular Radio" } }
 
@@ -61,21 +59,50 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
             .padding(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        // Stride-style Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .entrance(0)
+                .padding(top = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Info,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(28.dp),
+            )
+            Column {
+                Text(
+                    text = "About Switcher 5G",
+                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    text = "Version $appVersion • Material 3 Expressive",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
         // App Header Banner
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(0)
+                .entrance(1)
                 .border(
                     1.dp,
                     MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
                     RoundedCornerShape(28.dp),
                 )
-                .shadow(8.dp, RoundedCornerShape(28.dp)),
+                .shadow(6.dp, RoundedCornerShape(28.dp)),
             shape = RoundedCornerShape(28.dp),
         ) {
             Box(
@@ -104,7 +131,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = Icons.Default.CellTower,
+                                imageVector = Icons.Rounded.CellTower,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.size(40.dp),
@@ -141,7 +168,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(1)
+                .entrance(2)
                 .border(
                     1.dp,
                     MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
@@ -163,7 +190,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
-                            Icons.Default.SystemUpdate,
+                            Icons.Rounded.SystemUpdate,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                         )
@@ -252,7 +279,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                                         ),
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.Download,
+                                            imageVector = Icons.Rounded.Download,
                                             contentDescription = null,
                                             modifier = Modifier.size(18.dp),
                                         )
@@ -274,7 +301,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(2)
+                .entrance(3)
                 .border(
                     1.dp,
                     MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
@@ -291,7 +318,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Icon(
-                        Icons.Default.PermDeviceInformation,
+                        Icons.Rounded.PermDeviceInformation,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.tertiary,
                     )
@@ -313,7 +340,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(3)
+                .entrance(4)
                 .border(
                     1.dp,
                     MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
@@ -330,7 +357,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Icon(
-                        Icons.Default.Code,
+                        Icons.Rounded.Code,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                     )
@@ -360,7 +387,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                             .weight(1f)
                             .bouncyClickable {},
                     ) {
-                        Icon(Icons.Default.Code, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Rounded.Code, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("GitHub Repo", style = MaterialTheme.typography.labelMedium)
                     }
@@ -374,7 +401,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                             .weight(1f)
                             .bouncyClickable {},
                     ) {
-                        Icon(Icons.Default.Security, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Rounded.Security, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Shizuku Project", style = MaterialTheme.typography.labelMedium)
                     }

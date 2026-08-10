@@ -5,32 +5,28 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Outer Signal Tower Pulse Rings -->
+    <!-- Material You Dynamic Theme Background Tintable Outer Signal Arc -->
     <path
         android:fillColor="#3AA8C7FA"
-        android:pathData="M54,26 C38.54,26 26,38.54 26,54 C26,69.46 38.54,82 54,82 C69.46,82 82,69.46 82,54 C82,38.54 69.46,26 54,26 Z M54,76 C41.85,76 32,66.15 32,54 C32,41.85 41.85,32 54,32 C66.15,32 76,41.85 76,54 C76,66.15 66.15,76 54,76 Z" />
+        android:pathData="M54,22 C36.33,22 22,36.33 22,54 C22,71.67 36.33,86 54,86 C71.67,86 86,71.67 86,54 C86,36.33 71.67,22 54,22 Z M54,78 C40.75,78 30,67.25 30,54 C30,40.75 40.75,30 54,30 C67.25,30 78,40.75 78,54 C78,67.25 67.25,78 54,78 Z" />
 
-    <!-- Center Cell Tower Pole -->
+    <!-- Inner Wave Arc -->
+    <path
+        android:fillColor="#70A8C7FA"
+        android:pathData="M54,34 C42.95,34 34,42.95 34,54 C34,65.05 42.95,74 54,74 C65.05,74 74,65.05 74,54 C74,42.95 65.05,34 54,34 Z M54,67 C46.82,67 41,61.18 41,54 C41,46.82 46.82,41 54,41 C61.18,41 67,46.82 67,54 C67,61.18 61.18,67 54,67 Z" />
+
+    <!-- Center Tower Pole & Signal Emitter -->
     <path
         android:fillColor="#A8C7FA"
-        android:pathData="M51,46 L57,46 L57,72 L51,72 Z" />
+        android:pathData="M51,44 L57,44 L57,72 L51,72 Z M43,49 L65,49 L65,53 L43,53 Z M47,57 L61,57 L61,60 L47,60 Z" />
 
-    <!-- Tower Cross Arms -->
+    <!-- Material You Primary Beacon -->
     <path
-        android:fillColor="#A8C7FA"
-        android:pathData="M43,50 L65,50 L65,54 L43,54 Z M47,58 L61,58 L61,61 L47,61 Z" />
+        android:fillColor="#D9BDE3"
+        android:pathData="M54,37 C56.76,37 59,39.24 59,42 C59,44.76 56.76,47 54,47 C51.24,47 49,44.76 49,42 C49,39.24 51.24,37 54,37 Z" />
 
-    <!-- Signal Emitter Beacon -->
-    <path
-        android:fillColor="#7C4DFF"
-        android:pathData="M54,38 C56.76,38 59,40.24 59,43 C59,45.76 56.76,48 54,48 C51.24,48 49,45.76 49,43 C49,40.24 51.24,38 54,38 Z" />
-
-    <!-- 5G Badge Overlay -->
+    <!-- 5G Badge -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M38,36 H46 V39 H41 V41 H46 V46 H38 V43 H43 V42 H38 Z" />
-
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M62,36 H70 V39 H65 V43 H68 V41 H70 V46 H62 Z" />
+        android:pathData="M36,32 H44 V35 H39 V37 H44 V42 H36 V39 H41 V38 H36 Z M60,32 H68 V35 H63 V39 H66 V37 H68 V42 H60 Z" />
 </vector>

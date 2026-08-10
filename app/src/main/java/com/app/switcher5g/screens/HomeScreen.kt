@@ -6,10 +6,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,10 +33,12 @@ import com.app.switcher5g.network.NetworkModeManager
 import com.app.switcher5g.network.ShizukuHelper
 import com.app.switcher5g.network.SwitchResult
 import com.app.switcher5g.ui.components.*
-import com.app.switcher5g.util.AppLogger
 import com.app.switcher5g.util.AppPreferences
 import com.app.switcher5g.util.MarkdownUtils
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun MainScreen(
@@ -111,6 +114,14 @@ fun HomeScreenContent(prefs: AppPreferences) {
     var shizukuReady by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
     var useWheelPicker by remember { mutableStateOf(prefs.useWheelPicker) }
 
+    val formattedDate = remember {
+        try {
+            LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMM", Locale.getDefault()))
+        } catch (_: Throwable) {
+            "5G Network Controller"
+        }
+    }
+
     LaunchedEffect(Unit) {
         if (prefs.autoScanSims && ShizukuHelper.hasPermission()) {
             isScanningSims = true
@@ -135,7 +146,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
             .padding(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -148,7 +159,55 @@ fun HomeScreenContent(prefs: AppPreferences) {
             )
         }
 
-        // Top Header Card
+        // Stride-style App Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .entrance(0)
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column {
+                Text(
+                    text = formattedDate,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = "Switcher 5G",
+                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+
+            // Shizuku Connection Status Pill (matching Stride streak badge style)
+            Surface(
+                shape = CircleShape,
+                color = if (shizukuReady) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
+                modifier = Modifier.shadow(4.dp, CircleShape),
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = if (shizukuReady) Icons.Rounded.CheckCircle else Icons.Rounded.Warning,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                    Text(
+                        text = if (shizukuReady) "Shizuku Ready" else "Disconnected",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                        color = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                }
+            }
+        }
+
+        // Stride Hero Card Banner
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
@@ -156,10 +215,10 @@ fun HomeScreenContent(prefs: AppPreferences) {
                 .border(
                     1.dp,
                     MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                    RoundedCornerShape(24.dp),
+                    RoundedCornerShape(28.dp),
                 )
-                .shadow(8.dp, RoundedCornerShape(24.dp)),
-            shape = RoundedCornerShape(24.dp),
+                .shadow(6.dp, RoundedCornerShape(28.dp)),
+            shape = RoundedCornerShape(28.dp),
         ) {
             Box(
                 modifier = Modifier
@@ -185,42 +244,18 @@ fun HomeScreenContent(prefs: AppPreferences) {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
-                                Icons.Default.NetworkCheck,
+                                Icons.Rounded.CellTower,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(28.dp),
                             )
                             Text(
-                                text = "5G Switcher",
-                                style = MaterialTheme.typography.titleLarge.copy(
+                                text = "Privileged Band Control",
+                                style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 22.sp,
+                                    fontSize = 18.sp,
                                 ),
                             )
-                        }
-
-                        // Shizuku connection badge
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (shizukuReady) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer,
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    imageVector = if (shizukuReady) Icons.Default.CheckCircle else Icons.Default.Warning,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp),
-                                    tint = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
-                                )
-                                Text(
-                                    text = if (shizukuReady) "Shizuku Ready" else "Disconnected",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
-                                )
-                            }
                         }
                     }
 
@@ -244,11 +279,11 @@ fun HomeScreenContent(prefs: AppPreferences) {
             modifier = Modifier
                 .fillMaxWidth()
                 .entrance(3)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
-            shape = RoundedCornerShape(20.dp),
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Row(
@@ -261,7 +296,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
-                            Icons.Default.SimCard,
+                            Icons.Rounded.SimCard,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.tertiary,
                         )
@@ -285,7 +320,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
                                 }
                             },
                         ) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Scan SIMs")
+                            Icon(Icons.Rounded.Refresh, contentDescription = "Scan SIMs")
                         }
                     }
                 }
@@ -423,7 +458,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
                 if (isSwitching) {
                     FancyCircularOrbLoader(size = 20.dp)
                 } else {
-                    Icon(Icons.Default.Bolt, contentDescription = null)
+                    Icon(Icons.Rounded.Bolt, contentDescription = null)
                 }
                 Text(
                     text = if (isSwitching) "Applying Network Mode…" else "Apply Network Mode",
@@ -446,7 +481,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = if (statusText.startsWith("✅")) Icons.Default.CheckCircle else Icons.Default.Info,
+                    imageVector = if (statusText.startsWith("✅")) Icons.Rounded.CheckCircle else Icons.Rounded.Info,
                     contentDescription = null,
                     tint = if (statusText.startsWith("✅")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary,
                 )

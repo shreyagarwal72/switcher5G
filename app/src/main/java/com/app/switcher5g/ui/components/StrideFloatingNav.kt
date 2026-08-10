@@ -12,9 +12,9 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CellTower
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.CellTower
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -38,9 +38,9 @@ data class NavDestination(
 )
 
 val switcherDestinations = listOf(
-    NavDestination(route = "home", label = "Switcher", icon = Icons.Default.CellTower),
-    NavDestination(route = "settings", label = "Settings", icon = Icons.Default.Settings),
-    NavDestination(route = "about", label = "About", icon = Icons.Default.Info),
+    NavDestination(route = "home", label = "Switcher", icon = Icons.Rounded.CellTower),
+    NavDestination(route = "settings", label = "Settings", icon = Icons.Rounded.Settings),
+    NavDestination(route = "about", label = "About", icon = Icons.Rounded.Info),
 )
 
 /**

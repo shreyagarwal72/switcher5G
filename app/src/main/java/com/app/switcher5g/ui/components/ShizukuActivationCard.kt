@@ -11,7 +11,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -80,7 +80,7 @@ fun ShizukuActivationCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        Icons.Default.Security,
+                        Icons.Rounded.Security,
                         contentDescription = null,
                         tint = if (hasPermission) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                     )
@@ -156,7 +156,7 @@ fun ShizukuActivationCard(
                     if (isChecking) {
                         FancyCircularOrbLoader(size = 18.dp)
                     } else {
-                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                     }
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Re-check Status", style = MaterialTheme.typography.labelMedium)
@@ -171,13 +171,13 @@ fun ShizukuActivationCard(
                     },
                     modifier = Modifier.bouncyClickable {},
                 ) {
-                    Icon(Icons.Default.Launch, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Rounded.Launch, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Open Shizuku", style = MaterialTheme.typography.labelMedium)
                 }
             }
 
-            // ADB Command Activation Box (shown when Shizuku is not fully ready)
+            // ADB Command Activation Box
             if (!hasPermission) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
@@ -192,7 +192,7 @@ fun ShizukuActivationCard(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
-                                Icons.Default.Terminal,
+                                Icons.Rounded.Terminal,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.secondary,
                                 modifier = Modifier.size(20.dp),
@@ -260,7 +260,7 @@ fun ShizukuActivationCard(
                                         .bouncyClickable {},
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                                 ) {
-                                    Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Icon(Icons.Rounded.ContentCopy, contentDescription = null, modifier = Modifier.size(14.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text("Copy Command", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold))
                                 }
