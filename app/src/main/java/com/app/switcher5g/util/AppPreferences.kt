@@ -104,6 +104,13 @@ class AppPreferences(context: Context) {
             prefs.edit().putBoolean(KEY_ENABLE_ANIMATIONS, value).apply()
         }
 
+    var hasSeenManual5gDialog: Boolean
+        get() = hasSeenManual5gDialogState
+        set(value) {
+            hasSeenManual5gDialogState = value
+            prefs.edit().putBoolean(KEY_HAS_SEEN_MANUAL_5G_DIALOG, value).apply()
+        }
+
     // Reactive Compose States
     var activationMethodState by mutableStateOf(readActivationMethod())
         private set
@@ -139,6 +146,9 @@ class AppPreferences(context: Context) {
         private set
 
     var enableAnimationsState by mutableStateOf(readEnableAnimations())
+        private set
+
+    var hasSeenManual5gDialogState by mutableStateOf(readHasSeenManual5gDialog())
         private set
 
     private fun readActivationMethod(): ActivationMethod {
@@ -180,6 +190,8 @@ class AppPreferences(context: Context) {
 
     private fun readEnableAnimations(): Boolean = prefs.getBoolean(KEY_ENABLE_ANIMATIONS, true)
 
+    private fun readHasSeenManual5gDialog(): Boolean = prefs.getBoolean(KEY_HAS_SEEN_MANUAL_5G_DIALOG, false)
+
     fun exportToJsonString(): String {
         val json = org.json.JSONObject()
         json.put("activationMethod", activationMethod.name)
@@ -194,6 +206,7 @@ class AppPreferences(context: Context) {
         json.put("autoCheckUpdates", autoCheckUpdates)
         json.put("useDynamicTheme", useDynamicTheme)
         json.put("enableAnimations", enableAnimations)
+        json.put("hasSeenManual5gDialog", hasSeenManual5gDialog)
         return json.toString(2)
     }
 
@@ -236,6 +249,9 @@ class AppPreferences(context: Context) {
             if (json.has("enableAnimations")) {
                 enableAnimations = json.getBoolean("enableAnimations")
             }
+            if (json.has("hasSeenManual5gDialog")) {
+                hasSeenManual5gDialog = json.getBoolean("hasSeenManual5gDialog")
+            }
             true
         } catch (_: Throwable) {
             false
@@ -255,5 +271,6 @@ class AppPreferences(context: Context) {
         private const val KEY_AUTO_CHECK_UPDATES = "auto_check_updates"
         private const val KEY_USE_DYNAMIC_THEME = "use_dynamic_theme"
         private const val KEY_ENABLE_ANIMATIONS = "enable_animations"
+        private const val KEY_HAS_SEEN_MANUAL_5G_DIALOG = "has_seen_manual_5g_dialog"
     }
 }

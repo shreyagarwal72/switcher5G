@@ -115,6 +115,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
     var isScanningSims by remember { mutableStateOf(false) }
     var shizukuReady by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
     var showSetupDialog by remember { mutableStateOf(false) }
+    var showManual5gDialog by remember { mutableStateOf(false) }
 
     val directAdbCommand = remember(selectedMode, selectedSubId) {
         val subParam = selectedSubId?.let { " --ei subId $it" } ?: ""
@@ -139,6 +140,13 @@ fun HomeScreenContent(prefs: AppPreferences) {
         ShizukuSetupDialog(
             onDismissRequest = { showSetupDialog = false },
             onStatusUpdated = { shizukuReady = it },
+        )
+    }
+
+    if (showManual5gDialog) {
+        Manual5gFirstTimeDialog(
+            onDismissRequest = { showManual5gDialog = false },
+            onDontShowAgain = { dontShow -> if (dontShow) prefs.hasSeenManual5gDialog = true },
         )
     }
 
@@ -435,6 +443,30 @@ fun HomeScreenContent(prefs: AppPreferences) {
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 )
             }
+        }
+
+        // Manual 5G System Switcher Button Card (OpenAppsLabs/5G)
+        OutlinedButton(
+            onClick = {
+                if (!prefs.hasSeenManual5gDialog) {
+                    showManual5gDialog = true
+                } else {
+                    com.app.switcher5g.network.Manual5gSwitchHelper.openRadioInfo(context)
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .entrance(5)
+                .bouncyClickable {},
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Icon(Icons.Rounded.NetworkCheck, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Manual 5G Switch (System RadioInfo)",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+            )
         }
 
         // Combined All-in-One ADB Command Card

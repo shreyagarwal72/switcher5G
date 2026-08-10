@@ -48,10 +48,7 @@ fun ShizukuSetupDialog(
 
     val directAdbCommands = remember<List<Pair<String, String>>> {
         listOf(
-            "5G SA (NR Only)" to "adb shell am broadcast -a com.app.switcher5g.SET_NETWORK_MODE --es mode NR_ONLY",
-            "5G NSA (NR / LTE)" to "adb shell am broadcast -a com.app.switcher5g.SET_NETWORK_MODE --es mode NR_LTE",
-            "4G LTE Only" to "adb shell am broadcast -a com.app.switcher5g.SET_NETWORK_MODE --es mode LTE_ONLY",
-            "Deep Link 5G SA" to "adb shell am start -a android.intent.action.VIEW -d \"switcher5g://switch?mode=NR_ONLY\"",
+            "Combined All-in-One ADB Command" to "adb shell am broadcast -a com.app.switcher5g.SET_NETWORK_MODE --es mode NR_ONLY",
         )
     }
 
