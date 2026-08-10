@@ -17,7 +17,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -25,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.switcher5g.network.ShizukuHelper
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ShizukuSetupDialog(
     onDismissRequest: () -> Unit,
@@ -35,17 +34,16 @@ fun ShizukuSetupDialog(
     var isChecking by remember { mutableStateOf(false) }
     var isAvailable by remember { mutableStateOf(ShizukuHelper.isAvailable()) }
     var hasPermission by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var isInsideShell by remember { mutableStateOf(false) }
+    var selectedPathIndex by remember { mutableIntStateOf(0) }
+    var showFixGuide by remember { mutableStateOf(false) }
 
-    val commands = remember {
-        listOf(
-            "Standard ADB" to ShizukuHelper.ADB_START_COMMAND_SDCARD,
-            "User 0 ADB" to ShizukuHelper.ADB_START_COMMAND_USER,
-            "Root Terminal" to "su -c sh /sdcard/Android/data/moe.shizuku.privileged.api/files/start.sh",
-        )
+    val activeCommand = when {
+        isInsideShell && selectedPathIndex == 0 -> ShizukuHelper.SHELL_SDCARD
+        isInsideShell && selectedPathIndex == 1 -> ShizukuHelper.SHELL_USER
+        !isInsideShell && selectedPathIndex == 0 -> ShizukuHelper.ADB_PC_SDCARD
+        else -> ShizukuHelper.ADB_PC_USER
     }
-
-    val activeCommand = commands[selectedTab].second
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -68,7 +66,7 @@ fun ShizukuSetupDialog(
                     Toast.makeText(
                         context,
                         if (hasPermission) "✅ Shizuku active & authorized"
-                        else if (isAvailable) "⚠️ Shizuku service running. Permission required."
+                        else if (isAvailable) "⚠️ Shizuku running. Permission required."
                         else "❌ Shizuku not running",
                         Toast.LENGTH_SHORT,
                     ).show()
@@ -149,7 +147,7 @@ fun ShizukuSetupDialog(
                     }
                 }
 
-                // Launch Shizuku App Button
+                // Open Shizuku App Button
                 OutlinedButton(
                     onClick = {
                         val launched = ShizukuHelper.launchShizukuApp(context)
@@ -161,29 +159,50 @@ fun ShizukuSetupDialog(
                 ) {
                     Icon(Icons.Rounded.Launch, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Open Shizuku App")
+                    Text("Open Shizuku App (Required First Time)")
                 }
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
-                // ADB Section
+                // Environment selector (PC Terminal vs Inside adb shell prompt)
                 Text(
-                    text = "ADB Activation Commands",
+                    text = "Where are you running the command?",
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                 )
 
-                // Command Selector Chips
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    FilterChip(
+                        selected = !isInsideShell,
+                        onClick = { isInsideShell = false },
+                        label = { Text("PC / Terminal", style = MaterialTheme.typography.labelSmall) },
+                        modifier = Modifier.weight(1f),
+                    )
+                    FilterChip(
+                        selected = isInsideShell,
+                        onClick = { isInsideShell = true },
+                        label = { Text("Inside adb shell ($)", style = MaterialTheme.typography.labelSmall) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
+                // Path variant selector
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    commands.forEachIndexed { idx, pair ->
-                        FilterChip(
-                            selected = idx == selectedTab,
-                            onClick = { selectedTab = idx },
-                            label = { Text(pair.first, style = MaterialTheme.typography.labelSmall) },
-                        )
-                    }
+                    FilterChip(
+                        selected = selectedPathIndex == 0,
+                        onClick = { selectedPathIndex = 0 },
+                        label = { Text("Standard SD Card Path", style = MaterialTheme.typography.labelSmall) },
+                    )
+                    FilterChip(
+                        selected = selectedPathIndex == 1,
+                        onClick = { selectedPathIndex = 1 },
+                        label = { Text("User 0 Path", style = MaterialTheme.typography.labelSmall) },
+                    )
                 }
 
                 // Command Box with One-tap Copy
@@ -202,7 +221,7 @@ fun ShizukuSetupDialog(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                text = "ADB Shell Start Command",
+                                text = if (isInsideShell) "Command for inside adb shell ($)" else "Command for PC / Terminal",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 11.sp,
@@ -229,27 +248,59 @@ fun ShizukuSetupDialog(
                     }
                 }
 
-                // Troubleshooting Note for "No such file or directory"
+                // Troubleshooting Box for "No such file or directory"
                 Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        Icon(
-                            Icons.Rounded.Info,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Text(
-                            text = "Note: If ADB returns 'no such file or directory', launch the Shizuku app once to unpack its starter script, or use Wireless Debugging pairing inside Shizuku.",
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    Icons.Rounded.Warning,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Text(
+                                    text = "Getting 'No such file or directory'?",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                )
+                            }
+                            TextButton(
+                                onClick = { showFixGuide = !showFixGuide },
+                                contentPadding = PaddingValues(0.dp),
+                            ) {
+                                Text(
+                                    text = if (showFixGuide) "Hide" else "Fix Steps",
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            }
+                        }
+
+                        AnimatedVisibility(visible = showFixGuide) {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    text = "1. You MUST open the Shizuku app at least ONCE after installing so it extracts start.sh to storage.\n" +
+                                            "2. If you are already inside 'adb shell' prompt ($), select 'Inside adb shell ($)' tab above so 'adb shell' prefix is omitted.\n" +
+                                            "3. Or use Wireless Debugging inside the Shizuku app (no commands needed!).",
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                )
+                            }
+                        }
                     }
                 }
             }

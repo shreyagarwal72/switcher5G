@@ -13,9 +13,13 @@ object ShizukuHelper {
     const val REQUEST_CODE = 5271
     const val SHIZUKU_PACKAGE_NAME = "moe.shizuku.privileged.api"
 
-    const val ADB_START_COMMAND_SDCARD = "adb shell sh /sdcard/Android/data/moe.shizuku.privileged.api/files/start.sh"
-    const val ADB_START_COMMAND_USER = "adb shell sh /data/user/0/moe.shizuku.privileged.api/files/start.sh"
-    const val ADB_START_COMMAND_DIRECT = "sh /sdcard/Android/data/moe.shizuku.privileged.api/files/start.sh"
+    // Commands to run from PC terminal or LADB (outside adb shell)
+    const val ADB_PC_SDCARD = "adb shell sh /sdcard/Android/data/moe.shizuku.privileged.api/files/start.sh"
+    const val ADB_PC_USER = "adb shell sh /data/user/0/moe.shizuku.privileged.api/files/start.sh"
+
+    // Commands to run inside an existing adb shell prompt ($)
+    const val SHELL_SDCARD = "sh /sdcard/Android/data/moe.shizuku.privileged.api/files/start.sh"
+    const val SHELL_USER = "sh /data/user/0/moe.shizuku.privileged.api/files/start.sh"
 
     fun isAvailable(): Boolean =
         try {
