@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -47,7 +48,6 @@ fun FancyModeSlideBar(
     var isDragging by remember { mutableStateOf(false) }
 
     val segmentWidthPx = widthPx / modes.size
-
     val targetOffsetPx = selectedIndex * segmentWidthPx
 
     val animatedOffsetPx by animateFloatAsState(
@@ -64,6 +64,8 @@ fun FancyModeSlideBar(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = 300f),
         label = "thumbScale",
     )
+
+    val density = LocalDensity.current
 
     fun selectFromX(x: Float) {
         val index = (x / segmentWidthPx).toInt().coerceIn(0, modes.size - 1)
@@ -104,10 +106,11 @@ fun FancyModeSlideBar(
         ) {
             // Spring-animated sliding pill thumb
             if (widthPx > 1f) {
+                val pillWidthDp = with(density) { (widthPx / modes.size).toDp() }
                 Box(
                     modifier = Modifier
                         .offset { IntOffset(x = animatedOffsetPx.roundToInt(), y = 0) }
-                        .width((widthPx / modes.size).toDp())
+                        .width(pillWidthDp)
                         .fillMaxHeight()
                         .padding(4.dp)
                         .graphicsLayer {
