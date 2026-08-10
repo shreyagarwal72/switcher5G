@@ -46,7 +46,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
     var downloadProgress by remember { mutableFloatStateOf(0f) }
     var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
 
-    val appVersion = "1.0.0"
+    val appVersion = remember(context) { com.app.switcher5g.util.AppInfo.getAppVersionName(context) }
     val deviceModel = remember { "${Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} ${Build.MODEL}" }
     val androidVersion = remember { "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})" }
     val telephonyManager = remember { context.getSystemService(TelephonyManager::class.java) }

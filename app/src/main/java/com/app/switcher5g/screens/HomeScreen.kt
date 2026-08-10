@@ -128,7 +128,8 @@ fun HomeScreenContent(prefs: AppPreferences) {
             isScanningSims = false
         }
         if (prefs.autoCheckUpdates) {
-            val info = com.app.switcher5g.update.UpdateManager.checkForUpdates("1.0.0")
+            val currentVer = com.app.switcher5g.util.AppInfo.getAppVersionName(context)
+            val info = com.app.switcher5g.update.UpdateManager.checkForUpdates(currentVer)
             if (info.hasUpdate) {
                 updateInfo = info
                 showUpdateDialog = true
