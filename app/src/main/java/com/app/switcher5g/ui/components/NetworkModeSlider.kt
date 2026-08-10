@@ -3,6 +3,7 @@ package com.app.switcher5g.ui.components
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -28,6 +29,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -42,15 +44,11 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 
 /**
- * Custom Scalloped/Gear Shape for the Slider Thumb.
- * Generates 14 scalloped wave points around a circle using Path quadratic bezier curves.
- *
- * @param points Number of scalloped wave lobes around the circumference (12–16)
- * @param innerRadiusRatio Depth of the wave troughs relative to outer radius
+ * 12-point scalloped "cookie" shape for the slider thumb.
  */
 class ScallopedShape(
-    private val points: Int = 14,
-    private val innerRadiusRatio: Float = 0.84f,
+    private val points: Int = 12,
+    private val innerRadiusRatio: Float = 0.82f,
 ) : Shape {
     override fun createOutline(
         size: Size,
@@ -104,19 +102,18 @@ class ScallopedShape(
 /**
  * Reusable Discrete Stepped Slider for Telephony Preferred Network Mode selection.
  *
- * Specs & Features:
- * - Fixed discrete step snapping (NOT continuous, snaps to nearest step on release)
- * - Scalloped gear thumb shape (14 wave points around circle built via custom [ScallopedShape] Path)
- * - Dynamic Material You color schemes via [MaterialTheme.colorScheme] (No hardcoded colors)
- * - Immediate 1:1 finger tracking during touch drag (zero delay). Smooth 200ms ease-out snap on release.
- * - Thumb scale animation to 1.1x on drag + elevation increase
- * - Highlighted & bold step label above active selection
+ * Specifications & Features:
+ * - Pill-shaped track with rounded ends
+ * - 12-point scalloped "cookie" shape thumb with rolling rotation physics
+ *   Rotation = (distance traveled / thumb circumference) * 360°
+ * - Accent color (MaterialTheme.colorScheme.primary) for fill track & cookie thumb
+ * - Neutral gray (surfaceVariant) for unfilled track base
+ * - Immediate 1:1 position tracking during drag (zero delay). Spring-style snap on release.
+ * - Bold/highlighted label above selected step
  *
- * @param options List of network mode step labels (e.g. listOf("2G", "3G", "4G", "5G NSA", "5G SA"))
+ * @param options List of step labels (e.g. listOf("2G", "3G", "4G LTE", "5G NSA", "5G SA"))
  * @param selected Currently active selected index in [options]
- * @param onSelect Callback invoked when a step index is selected
- * @param modifier Composable layout modifier
- * @param enabled Interactivity state toggle
+ * @param onSelect Callback when step index is selected
  */
 @Composable
 fun NetworkModeSlider(
@@ -127,6 +124,7 @@ fun NetworkModeSlider(
     enabled: Boolean = true,
 ) {
     val haptic = LocalHapticFeedback.current
+    val density = LocalDensity.current
     val totalSteps = options.size.coerceAtLeast(1)
     val maxIndex = (totalSteps - 1).coerceAtLeast(1)
     val clampedSelected = selected.coerceIn(0, maxIndex)
@@ -136,22 +134,24 @@ fun NetworkModeSlider(
     var trackWidthPx by remember { mutableFloatStateOf(1f) }
     var lastHapticStep by remember { mutableIntStateOf(clampedSelected) }
 
-    // Material You Dynamic Colors
-    val filledTrackColor = MaterialTheme.colorScheme.primary
-    val unfilledTrackColor = MaterialTheme.colorScheme.surfaceVariant
-    val thumbColor = MaterialTheme.colorScheme.primary
+    // Single dynamic accent color for fill track & scalloped thumb
+    val accentColor = MaterialTheme.colorScheme.primary
+    val trackBgColor = MaterialTheme.colorScheme.surfaceVariant
     val thumbOnColor = MaterialTheme.colorScheme.onPrimary
     val selectedTextColor = MaterialTheme.colorScheme.primary
     val unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
 
-    // 200ms Ease-Out Animation ONLY for snapping after drag release or tap
+    // Spring-style ease animation ONLY on release snap
     val snapAnimatedFraction by animateFloatAsState(
         targetValue = clampedSelected.toFloat(),
-        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+        animationSpec = spring(
+            dampingRatio = 0.65f,
+            stiffness = 350f,
+        ),
         label = "snapTrackAnimation",
     )
 
-    // Critical constraint: Finger tracking during drag MUST be immediate (no animation delay).
+    // Immediate 1:1 finger tracking during drag (zero animation delay)
     val currentStepFraction = if (isDragging) {
         (dragPx / trackWidthPx.coerceAtLeast(1f)).coerceIn(0f, 1f) * maxIndex
     } else {
@@ -159,6 +159,13 @@ fun NetworkModeSlider(
     }
 
     val currentNormalizedProgress = (currentStepFraction / maxIndex.toFloat()).coerceIn(0f, 1f)
+
+    // Rolling rotation angle: (distance / thumbCircumference) * 360°
+    val thumbSize = 40.dp
+    val thumbSizePx = with(density) { thumbSize.toPx() }
+    val thumbCircumferencePx = (Math.PI * thumbSizePx).toFloat()
+    val distanceTraveledPx = currentNormalizedProgress * trackWidthPx
+    val rotationDegrees = (distanceTraveledPx / thumbCircumferencePx.coerceAtLeast(1f)) * 360f
 
     // Thumb scale: 1.1x on press/drag, back to 1.0x on release
     val thumbScale by animateFloatAsState(
@@ -243,7 +250,7 @@ fun NetworkModeSlider(
             }
         }
 
-        // --- 2. Track & Scalloped Gear Thumb Component ---
+        // --- 2. Track & Rolling Scalloped Cookie Thumb Component ---
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -275,28 +282,28 @@ fun NetworkModeSlider(
                 },
             contentAlignment = Alignment.CenterStart,
         ) {
-            // Track Canvas: Filled primary track & unfilled surfaceVariant track
+            // Pill-shaped Track: Neutral gray unfilled track & accent-colored fill track
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(16.dp),
+                    .height(18.dp),
             ) {
                 val corner = CornerRadius(size.height / 2f)
                 val fullW = size.width
                 val h = size.height
 
-                // Unfilled track (Material You surfaceVariant)
+                // Neutral gray unfilled track
                 drawRoundRect(
-                    color = unfilledTrackColor,
+                    color = trackBgColor,
                     size = Size(fullW, h),
                     cornerRadius = corner,
                 )
 
-                // Filled active track (Material You primary)
+                // Filled active track using single accent color
                 val fillW = fullW * currentNormalizedProgress
                 if (fillW > 0f) {
                     drawRoundRect(
-                        color = filledTrackColor,
+                        color = accentColor,
                         size = Size(fillW, h),
                         cornerRadius = corner,
                     )
@@ -308,7 +315,7 @@ fun NetworkModeSlider(
                     for (i in 0 until totalSteps) {
                         val tickX = stepSpacing * i
                         val isPassed = i <= currentStepFraction + 0.1f
-                        val tickColor = if (isPassed) thumbOnColor else filledTrackColor.copy(alpha = 0.5f)
+                        val tickColor = if (isPassed) thumbOnColor else accentColor.copy(alpha = 0.5f)
                         val tickRadius = if (i == clampedSelected) 4.5.dp.toPx() else 3.dp.toPx()
 
                         drawCircle(
@@ -320,36 +327,36 @@ fun NetworkModeSlider(
                 }
             }
 
-            // Scalloped / Gear Shaped Thumb (14 wave points around circle)
-            val thumbSize = 40.dp
+            // 12-point Scalloped "Cookie" Thumb with Rolling Rotation Physics
             val thumbOffsetPx = currentNormalizedProgress * trackWidthPx
 
             Box(
                 modifier = Modifier
                     .offset {
                         androidx.compose.ui.unit.IntOffset(
-                            x = (thumbOffsetPx - (thumbSize.toPx() / 2f)).roundToInt(),
+                            x = (thumbOffsetPx - (thumbSizePx / 2f)).roundToInt(),
                             y = 0,
                         )
                     }
                     .graphicsLayer {
                         scaleX = thumbScale
                         scaleY = thumbScale
+                        rotationZ = rotationDegrees // Visually rotates matching distance / circumference!
                     }
                     .shadow(
                         elevation = thumbElevation,
-                        shape = ScallopedShape(points = 14),
-                        spotColor = filledTrackColor,
+                        shape = ScallopedShape(points = 12),
+                        spotColor = accentColor,
                     )
                     .size(thumbSize)
-                    .clip(ScallopedShape(points = 14))
-                    .background(thumbColor),
+                    .clip(ScallopedShape(points = 12))
+                    .background(accentColor),
                 contentAlignment = Alignment.Center,
             ) {
                 // Inner center dot accent
                 Box(
                     modifier = Modifier
-                        .size(12.dp)
+                        .size(10.dp)
                         .clip(CircleShape)
                         .background(thumbOnColor),
                 )

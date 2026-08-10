@@ -55,7 +55,7 @@ fun CellularSignalMonitorCard(
 
     fun refreshSignalInfo() {
         isRefreshing = true
-        scope.launch {
+        scope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
                 if (tm != null) {

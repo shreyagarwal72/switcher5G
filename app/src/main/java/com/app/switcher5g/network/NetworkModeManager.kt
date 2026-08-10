@@ -73,17 +73,36 @@ class NetworkModeManager(private val context: Context) {
         }
     }
 
-    suspend fun getAvailableSubIds(): List<Int> {
+    suspend fun getAvailableSubIds(): List<Int> = withContext(Dispatchers.IO) {
+        val detectedSubIds = mutableListOf<Int>()
         if (ShizukuHelper.hasPermission() && ensureBound()) {
             service?.let { svc ->
                 try {
                     val ids = svc.availableSubIds
-                    if (ids.isNotEmpty()) return ids.toList()
+                    if (ids.isNotEmpty()) return@withContext ids.toList()
                 } catch (_: Throwable) {
                 }
             }
         }
-        return listOf(1, 2)
+        try {
+            val sm = context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as? android.telephony.SubscriptionManager
+            if (sm != null) {
+                val list = sm.activeSubscriptionInfoList
+                if (!list.isNullOrEmpty()) {
+                    list.forEach { info ->
+                        val subId = info.subscriptionId
+                        if (subId > 0 && subId != 2147483647 && !detectedSubIds.contains(subId)) {
+                            detectedSubIds.add(subId)
+                        }
+                    }
+                }
+            }
+        } catch (_: Throwable) {
+        }
+        if (detectedSubIds.isNotEmpty()) {
+            return@withContext detectedSubIds
+        }
+        return@withContext listOf(1, 2)
     }
 
     suspend fun switchTo(mode: NetworkMode, overrideSubId: Int? = null): SwitchResult = withContext(Dispatchers.IO) {
