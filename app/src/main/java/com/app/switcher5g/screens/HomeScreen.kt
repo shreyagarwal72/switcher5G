@@ -269,11 +269,17 @@ fun HomeScreenContent(prefs: AppPreferences) {
             }
         }
 
+        // Live Cellular Signal Telemetry Card
+        CellularSignalMonitorCard(
+            subId = selectedSubId,
+            modifier = Modifier.entrance(2),
+        )
+
         // Target SIM Subscription Card
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(2)
+                .entrance(3)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -341,18 +347,18 @@ fun HomeScreenContent(prefs: AppPreferences) {
                         InputChip(
                             selected = selectedSubId == subId,
                             onClick = { selectedSubId = subId },
-                            label = { Text("SIM (Sub $subId)") },
+                            label = { Text("SIM Slot (Sub $subId)") },
                         )
                     }
                 }
             }
         }
 
-        // Network Mode Selector Section (Wheel Scroller)
+        // Preferred Network Mode Custom Slider Section
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(3)
+                .entrance(4)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -365,30 +371,30 @@ fun HomeScreenContent(prefs: AppPreferences) {
             ) {
                 Text(
                     text = "Preferred Network Mode",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface,
                 )
 
-                val modes = NetworkMode.entries
-                val labels = remember<List<String>> { modes.map { it.label() } }
-                val selectedIndex = modes.indexOf(selectedMode).coerceAtLeast(0)
+                val networkOptions = remember { listOf("2G", "3G", "4G LTE", "5G NSA", "5G SA") }
+                val currentOptionIndex = when (selectedMode) {
+                    NetworkMode.LTE_ONLY -> 2
+                    NetworkMode.NR_LTE -> 3
+                    NetworkMode.NR_ONLY -> 4
+                }
 
-                FancyWheelScroller(
-                    items = labels,
-                    selectedIndex = selectedIndex,
-                    onSelectedIndexChange = { index ->
-                        if (index in modes.indices) {
-                            selectedMode = modes[index]
+                NetworkModeSlider(
+                    options = networkOptions,
+                    selected = currentOptionIndex,
+                    onSelect = { index ->
+                        selectedMode = when (index) {
+                            0, 1, 2 -> NetworkMode.LTE_ONLY
+                            3 -> NetworkMode.NR_LTE
+                            4 -> NetworkMode.NR_ONLY
+                            else -> NetworkMode.NR_LTE
                         }
                     },
-                )
-
-                Text(
-                    text = selectedMode.description(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 8.dp),
+                    enabled = !isSwitching,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
@@ -411,7 +417,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp)
-                .entrance(4)
+                .entrance(5)
                 .bouncyClickable(scaleDown = 0.94f) {},
             shape = RoundedCornerShape(16.dp),
         ) {
@@ -435,7 +441,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(5),
+                .entrance(6),
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
@@ -455,6 +461,11 @@ fun HomeScreenContent(prefs: AppPreferences) {
                 )
             }
         }
+
+        // OEM & Execution Strategy Diagnostics Matrix Card
+        OemDiagnosticsCard(
+            modifier = Modifier.entrance(7),
+        )
     }
 }
 
