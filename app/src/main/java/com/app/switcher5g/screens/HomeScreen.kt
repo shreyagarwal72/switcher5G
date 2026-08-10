@@ -95,7 +95,7 @@ private fun NavHostController.navigateSingleTop(route: String) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreenContent(prefs: AppPreferences) {
     val context = LocalContext.current
@@ -297,7 +297,6 @@ fun HomeScreenContent(prefs: AppPreferences) {
                 )
 
                 // SIM Slot Choice Chips with Mobile Wrapping Row
-                OptIn(ExperimentalLayoutApi::class)
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
