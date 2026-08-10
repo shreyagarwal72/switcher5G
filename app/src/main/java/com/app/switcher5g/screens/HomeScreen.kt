@@ -119,11 +119,6 @@ fun HomeScreenContent(prefs: AppPreferences) {
     var updateInfo by remember { mutableStateOf<com.app.switcher5g.update.UpdateInfo?>(null) }
     var showUpdateDialog by remember { mutableStateOf(false) }
 
-    val directAdbCommand = remember(selectedMode, selectedSubId) {
-        val subParam = selectedSubId?.let { " --ei subId $it" } ?: ""
-        "adb shell am broadcast -a com.app.switcher5g.SET_NETWORK_MODE --es mode ${selectedMode.name}$subParam"
-    }
-
     LaunchedEffect(Unit) {
         if (prefs.autoScanSims && ShizukuHelper.hasPermission()) {
             isScanningSims = true

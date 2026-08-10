@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.ui.components.IconSwitch
+import kotlin.math.roundToInt
 import com.app.switcher5g.ui.components.ShizukuSetupDialog
 import com.app.switcher5g.ui.components.bouncyClickable
 import com.app.switcher5g.ui.components.entrance
@@ -484,7 +485,7 @@ private fun SettingStrideSlider(
         com.app.switcher5g.ui.components.StrideSlider(
             value = selectedIndex.coerceIn(0, maxIndex).toFloat(),
             onValueChange = { floatVal ->
-                val idx = kotlin.math.roundToInt(floatVal).coerceIn(0, options.size - 1)
+                val idx = floatVal.roundToInt().coerceIn(0, options.size - 1)
                 if (idx != selectedIndex) {
                     onSelectIndex(idx)
                 }
