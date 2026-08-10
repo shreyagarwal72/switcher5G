@@ -31,6 +31,8 @@ import com.app.switcher5g.ui.components.FancyCircularOrbLoader
 import com.app.switcher5g.ui.components.FancyLiquidProgressBar
 import com.app.switcher5g.ui.components.FancyPulseLoader
 import com.app.switcher5g.ui.components.FloatingDepthBottomBar
+import com.app.switcher5g.update.UpdateInfo
+import com.app.switcher5g.update.UpdateManager
 import com.app.switcher5g.util.AppLogger
 import kotlinx.coroutines.launch
 
@@ -54,7 +56,6 @@ fun MainScreen(modifier: Modifier = Modifier) {
                     DevLogsScreen()
                 }
             }
-            // Space for floating bottom bar
             Spacer(modifier = Modifier.height(72.dp))
         }
 
@@ -82,6 +83,11 @@ fun HomeScreenContent() {
     var isSwitching by remember { mutableStateOf(false) }
     var isScanningSims by remember { mutableStateOf(false) }
     var shizukuReady by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
+
+    var isCheckingUpdate by remember { mutableStateOf(false) }
+    var isDownloadingUpdate by remember { mutableStateOf(false) }
+    var downloadProgress by remember { mutableFloatStateOf(0f) }
+    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
 
     LaunchedEffect(Unit) {
         AppLogger.i("HomeScreen", "Initial SIM scan triggered")
@@ -223,6 +229,115 @@ fun HomeScreenContent() {
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     ) {
                         Text("Grant Shizuku Permission")
+                    }
+                }
+            }
+        }
+
+        // Auto Update Card Facility
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Default.SystemUpdate,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Text(
+                            text = "Auto Update Facility",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        )
+                    }
+
+                    if (isCheckingUpdate) {
+                        FancyCircularOrbLoader(size = 22.dp)
+                    } else {
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch {
+                                    isCheckingUpdate = true
+                                    val info = UpdateManager.checkForUpdates(currentVersion = "1.0.0")
+                                    updateInfo = info
+                                    isCheckingUpdate = false
+                                }
+                            },
+                        ) {
+                            Text("Check Updates")
+                        }
+                    }
+                }
+
+                updateInfo?.let { info ->
+                    if (info.hasUpdate) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                Text(
+                                    text = "Update Available: v${info.latestVersion}",
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                )
+                                Text(
+                                    text = info.releaseNotes,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                )
+
+                                if (isDownloadingUpdate) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        FancyLiquidProgressBar(progress = downloadProgress, modifier = Modifier.fillMaxWidth())
+                                        Text(
+                                            text = "Downloading APK: ${(downloadProgress * 100).toInt()}%",
+                                            style = MaterialTheme.typography.labelSmall,
+                                        )
+                                    }
+                                } else {
+                                    Button(
+                                        onClick = {
+                                            scope.launch {
+                                                isDownloadingUpdate = true
+                                                downloadProgress = 0f
+                                                UpdateManager.downloadAndInstallApk(
+                                                    context = context,
+                                                    apkUrl = info.apkUrl,
+                                                    onProgress = { downloadProgress = it },
+                                                )
+                                                isDownloadingUpdate = false
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Text("Download & Install Update")
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = "✅ Switcher 5G is up to date (v1.0.0)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             }
