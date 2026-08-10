@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+
 package com.app.switcher5g.ui.components
 
 import androidx.compose.animation.core.Spring
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +39,6 @@ private val ThumbInset = 8.dp
  * The thumb physically rolls — its rotation is derived from the distance travelled,
  * so the scallops turn like a wheel as the value changes.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun StrideSlider(
     value: Float,
