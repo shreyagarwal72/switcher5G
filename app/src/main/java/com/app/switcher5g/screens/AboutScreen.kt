@@ -240,11 +240,10 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                                 )
                             }
 
-                            if (info.isAvailable) {
+                            if (info.hasUpdate && info.isAvailable) {
                                 if (isDownloadingUpdate) {
-                                    FancyLinearLoadingBar(
+                                    LinearRipplingWavyProgressIndicator(
                                         progress = downloadProgress,
-                                        showPercentage = true,
                                         label = "Downloading update…",
                                     )
                                 } else {
@@ -265,7 +264,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                                             .fillMaxWidth()
                                             .bouncyClickable {},
                                         colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (info.hasUpdate) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                                            containerColor = MaterialTheme.colorScheme.primary,
                                         ),
                                     ) {
                                         Icon(
@@ -275,10 +274,28 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = if (info.hasUpdate) "Download Update (v${info.latestVersion})" else "Download Release APK",
+                                            text = "Download & Install Update (v${info.latestVersion})",
                                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                                         )
                                     }
+                                }
+                            } else if (!info.hasUpdate) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.CheckCircle,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Text(
+                                        text = "You are running the latest release version.",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
                                 }
                             }
                         }
