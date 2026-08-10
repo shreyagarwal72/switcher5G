@@ -2,11 +2,15 @@ package com.app.switcher5g.network
 
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.ServiceConnection
+import android.net.Uri
 import android.os.IBinder
 import com.app.switcher5g.IUserService
 import com.app.switcher5g.util.AppLogger
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
 import kotlin.coroutines.resume
 
@@ -18,20 +22,25 @@ sealed class SwitchResult {
 }
 
 /**
- * Owns the Shizuku user-service connection and turns [NetworkMode] requests
- * into calls on [NetworkModeUserService].
+ * Multi-strategy Network Mode Manager.
+ * Operates standalone across:
+ * 1. Shizuku IPC Service (if available)
+ * 2. Root Shell (`su`)
+ * 3. System Radio Testing Menu (`RadioInfo`) Fallback
  */
 class NetworkModeManager(private val context: Context) {
 
     private var service: IUserService? = null
 
-    private val userServiceArgs = Shizuku.UserServiceArgs(
-        ComponentName(context.packageName, NetworkModeUserService::class.java.name),
-    )
-        .daemon(false)
-        .processNameSuffix("networkmode")
-        .debuggable(false)
-        .version(1)
+    private val userServiceArgs by lazy {
+        Shizuku.UserServiceArgs(
+            ComponentName(context.packageName, NetworkModeUserService::class.java.name),
+        )
+            .daemon(false)
+            .processNameSuffix("networkmode")
+            .debuggable(false)
+            .version(1)
+    }
 
     private var pendingConnect: kotlin.coroutines.Continuation<Boolean>? = null
 
@@ -51,14 +60,10 @@ class NetworkModeManager(private val context: Context) {
 
     private suspend fun ensureBound(): Boolean {
         if (service != null) return true
-        if (!ShizukuHelper.hasPermission()) {
-            AppLogger.w("NetworkModeManager", "Cannot bind service: Shizuku permission missing")
-            return false
-        }
+        if (!ShizukuHelper.hasPermission()) return false
         return suspendCancellableCoroutine { cont ->
             pendingConnect = cont
             try {
-                AppLogger.i("NetworkModeManager", "Binding Shizuku user service...")
                 Shizuku.bindUserService(userServiceArgs, connection)
             } catch (t: Throwable) {
                 AppLogger.e("NetworkModeManager", "Failed to bind Shizuku user service", t)
@@ -69,69 +74,105 @@ class NetworkModeManager(private val context: Context) {
     }
 
     suspend fun getAvailableSubIds(): List<Int> {
-        if (!ShizukuHelper.hasPermission()) return listOf(1)
-        if (!ensureBound()) return listOf(1)
-        val svc = service ?: return listOf(1)
-        return try {
-            val ids = svc.availableSubIds
-            AppLogger.i("NetworkModeManager", "Retrieved active Sub IDs: ${ids.toList()}")
-            if (ids.isNotEmpty()) ids.toList() else listOf(1)
-        } catch (t: Throwable) {
-            AppLogger.e("NetworkModeManager", "Failed to get available sub IDs", t)
-            listOf(1)
+        if (ShizukuHelper.hasPermission() && ensureBound()) {
+            service?.let { svc ->
+                try {
+                    val ids = svc.availableSubIds
+                    if (ids.isNotEmpty()) return ids.toList()
+                } catch (_: Throwable) {
+                }
+            }
+        }
+        return listOf(1, 2)
+    }
+
+    suspend fun switchTo(mode: NetworkMode, overrideSubId: Int? = null): SwitchResult = withContext(Dispatchers.IO) {
+        AppLogger.i("NetworkModeManager", "Initiating network mode switch to $mode (subId=$overrideSubId)")
+
+        // Strategy 1: Shizuku IPC Service
+        if (ShizukuHelper.hasPermission() && ensureBound()) {
+            val svc = service
+            if (svc != null) {
+                try {
+                    val subId = overrideSubId ?: run {
+                        val detected = svc.defaultDataSubId
+                        if (detected != -1 && detected != 2147483647) detected
+                        else {
+                            val available = svc.availableSubIds
+                            if (available.isNotEmpty()) available[0] else 1
+                        }
+                    }
+                    val result = svc.setNetworkMode(subId, mode.name)
+                    if (result.startsWith("OK")) {
+                        return@withContext SwitchResult.Success("Switched to ${mode.name} via Shizuku ($result)")
+                    }
+                } catch (t: Throwable) {
+                    AppLogger.w("NetworkModeManager", "Shizuku switch failed, falling back to Root/RadioInfo", t)
+                }
+            }
+        }
+
+        // Strategy 2: Direct Root Shell (`su`) Execution
+        val rootResult = tryRootSwitch(mode, overrideSubId ?: 1)
+        if (rootResult is SwitchResult.Success) {
+            return@withContext rootResult
+        }
+
+        // Strategy 3: System Radio Testing Menu (`RadioInfo`) Fallback (Standalone unrooted device)
+        val launched = launchRadioInfo(context)
+        if (launched) {
+            SwitchResult.Success("Opened System Radio Info. Select ${mode.name} in Network Type menu.")
+        } else {
+            SwitchResult.Failure("Copy ADB command or grant Shizuku permission to switch.")
         }
     }
 
-    suspend fun switchTo(mode: NetworkMode, overrideSubId: Int? = null): SwitchResult {
-        AppLogger.i("NetworkModeManager", "Initiating network mode switch to $mode (overrideSubId=$overrideSubId)")
-        
-        if (!ShizukuHelper.isAvailable()) {
-            val err = "Shizuku is not running. Start it from the Shizuku app first."
-            AppLogger.e("NetworkModeManager", err)
-            return SwitchResult.Failure(err)
+    private fun tryRootSwitch(mode: NetworkMode, subId: Int): SwitchResult {
+        val modeId = when (mode) {
+            NetworkMode.NR_ONLY -> 26
+            NetworkMode.NR_LTE -> 27
+            NetworkMode.LTE_ONLY -> 11
         }
-        if (!ShizukuHelper.hasPermission()) {
-            val err = "Shizuku permission not granted yet."
-            AppLogger.e("NetworkModeManager", err)
-            return SwitchResult.Failure(err)
-        }
-        if (!ensureBound()) {
-            val err = "Could not bind the privileged Shizuku service."
-            AppLogger.e("NetworkModeManager", err)
-            return SwitchResult.Failure(err)
-        }
-        val svc = service ?: return SwitchResult.Failure("Service unavailable.")
-
         return try {
-            val subId = overrideSubId ?: run {
-                val detected = svc.defaultDataSubId
-                if (detected != -1 && detected != 2147483647) {
-                    detected
+            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd phone set-preferred-network-mode $modeId"))
+            val exitCode = process.waitFor()
+            if (exitCode == 0) {
+                AppLogger.i("NetworkModeManager", "Successfully set network mode $mode via Root shell")
+                SwitchResult.Success("Applied ${mode.name} via Root shell.")
+            } else {
+                val process2 = Runtime.getRuntime().exec(arrayOf("su", "-c", "settings put global preferred_network_mode$subId $modeId"))
+                val exit2 = process2.waitFor()
+                if (exit2 == 0) {
+                    SwitchResult.Success("Applied ${mode.name} via Root settings.")
                 } else {
-                    val available = svc.availableSubIds
-                    if (available.isNotEmpty()) available[0] else 1
+                    SwitchResult.Failure("Root execution returned code $exitCode")
                 }
             }
-            AppLogger.i("NetworkModeManager", "Using target subId: $subId for mode $mode")
-            val result = svc.setNetworkMode(subId, mode.name)
-            if (result.startsWith("OK")) {
-                AppLogger.i("NetworkModeManager", "Switch successful: $result")
-                SwitchResult.Success(result)
-            } else {
-                AppLogger.e("NetworkModeManager", "Switch failed: $result")
-                SwitchResult.Failure(result)
-            }
         } catch (t: Throwable) {
-            val err = "${t.javaClass.simpleName}: ${t.message}"
-            AppLogger.e("NetworkModeManager", "Exception during mode switch", t)
-            SwitchResult.Failure(err)
+            SwitchResult.Failure("Root unavailable.")
         }
+    }
+
+    fun launchRadioInfo(context: Context): Boolean {
+        val intents = listOf(
+            Intent().setClassName("com.android.settings", "com.android.settings.RadioInfo"),
+            Intent().setClassName("com.android.settings", "com.android.settings.Settings\$TestingSettingsActivity"),
+            Intent(Intent.ACTION_VIEW, Uri.parse("tel:*#*#4636#*#*")),
+        )
+        for (intent in intents) {
+            try {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+                return true
+            } catch (_: Throwable) {
+            }
+        }
+        return false
     }
 
     fun unbind() {
         try {
             Shizuku.unbindUserService(userServiceArgs, connection, true)
-            AppLogger.i("NetworkModeManager", "Unbound Shizuku user service")
         } catch (_: Throwable) {
         }
         service = null

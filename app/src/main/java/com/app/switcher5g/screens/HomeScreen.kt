@@ -114,7 +114,6 @@ fun HomeScreenContent(prefs: AppPreferences) {
     var isSwitching by remember { mutableStateOf(false) }
     var isScanningSims by remember { mutableStateOf(false) }
     var shizukuReady by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
-    var useWheelPicker by remember { mutableStateOf(prefs.useWheelPicker) }
     var showSetupDialog by remember { mutableStateOf(false) }
 
     val directAdbCommand = remember(selectedMode, selectedSubId) {
@@ -183,9 +182,8 @@ fun HomeScreenContent(prefs: AppPreferences) {
             // Setup / Status Pill Badge
             Surface(
                 shape = CircleShape,
-                color = if (prefs.activationMethod == ActivationMethod.SHIZUKU && shizukuReady) MaterialTheme.colorScheme.primaryContainer
-                else if (prefs.activationMethod == ActivationMethod.DIRECT_ADB) MaterialTheme.colorScheme.tertiaryContainer
-                else MaterialTheme.colorScheme.errorContainer,
+                color = if (shizukuReady) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.tertiaryContainer,
                 modifier = Modifier
                     .bouncyClickable(scaleDown = 0.92f) { showSetupDialog = true }
                     .shadow(4.dp, CircleShape),
@@ -196,54 +194,78 @@ fun HomeScreenContent(prefs: AppPreferences) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = if (prefs.activationMethod == ActivationMethod.DIRECT_ADB) Icons.Rounded.Terminal
-                        else if (shizukuReady) Icons.Rounded.CheckCircle else Icons.Rounded.Warning,
+                        imageVector = if (shizukuReady) Icons.Rounded.CheckCircle else Icons.Rounded.Security,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = if (prefs.activationMethod == ActivationMethod.SHIZUKU && shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer
-                        else if (prefs.activationMethod == ActivationMethod.DIRECT_ADB) MaterialTheme.colorScheme.onTertiaryContainer
-                        else MaterialTheme.colorScheme.onErrorContainer,
+                        tint = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
                     )
                     Text(
-                        text = if (prefs.activationMethod == ActivationMethod.DIRECT_ADB) "Direct ADB"
-                        else if (shizukuReady) "Shizuku Ready" else "Setup Service",
+                        text = if (shizukuReady) "Shizuku Active" else "Setup / ADB",
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                        color = if (prefs.activationMethod == ActivationMethod.SHIZUKU && shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer
-                        else if (prefs.activationMethod == ActivationMethod.DIRECT_ADB) MaterialTheme.colorScheme.onTertiaryContainer
-                        else MaterialTheme.colorScheme.onErrorContainer,
+                        color = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
                     )
                 }
             }
         }
 
-        // Activation Method Choice Segment
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(1)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
-            shape = RoundedCornerShape(20.dp),
-        ) {
-            Row(
+        // ONE-TIME Setup Banner (Appears only 1 time on Home Screen until dismissed)
+        if (!prefs.hasDismissedSetupCard && !shizukuReady) {
+            ElevatedCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    .entrance(1)
+                    .border(1.dp, MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
+                shape = RoundedCornerShape(20.dp),
             ) {
-                FilterChip(
-                    selected = prefs.activationMethod == ActivationMethod.SHIZUKU,
-                    onClick = { prefs.activationMethod = ActivationMethod.SHIZUKU },
-                    leadingIcon = { Icon(Icons.Rounded.Security, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                    label = { Text("Shizuku Service", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)) },
-                    modifier = Modifier.weight(1f),
-                )
-                FilterChip(
-                    selected = prefs.activationMethod == ActivationMethod.DIRECT_ADB,
-                    onClick = { prefs.activationMethod = ActivationMethod.DIRECT_ADB },
-                    leadingIcon = { Icon(Icons.Rounded.Terminal, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                    label = { Text("Direct ADB Command", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)) },
-                    modifier = Modifier.weight(1f),
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Rounded.Security,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.tertiary,
+                        )
+                        Column {
+                            Text(
+                                text = "Setup Shizuku or ADB",
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            )
+                            Text(
+                                text = "Optional for 1-tap in-app switching, or use Root/RadioInfo standalone.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TextButton(onClick = { showSetupDialog = true }) {
+                            Text("Setup")
+                        }
+                        IconButton(
+                            onClick = { prefs.hasDismissedSetupCard = true },
+                            modifier = Modifier.size(28.dp),
+                        ) {
+                            Icon(
+                                Icons.Rounded.Close,
+                                contentDescription = "Dismiss Banner",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -326,7 +348,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
             }
         }
 
-        // Network Mode Selector Section
+        // Network Mode Selector Section (Wheel Scroller)
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
@@ -341,56 +363,25 @@ fun HomeScreenContent(prefs: AppPreferences) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "Network Mode",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = if (useWheelPicker) "Wheel" else "Slide Bar",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Switch(
-                            checked = useWheelPicker,
-                            onCheckedChange = {
-                                useWheelPicker = it
-                                prefs.useWheelPicker = it
-                            },
-                            modifier = Modifier.scale(0.8f),
-                        )
-                    }
-                }
+                Text(
+                    text = "Preferred Network Mode",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
 
-                if (useWheelPicker) {
-                    val modes = NetworkMode.entries
-                    val labels = remember<List<String>> { modes.map { it.label() } }
-                    val selectedIndex = modes.indexOf(selectedMode).coerceAtLeast(0)
+                val modes = NetworkMode.entries
+                val labels = remember<List<String>> { modes.map { it.label() } }
+                val selectedIndex = modes.indexOf(selectedMode).coerceAtLeast(0)
 
-                    FancyWheelScroller(
-                        items = labels,
-                        selectedIndex = selectedIndex,
-                        onSelectedIndexChange = { index ->
-                            if (index in modes.indices) {
-                                selectedMode = modes[index]
-                            }
-                        },
-                    )
-                } else {
-                    FancyModeSlideBar(
-                        selectedMode = selectedMode,
-                        onModeSelected = { selectedMode = it },
-                    )
-                }
+                FancyWheelScroller(
+                    items = labels,
+                    selectedIndex = selectedIndex,
+                    onSelectedIndexChange = { index ->
+                        if (index in modes.indices) {
+                            selectedMode = modes[index]
+                        }
+                    },
+                )
 
                 Text(
                     text = selectedMode.description(),
@@ -402,100 +393,41 @@ fun HomeScreenContent(prefs: AppPreferences) {
             }
         }
 
-        // Action Section (Shizuku Binder Call vs Direct ADB Copy Command)
-        if (prefs.activationMethod == ActivationMethod.SHIZUKU) {
-            Button(
-                enabled = !isSwitching,
-                onClick = {
-                    if (!shizukuReady) {
-                        showSetupDialog = true
-                        return@Button
+        // Standalone Apply Button (Works with Shizuku, Root, or RadioInfo Testing Menu!)
+        Button(
+            enabled = !isSwitching,
+            onClick = {
+                isSwitching = true
+                statusText = "Applying network mode switch…"
+                scope.launch {
+                    val result = manager.switchTo(selectedMode, selectedSubId)
+                    statusText = when (result) {
+                        is SwitchResult.Success -> "✅ ${result.message}"
+                        is SwitchResult.Failure -> "⚠️ ${result.reason}"
                     }
-                    isSwitching = true
-                    statusText = "Connecting to Shizuku IPC service…"
-                    scope.launch {
-                        val result = manager.switchTo(selectedMode, selectedSubId)
-                        statusText = when (result) {
-                            is SwitchResult.Success -> "✅ ${result.message}"
-                            is SwitchResult.Failure -> "⚠️ ${result.reason}"
-                        }
-                        isSwitching = false
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .entrance(4)
-                    .bouncyClickable(scaleDown = 0.94f) {},
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (isSwitching) {
-                        FancyCircularOrbLoader(size = 20.dp)
-                    } else {
-                        Icon(Icons.Rounded.Bolt, contentDescription = null)
-                    }
-                    Text(
-                        text = if (isSwitching) "Applying Network Mode…" else "Apply via Shizuku",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    )
+                    isSwitching = false
                 }
-            }
-        } else {
-            // Direct ADB Command Generator Card
-            ElevatedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .entrance(4)
-                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), RoundedCornerShape(20.dp)),
-                shape = RoundedCornerShape(20.dp),
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .entrance(4)
+                .bouncyClickable(scaleDown = 0.94f) {},
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "Direct ADB Switch Command",
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-
-                        Button(
-                            onClick = {
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                clipboard.setPrimaryClip(ClipData.newPlainText("ADB Switch Command", directAdbCommand))
-                                Toast.makeText(context, "Copied ADB command for ${selectedMode.name}!", Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.bouncyClickable {},
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                        ) {
-                            Icon(Icons.Rounded.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Copy Command", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
-                        }
-                    }
-
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = directAdbCommand,
-                            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(12.dp),
-                        )
-                    }
+                if (isSwitching) {
+                    FancyCircularOrbLoader(size = 20.dp)
+                } else {
+                    Icon(Icons.Rounded.Bolt, contentDescription = null)
                 }
+                Text(
+                    text = if (isSwitching) "Applying Network Mode…" else "Apply Network Mode",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                )
             }
         }
 

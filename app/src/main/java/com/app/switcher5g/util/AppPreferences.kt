@@ -76,11 +76,11 @@ class AppPreferences(context: Context) {
             prefs.edit().putBoolean(KEY_AUTO_SCAN_SIMS, value).apply()
         }
 
-    var useWheelPicker: Boolean
-        get() = useWheelPickerState
+    var hasDismissedSetupCard: Boolean
+        get() = hasDismissedSetupCardState
         set(value) {
-            useWheelPickerState = value
-            prefs.edit().putBoolean(KEY_USE_WHEEL_PICKER, value).apply()
+            hasDismissedSetupCardState = value
+            prefs.edit().putBoolean(KEY_HAS_DISMISSED_SETUP, value).apply()
         }
 
     var autoCheckUpdates: Boolean
@@ -129,7 +129,7 @@ class AppPreferences(context: Context) {
     var autoScanSimsState by mutableStateOf(readAutoScanSims())
         private set
 
-    var useWheelPickerState by mutableStateOf(readUseWheelPicker())
+    var hasDismissedSetupCardState by mutableStateOf(readHasDismissedSetupCard())
         private set
 
     var autoCheckUpdatesState by mutableStateOf(readAutoCheckUpdates())
@@ -172,7 +172,7 @@ class AppPreferences(context: Context) {
 
     private fun readAutoScanSims(): Boolean = prefs.getBoolean(KEY_AUTO_SCAN_SIMS, true)
 
-    private fun readUseWheelPicker(): Boolean = prefs.getBoolean(KEY_USE_WHEEL_PICKER, false)
+    private fun readHasDismissedSetupCard(): Boolean = prefs.getBoolean(KEY_HAS_DISMISSED_SETUP, false)
 
     private fun readAutoCheckUpdates(): Boolean = prefs.getBoolean(KEY_AUTO_CHECK_UPDATES, true)
 
@@ -189,7 +189,7 @@ class AppPreferences(context: Context) {
         private const val KEY_COLOR_STYLE = "color_style"
         private const val KEY_APP_FONT = "app_font"
         private const val KEY_AUTO_SCAN_SIMS = "auto_scan_sims"
-        private const val KEY_USE_WHEEL_PICKER = "use_wheel_picker"
+        private const val KEY_HAS_DISMISSED_SETUP = "has_dismissed_setup"
         private const val KEY_AUTO_CHECK_UPDATES = "auto_check_updates"
         private const val KEY_USE_DYNAMIC_THEME = "use_dynamic_theme"
         private const val KEY_ENABLE_ANIMATIONS = "enable_animations"

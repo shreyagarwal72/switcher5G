@@ -80,66 +80,11 @@ fun SettingsScreen(
             )
         }
 
-        // 0. Activation Method Selector (Shizuku vs Direct ADB)
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(1)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
-            shape = RoundedCornerShape(24.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon(
-                        Icons.Rounded.Build,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                    Text(
-                        text = "Activation & Execution Method",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    )
-                }
-
-                Text(
-                    text = "Choose how network mode changes are executed on your device:",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    FilterChip(
-                        selected = prefs.activationMethod == ActivationMethod.SHIZUKU,
-                        onClick = { prefs.activationMethod = ActivationMethod.SHIZUKU },
-                        leadingIcon = { Icon(Icons.Rounded.Security, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                        label = { Text("Shizuku Service") },
-                        modifier = Modifier.weight(1f),
-                    )
-                    FilterChip(
-                        selected = prefs.activationMethod == ActivationMethod.DIRECT_ADB,
-                        onClick = { prefs.activationMethod = ActivationMethod.DIRECT_ADB },
-                        leadingIcon = { Icon(Icons.Rounded.Terminal, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                        label = { Text("Direct ADB") },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-        }
-
         // 1. Theme & Appearance
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(2)
+                .entrance(1)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -252,7 +197,7 @@ fun SettingsScreen(
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(3)
+                .entrance(2)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -319,7 +264,7 @@ fun SettingsScreen(
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(4)
+                .entrance(3)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -337,13 +282,13 @@ fun SettingsScreen(
                         tint = MaterialTheme.colorScheme.secondary,
                     )
                     Text(
-                        text = "Shizuku & ADB Commands Guide",
+                        text = "Shizuku & ADB Setup",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
 
                 Text(
-                    text = "Configure Shizuku service, permission authorizations, and copy direct ADB switch commands.",
+                    text = "Optional helper setup for Shizuku service, permissions, and direct ADB commands.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -356,7 +301,7 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Rounded.Terminal, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Open Activation & ADB Setup Dialog")
+                    Text("Open Shizuku & ADB Setup Dialog")
                 }
             }
         }
