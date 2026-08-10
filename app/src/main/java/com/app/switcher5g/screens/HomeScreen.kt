@@ -116,6 +116,8 @@ fun HomeScreenContent(prefs: AppPreferences) {
     var shizukuReady by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
     var showSetupDialog by remember { mutableStateOf(false) }
     var showManual5gDialog by remember { mutableStateOf(false) }
+    var updateInfo by remember { mutableStateOf<com.app.switcher5g.update.UpdateInfo?>(null) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
 
     val directAdbCommand = remember(selectedMode, selectedSubId) {
         val subParam = selectedSubId?.let { " --ei subId $it" } ?: ""
@@ -129,6 +131,13 @@ fun HomeScreenContent(prefs: AppPreferences) {
             availableSubIds = ids
             if (ids.isNotEmpty()) selectedSubId = ids[0]
             isScanningSims = false
+        }
+        if (prefs.autoCheckUpdates) {
+            val info = com.app.switcher5g.update.UpdateManager.checkForUpdates("1.0.0")
+            if (info.hasUpdate) {
+                updateInfo = info
+                showUpdateDialog = true
+            }
         }
     }
 
@@ -147,6 +156,13 @@ fun HomeScreenContent(prefs: AppPreferences) {
         Manual5gFirstTimeDialog(
             onDismissRequest = { showManual5gDialog = false },
             onDontShowAgain = { dontShow -> if (dontShow) prefs.hasSeenManual5gDialog = true },
+        )
+    }
+
+    if (showUpdateDialog && updateInfo != null) {
+        com.app.switcher5g.ui.components.UpdateAvailableDialog(
+            updateInfo = updateInfo!!,
+            onDismissRequest = { showUpdateDialog = false },
         )
     }
 
@@ -469,68 +485,11 @@ fun HomeScreenContent(prefs: AppPreferences) {
             )
         }
 
-        // Combined All-in-One ADB Command Card
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(6)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
-            shape = RoundedCornerShape(20.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "Combined ADB Command (1-Tap)",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-
-                    IconButton(
-                        onClick = {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            clipboard.setPrimaryClip(ClipData.newPlainText("ADB Command", directAdbCommand))
-                            Toast.makeText(context, "Command copied to clipboard!", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.size(32.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.ContentCopy,
-                            contentDescription = "Copy ADB Command",
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = directAdbCommand,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp,
-                        ),
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(10.dp),
-                    )
-                }
-            }
-        }
-
         // Status Card
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(7),
+                .entrance(6),
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {

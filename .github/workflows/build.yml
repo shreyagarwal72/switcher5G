@@ -1,4 +1,4 @@
-name: Build APK
+name: Build & Release Signed APK
 
 on:
   push:
@@ -29,20 +29,20 @@ jobs:
         with:
           gradle-version: "8.7"
 
-      - name: Build debug APK
-        run: gradle assembleDebug --no-daemon
+      - name: Build Release APK
+        run: gradle assembleRelease --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: switcher5g-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: switcher5g-release-apk
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
-      - name: Create or Update GitHub Release with APK
+      - name: Create or Update GitHub Release with Signed APK
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "v1.0.0"
-          name: "Switcher 5G Release v1.0.0"
-          files: app/build/outputs/apk/debug/*.apk
+          name: "Switcher 5G Release v1.0.0 (Final Release)"
+          files: app/build/outputs/apk/release/*.apk
           generate_release_notes: true
