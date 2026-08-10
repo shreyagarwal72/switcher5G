@@ -3,7 +3,6 @@ package com.app.switcher5g.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,12 +13,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.switcher5g.network.NetworkMode
@@ -30,6 +28,7 @@ import com.app.switcher5g.ui.components.BottomBarItem
 import com.app.switcher5g.ui.components.FancyCircularOrbLoader
 import com.app.switcher5g.ui.components.FancyLiquidProgressBar
 import com.app.switcher5g.ui.components.FancyPulseLoader
+import com.app.switcher5g.ui.components.FancyWheelScroller
 import com.app.switcher5g.ui.components.FloatingDepthBottomBar
 import com.app.switcher5g.update.UpdateInfo
 import com.app.switcher5g.update.UpdateManager
@@ -419,78 +418,46 @@ fun HomeScreenContent() {
             }
         }
 
-        // Network Mode Options
+        // FancyWheelScroller Network Mode Selector
         Text(
             text = "Select Preferred Network Mode",
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onBackground,
         )
 
-        NetworkMode.entries.forEach { mode ->
-            val isSelected = selectedMode == mode
-            val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
-
-            ElevatedCard(
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(2.dp, borderColor, RoundedCornerShape(20.dp))
-                    .clip(RoundedCornerShape(20.dp))
-                    .clickable { selectedMode = mode },
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = if (isSelected) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surface,
-                ),
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(
-                                    if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = when (mode) {
-                                    NetworkMode.NR_ONLY -> Icons.Default.Speed
-                                    NetworkMode.NR_LTE -> Icons.Default.CellTower
-                                    NetworkMode.LTE_ONLY -> Icons.Default.SignalCellular4Bar
-                                },
-                                contentDescription = null,
-                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
+                val modes = NetworkMode.entries
+                val labels = remember { modes.map { it.label() } }
+                val selectedIndex = modes.indexOf(selectedMode).coerceAtLeast(0)
 
-                        Column {
-                            Text(
-                                text = mode.label(),
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            )
-                            Text(
-                                text = mode.description(),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                FancyWheelScroller(
+                    items = labels,
+                    selectedIndex = selectedIndex,
+                    onSelectedIndexChange = { index ->
+                        if (index in modes.indices) {
+                            selectedMode = modes[index]
                         }
-                    }
+                    },
+                )
 
-                    RadioButton(
-                        selected = isSelected,
-                        onClick = { selectedMode = mode },
-                    )
-                }
+                // Description for current centered/selected mode
+                Text(
+                    text = selectedMode.description(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
             }
         }
 
