@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DeleteSweep
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -72,7 +71,7 @@ fun DevLogsScreen(modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 )
                 Text(
-                    text = "Total: ${logsList.size} | Errors: $errorCount | Warnings: $warnCount",
+                    text = "Total: ${logsList.size} • Errors: $errorCount • Warnings: $warnCount",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

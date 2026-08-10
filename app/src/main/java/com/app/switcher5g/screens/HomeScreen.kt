@@ -37,6 +37,7 @@ import com.app.switcher5g.ui.components.FloatingDepthBottomBar
 import com.app.switcher5g.update.UpdateInfo
 import com.app.switcher5g.update.UpdateManager
 import com.app.switcher5g.util.AppLogger
+import com.app.switcher5g.util.MarkdownUtils
 import kotlinx.coroutines.launch
 
 @Composable
@@ -115,10 +116,15 @@ fun HomeScreenContent() {
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Top Header Card
+        // Top Header Card (Stride Stride-style surface container card)
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
+                .border(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                    RoundedCornerShape(24.dp),
+                )
                 .shadow(8.dp, RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -186,7 +192,7 @@ fun HomeScreenContent() {
                     }
 
                     Text(
-                        text = "Switch between 5G SA (NR), 5G NSA (NR/LTE), and 4G (LTE) instantly using privileged Shizuku shell IPC.",
+                        text = "Switch between **5G SA (NR)**, **5G NSA (NR/LTE)**, and **4G (LTE)** instantly using privileged Shizuku shell IPC.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -238,9 +244,11 @@ fun HomeScreenContent() {
             }
         }
 
-        // Auto Update Card Facility
+        // GitHub Auto Update Checker Facility (Clean M3 Stride-style surface card)
         ElevatedCard(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
             shape = RoundedCornerShape(20.dp),
         ) {
             Column(
@@ -309,7 +317,7 @@ fun HomeScreenContent() {
 
                             if (info.releaseNotes.isNotBlank()) {
                                 Text(
-                                    text = info.releaseNotes,
+                                    text = MarkdownUtils.parseMarkdown(info.releaseNotes),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (info.hasUpdate) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -364,7 +372,9 @@ fun HomeScreenContent() {
 
         // Active SIM Card Selector Section
         ElevatedCard(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
             shape = RoundedCornerShape(20.dp),
         ) {
             Column(
@@ -441,7 +451,9 @@ fun HomeScreenContent() {
 
         // Network Mode Selector Section (Material 3 Fancy Slide Bar + Wheel Scroller Toggle)
         ElevatedCard(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(
