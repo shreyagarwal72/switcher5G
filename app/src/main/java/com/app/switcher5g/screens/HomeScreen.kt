@@ -1,6 +1,11 @@
 package com.app.switcher5g.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -13,27 +18,33 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.network.NetworkModeManager
 import com.app.switcher5g.network.ShizukuHelper
 import com.app.switcher5g.network.SwitchResult
-import com.app.switcher5g.ui.components.BottomBarItem
 import com.app.switcher5g.ui.components.FancyCircularOrbLoader
+import com.app.switcher5g.ui.components.FancyExpressiveWheelLoader
 import com.app.switcher5g.ui.components.FancyLiquidProgressBar
 import com.app.switcher5g.ui.components.FancyModeSlideBar
 import com.app.switcher5g.ui.components.FancyPulseLoader
 import com.app.switcher5g.ui.components.FancyWheelScroller
-import com.app.switcher5g.ui.components.FloatingDepthBottomBar
+import com.app.switcher5g.ui.components.NetworkModeSwitchLoadingOverlay
+import com.app.switcher5g.ui.components.StrideFloatingNav
+import com.app.switcher5g.ui.components.bouncyClickable
+import com.app.switcher5g.ui.components.entrance
 import com.app.switcher5g.update.UpdateInfo
 import com.app.switcher5g.update.UpdateManager
 import com.app.switcher5g.util.AppLogger
@@ -42,35 +53,45 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
-    var selectedTab by remember { mutableIntStateOf(0) }
-
-    val navItems = remember {
-        listOf(
-            BottomBarItem(label = "Switcher", icon = Icons.Default.CellTower),
-            BottomBarItem(label = "Dev Logs", icon = Icons.Default.BugReport),
-        )
-    }
+    val navController = rememberNavController()
+    val backStack by navController.currentBackStackEntryAsState()
+    val currentRoute = backStack?.destination?.route ?: "home"
 
     Box(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.weight(1f)) {
-                if (selectedTab == 0) {
-                    HomeScreenContent()
-                } else {
-                    DevLogsScreen()
-                }
+        NavHost(
+            navController = navController,
+            startDestination = "home",
+            modifier = Modifier.fillMaxSize(),
+            enterTransition = {
+                fadeIn(tween(150)) + slideInVertically(tween(210)) { it / 16 } +
+                        scaleIn(initialScale = 0.98f, animationSpec = tween(210))
+            },
+            exitTransition = { fadeOut(tween(80)) },
+        ) {
+            composable("home") {
+                HomeScreenContent()
             }
-            Spacer(modifier = Modifier.height(72.dp))
+            composable("logs") {
+                DevLogsScreen()
+            }
         }
 
-        FloatingDepthBottomBar(
-            items = navItems,
-            selectedIndex = selectedTab,
-            onSelect = { selectedTab = it },
+        StrideFloatingNav(
+            currentRoute = currentRoute,
+            onNavigate = { route -> navController.navigateSingleTop(route) },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 8.dp),
+                .navigationBarsPadding()
+                .padding(bottom = 16.dp),
         )
+    }
+}
+
+private fun NavHostController.navigateSingleTop(route: String) {
+    navigate(route) {
+        popUpTo(graph.startDestinationId) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }
 
@@ -109,17 +130,25 @@ fun HomeScreenContent() {
         onDispose { manager.unbind() }
     }
 
+    // Modal M3 Expressive loading overlay during network mode switch via Shizuku
+    NetworkModeSwitchLoadingOverlay(
+        isSwitching = isSwitching,
+        modeName = selectedMode.label(),
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(bottom = 80.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Top Header Card (Stride Stride-style surface container card)
+        // Top Header Card (Stride-style staggered entrance card)
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
+                .entrance(0)
                 .border(
                     1.dp,
                     MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
@@ -192,7 +221,7 @@ fun HomeScreenContent() {
                     }
 
                     Text(
-                        text = "Switch between **5G SA (NR)**, **5G NSA (NR/LTE)**, and **4G (LTE)** instantly using privileged Shizuku shell IPC.",
+                        text = MarkdownUtils.parseMarkdown("Switch between **5G SA (NR)**, **5G NSA (NR/LTE)**, and **4G (LTE)** instantly using privileged Shizuku shell IPC."),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -205,6 +234,7 @@ fun HomeScreenContent() {
             ElevatedCard(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .entrance(1)
                     .border(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f), RoundedCornerShape(20.dp)),
                 colors = CardDefaults.elevatedCardColors(
                     containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
@@ -236,6 +266,7 @@ fun HomeScreenContent() {
                             ShizukuHelper.requestPermission()
                             shizukuReady = ShizukuHelper.hasPermission()
                         },
+                        modifier = Modifier.bouncyClickable {},
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     ) {
                         Text("Grant Shizuku Permission")
@@ -244,10 +275,11 @@ fun HomeScreenContent() {
             }
         }
 
-        // GitHub Auto Update Checker Facility (Clean M3 Stride-style surface card)
+        // GitHub Auto Update Checker Facility
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
+                .entrance(2)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
             shape = RoundedCornerShape(20.dp),
         ) {
@@ -287,6 +319,7 @@ fun HomeScreenContent() {
                                     isCheckingUpdate = false
                                 }
                             },
+                            modifier = Modifier.bouncyClickable {},
                         ) {
                             Text("Check Updates")
                         }
@@ -346,7 +379,9 @@ fun HomeScreenContent() {
                                                 isDownloadingUpdate = false
                                             }
                                         },
-                                        modifier = Modifier.fillMaxWidth(),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .bouncyClickable {},
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = if (info.hasUpdate) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
                                         ),
@@ -374,6 +409,7 @@ fun HomeScreenContent() {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
+                .entrance(3)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
             shape = RoundedCornerShape(20.dp),
         ) {
@@ -453,6 +489,7 @@ fun HomeScreenContent() {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
+                .entrance(4)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
         ) {
@@ -522,25 +559,7 @@ fun HomeScreenContent() {
             }
         }
 
-        // Animated Fancy Loader during mode switch
-        AnimatedVisibility(visible = isSwitching) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                FancyLiquidProgressBar(progress = 0f, isIndeterminate = true, modifier = Modifier.fillMaxWidth())
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    FancyCircularOrbLoader(size = 20.dp)
-                    Text("Applying ${selectedMode.name} via Shizuku shell IPC…", style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-
-        // Apply Button
+        // Apply Button with bouncyClickable spring animation
         Button(
             enabled = !isSwitching,
             onClick = {
@@ -558,7 +577,8 @@ fun HomeScreenContent() {
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
+                .height(52.dp)
+                .bouncyClickable(scaleDown = 0.94f) {},
             shape = RoundedCornerShape(16.dp),
         ) {
             Row(
@@ -579,7 +599,9 @@ fun HomeScreenContent() {
 
         // Status Card
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .entrance(5),
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {

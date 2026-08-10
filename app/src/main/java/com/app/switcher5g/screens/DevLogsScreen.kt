@@ -9,7 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
@@ -26,6 +26,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.app.switcher5g.ui.components.bouncyClickable
+import com.app.switcher5g.ui.components.entrance
 import com.app.switcher5g.util.AppLogger
 import com.app.switcher5g.util.LogEntry
 import com.app.switcher5g.util.LogLevel
@@ -56,12 +58,15 @@ fun DevLogsScreen(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(bottom = 80.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // Header & Actions
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .entrance(0),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -84,6 +89,7 @@ fun DevLogsScreen(modifier: Modifier = Modifier) {
                         clipboard.setPrimaryClip(ClipData.newPlainText("Switcher5G Logs", text))
                         Toast.makeText(context, "Copied ${logsList.size} logs to clipboard", Toast.LENGTH_SHORT).show()
                     },
+                    modifier = Modifier.bouncyClickable {},
                 ) {
                     Icon(Icons.Default.ContentCopy, contentDescription = "Copy Logs", tint = MaterialTheme.colorScheme.primary)
                 }
@@ -92,6 +98,7 @@ fun DevLogsScreen(modifier: Modifier = Modifier) {
                         AppLogger.clear()
                         Toast.makeText(context, "Logs cleared", Toast.LENGTH_SHORT).show()
                     },
+                    modifier = Modifier.bouncyClickable {},
                 ) {
                     Icon(Icons.Default.DeleteSweep, contentDescription = "Clear Logs", tint = MaterialTheme.colorScheme.error)
                 }
@@ -102,7 +109,9 @@ fun DevLogsScreen(modifier: Modifier = Modifier) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .entrance(1),
             placeholder = { Text("Search tag, message, or exception…") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             singleLine = true,
@@ -111,7 +120,9 @@ fun DevLogsScreen(modifier: Modifier = Modifier) {
 
         // Filter Chips
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .entrance(2),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             FilterChip(
@@ -161,8 +172,8 @@ fun DevLogsScreen(modifier: Modifier = Modifier) {
                     .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(filteredLogs, key = { it.id }) { logEntry ->
-                    LogCard(entry = logEntry)
+                itemsIndexed(filteredLogs, key = { _, item -> item.id }) { index, logEntry ->
+                    LogCard(entry = logEntry, index = index)
                 }
             }
         }
@@ -170,7 +181,7 @@ fun DevLogsScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun LogCard(entry: LogEntry) {
+private fun LogCard(entry: LogEntry, index: Int) {
     var expanded by remember { mutableStateOf(false) }
 
     val (badgeColor, textColor) = when (entry.level) {
@@ -183,13 +194,14 @@ private fun LogCard(entry: LogEntry) {
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .clickable { expanded = !expanded },
+            .entrance(index + 3)
+            .bouncyClickable(scaleDown = 0.98f) { expanded = !expanded },
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Row(
