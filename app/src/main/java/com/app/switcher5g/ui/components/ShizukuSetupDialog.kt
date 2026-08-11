@@ -5,6 +5,15 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +29,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.app.switcher5g.network.Manual5gSwitchHelper
 import com.app.switcher5g.network.RootHelper
 import com.app.switcher5g.network.ShizukuHelper
 import kotlinx.coroutines.launch
@@ -90,8 +100,8 @@ fun ShizukuSetupDialog(
                         onStatusUpdated(hasPermission || isRootGranted)
                         isChecking = false
                         val statusMsg = when {
-                            hasPermission -> "✅ Shizuku active & authorized"
-                            isRootGranted -> "✅ Root shell (su) authorized"
+                            hasPermission -> "✅ Shizuku active & authorized!"
+                            isRootGranted -> "✅ Root shell (su) authorized!"
                             isAvailable -> "⚠️ Shizuku running. Authorization needed."
                             else -> "❌ Shizuku not running."
                         }
@@ -119,7 +129,7 @@ fun ShizukuSetupDialog(
         },
         title = {
             Text(
-                text = "Service Setup & Privileges",
+                text = "Service & Privilege Setup",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
             )
         },
@@ -127,126 +137,166 @@ fun ShizukuSetupDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .animateContentSize(animationSpec = spring(stiffness = 350f))
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                // Root Shell Facility Section
-                if (isRootAvailable) {
-                    Surface(
-                        shape = RoundedCornerShape(14.dp),
-                        color = if (isRootGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    imageVector = if (isRootGranted) Icons.Rounded.CheckCircle else Icons.Rounded.Terminal,
-                                    contentDescription = null,
-                                    tint = if (isRootGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
-                                )
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = if (isRootGranted) "Root Access (su) Granted" else "Root Binary (su) Detected",
-                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                        color = if (isRootGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
-                                    )
-                                    Text(
-                                        text = if (isRootGranted) "Root privilege active. 1-tap network switching enabled!" else "Device is rooted. Grant su access to switch network mode directly.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = if (isRootGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
-                                    )
-                                }
-                            }
-
-                            if (!isRootGranted) {
-                                Button(
-                                    onClick = {
-                                        scope.launch {
-                                            val granted = RootHelper.requestRootAccess()
-                                            isRootGranted = granted
-                                            onStatusUpdated(hasPermission || isRootGranted)
-                                            val msg = if (granted) "✅ Root access granted!" else "❌ Root access denied by Superuser manager."
-                                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .bouncyClickable {},
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                                ) {
-                                    Icon(Icons.Rounded.Terminal, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Grant Root (su) Permission", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Shizuku Service Setup
+                // Root Access Card (First-class alternative for users who don't want Shizuku)
                 Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = if (hasPermission) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (isRootGranted) MaterialTheme.colorScheme.primaryContainer
+                    else if (isRootAvailable) MaterialTheme.colorScheme.secondaryContainer
+                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            1.dp,
+                            if (isRootGranted) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                            RoundedCornerShape(16.dp),
+                        ),
                 ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = if (hasPermission) Icons.Rounded.CheckCircle else Icons.Rounded.Warning,
-                            contentDescription = null,
-                            tint = if (hasPermission) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary,
-                        )
-                        Column {
-                            Text(
-                                text = if (hasPermission) "Shizuku Active & Authorized"
-                                else if (isAvailable) "Shizuku Running — Authorization Needed"
-                                else "Shizuku Service Not Running",
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                color = if (hasPermission) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                text = if (hasPermission) "Ready to switch network modes via Shizuku IPC!"
-                                else if (isAvailable) "Tap 'Request Shizuku Permission' to authorize Switcher 5G."
-                                else "Start Shizuku via Wireless Debugging or ADB command.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (hasPermission) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-
-                if (!hasPermission) {
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    Column(
+                        modifier = Modifier.padding(14.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        if (isAvailable) {
-                            Button(
-                                onClick = { ShizukuHelper.requestPermission() },
-                                modifier = Modifier.bouncyClickable {},
-                            ) {
-                                Icon(Icons.Rounded.Security, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Request Shizuku Permission", style = MaterialTheme.typography.labelMedium)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = if (isRootGranted) Icons.Rounded.CheckCircle else Icons.Rounded.Terminal,
+                                contentDescription = null,
+                                tint = if (isRootGranted) MaterialTheme.colorScheme.onPrimaryContainer
+                                else if (isRootAvailable) MaterialTheme.colorScheme.onSecondaryContainer
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp),
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (isRootGranted) "Root Shell (su) Authorized"
+                                    else if (isRootAvailable) "Root Access (su) Available"
+                                    else "Root Mode (su)",
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = if (isRootGranted) MaterialTheme.colorScheme.onPrimaryContainer
+                                    else if (isRootAvailable) MaterialTheme.colorScheme.onSecondaryContainer
+                                    else MaterialTheme.colorScheme.onSurface,
+                                )
+                                Text(
+                                    text = if (isRootGranted) "Root permission granted! No Shizuku daemon required."
+                                    else if (isRootAvailable) "Don't want to use Shizuku? Grant root access to switch directly!"
+                                    else "Unrooted device. Use Shizuku, Wireless Debugging, or RadioInfo below.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (isRootGranted) MaterialTheme.colorScheme.onPrimaryContainer
+                                    else if (isRootAvailable) MaterialTheme.colorScheme.onSecondaryContainer
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                             }
-                        } else {
+                        }
+
+                        if (isRootAvailable && !isRootGranted) {
                             Button(
-                                onClick = { ShizukuHelper.launchShizukuApp(context) },
-                                modifier = Modifier.bouncyClickable {},
+                                onClick = {
+                                    scope.launch {
+                                        val granted = RootHelper.requestRootAccess()
+                                        isRootGranted = granted
+                                        onStatusUpdated(hasPermission || isRootGranted)
+                                        val msg = if (granted) "✅ Root access granted!" else "❌ Root permission denied in Superuser app."
+                                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .bouncyClickable {},
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                             ) {
-                                Icon(Icons.Rounded.Launch, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Rounded.Terminal, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Open Shizuku App", style = MaterialTheme.typography.labelMedium)
+                                Text("Grant Root (su) Access", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
+                            }
+                        }
+                    }
+                }
+
+                // Shizuku Service Setup Section
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (hasPermission) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            1.dp,
+                            if (hasPermission) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                            RoundedCornerShape(16.dp),
+                        ),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = if (hasPermission) Icons.Rounded.CheckCircle else Icons.Rounded.Security,
+                                contentDescription = null,
+                                tint = if (hasPermission) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp),
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (hasPermission) "Shizuku Active & Authorized"
+                                    else if (isAvailable) "Shizuku Running — Authorization Needed"
+                                    else "Shizuku Service Not Running",
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = if (hasPermission) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                                )
+                                Text(
+                                    text = if (hasPermission) "Ready for 1-tap network mode switching via Shizuku IPC!"
+                                    else if (isAvailable) "Tap 'Request Shizuku Permission' to authorize Switcher 5G."
+                                    else "Start Shizuku via Wireless Debugging or ADB command below.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (hasPermission) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+
+                        if (!hasPermission) {
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                if (isAvailable) {
+                                    Button(
+                                        onClick = { ShizukuHelper.requestPermission() },
+                                        modifier = Modifier.bouncyClickable {},
+                                    ) {
+                                        Icon(Icons.Rounded.Security, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Request Permission", style = MaterialTheme.typography.labelMedium)
+                                    }
+                                } else {
+                                    Button(
+                                        onClick = { ShizukuHelper.launchShizukuApp(context) },
+                                        modifier = Modifier.bouncyClickable {},
+                                    ) {
+                                        Icon(Icons.Rounded.Launch, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Open Shizuku App", style = MaterialTheme.typography.labelMedium)
+                                    }
+                                }
+
+                                OutlinedButton(
+                                    onClick = { Manual5gSwitchHelper.openRadioInfo(context) },
+                                    modifier = Modifier.bouncyClickable {},
+                                ) {
+                                    Icon(Icons.Rounded.NetworkCheck, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Use System RadioInfo", style = MaterialTheme.typography.labelMedium)
+                                }
                             }
                         }
                     }
@@ -263,13 +313,13 @@ fun ShizukuSetupDialog(
                 Text(
                     text = "Option A: Wireless Debugging (Android 11+, Recommended)\n" +
                             "Open Shizuku app -> Tap 'Pairing' under Wireless Debugging -> Enter pairing code -> Tap 'Start'.\n\n" +
-                            "Option B: ADB Terminal Execution\n" +
-                            "Connect phone to PC with USB Debugging enabled, then run the command below:",
+                            "Option B: ADB Terminal Command Execution\n" +
+                            "Connect phone to PC with USB Debugging enabled, then execute the command below:",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                // Command Selector Chips (FlowRow guarantees text wrapping and no clipping)
+                // Command Selector Chips (FlowRow guarantees non-overflow text wrapping)
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -297,7 +347,7 @@ fun ShizukuSetupDialog(
                     )
                 }
 
-                // Command Card
+                // Command Snippet Box
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -342,15 +392,22 @@ fun ShizukuSetupDialog(
                     }
                 }
 
-                // Troubleshoot / Fix Guide Box
+                // REDESIGNED Troubleshoot / "No such file or directory" Card
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
-                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateContentSize(animationSpec = spring(stiffness = 300f))
+                        .border(
+                            1.dp,
+                            MaterialTheme.colorScheme.error.copy(alpha = 0.3f),
+                            RoundedCornerShape(16.dp),
+                        ),
                 ) {
                     Column(
-                        modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -358,40 +415,59 @@ fun ShizukuSetupDialog(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Icon(
-                                    Icons.Rounded.Warning,
+                                    Icons.Rounded.HelpOutline,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(18.dp),
+                                    modifier = Modifier.size(20.dp),
                                 )
                                 Text(
                                     text = "Getting 'No such file or directory'?",
-                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onErrorContainer,
                                 )
                             }
+
                             TextButton(
                                 onClick = { showFixGuide = !showFixGuide },
-                                contentPadding = PaddingValues(0.dp),
+                                modifier = Modifier.bouncyClickable {},
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                             ) {
                                 Text(
-                                    text = if (showFixGuide) "Hide" else "Fix Steps",
-                                    style = MaterialTheme.typography.labelSmall,
+                                    text = if (showFixGuide) "Hide Steps" else "View Fix",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.error,
                                 )
                             }
                         }
 
-                        AnimatedVisibility(visible = showFixGuide) {
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(
-                                    text = "1. You MUST open the Shizuku app at least ONCE after installing so it extracts start.sh to storage.\n" +
-                                            "2. If you are already inside 'adb shell' prompt ($), select 'Inside Shell ($)' chip above so 'adb shell' prefix is omitted.\n" +
-                                            "3. Or use Wireless Debugging inside the Shizuku app (no commands needed!).",
-                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                        AnimatedVisibility(
+                            visible = showFixGuide,
+                            enter = fadeIn(tween(200)) + expandVertically(tween(250, easing = FastOutSlowInEasing)),
+                            exit = fadeOut(tween(150)) + shrinkVertically(tween(200, easing = FastOutSlowInEasing)),
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(top = 4.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                TroubleshootStepRow(
+                                    number = "1",
+                                    title = "Open Shizuku App First",
+                                    description = "You MUST open the Shizuku app at least ONCE after installation so it extracts start.sh binary script to storage.",
+                                )
+                                TroubleshootStepRow(
+                                    number = "2",
+                                    title = "Omit 'adb shell' if inside shell",
+                                    description = "If your PC terminal is already at the 'adb shell' prompt ($), select the 'Inside Shell ($)' chip above so the extra 'adb shell' command is omitted.",
+                                )
+                                TroubleshootStepRow(
+                                    number = "3",
+                                    title = "Don't want Shizuku? Use Root or System 5G",
+                                    description = "Tap 'Grant Root Access' above if rooted, or tap 'Use System RadioInfo' for 0-command manual 5G mode switching!",
                                 )
                             }
                         }
@@ -400,4 +476,43 @@ fun ShizukuSetupDialog(
             }
         },
     )
+}
+
+@Composable
+private fun TroubleshootStepRow(
+    number: String,
+    title: String,
+    description: String,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
+            modifier = Modifier.size(24.dp),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = number,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.ExtraBold),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.9f),
+            )
+        }
+    }
 }

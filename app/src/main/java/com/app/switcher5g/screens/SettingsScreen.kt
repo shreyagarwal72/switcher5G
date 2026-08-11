@@ -356,7 +356,7 @@ fun SettingsScreen(
             }
         }
 
-        // 4. Setup Dialog Trigger Card
+        // 4. Execution Mode & Setup Card
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
@@ -366,7 +366,7 @@ fun SettingsScreen(
         ) {
             Column(
                 modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -378,16 +378,43 @@ fun SettingsScreen(
                         tint = MaterialTheme.colorScheme.secondary,
                     )
                     Text(
-                        text = "Shizuku & ADB Setup",
+                        text = "Execution Method & Privileges",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
 
                 Text(
-                    text = "Optional helper setup for Shizuku service, permissions, and direct ADB commands.",
+                    text = "Select preferred 5G network mode switching engine:",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    ActivationMethod.entries.forEach { method ->
+                        FilterChip(
+                            selected = prefs.activationMethod == method,
+                            onClick = { prefs.activationMethod = method },
+                            label = {
+                                Text(
+                                    text = when (method) {
+                                        ActivationMethod.AUTO -> "Auto-Detect (Recommended)"
+                                        ActivationMethod.SHIZUKU -> "Shizuku IPC"
+                                        ActivationMethod.ROOT -> "Root Shell (su)"
+                                        ActivationMethod.DIRECT_ADB -> "Direct ADB"
+                                        ActivationMethod.RADIO_INFO -> "System RadioInfo"
+                                    },
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                )
+                            },
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
                 OutlinedButton(
                     onClick = { showSetupDialog = true },
@@ -397,7 +424,7 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Rounded.Terminal, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Open Shizuku & ADB Setup Dialog")
+                    Text("Open Shizuku & Root Setup Dialog")
                 }
             }
         }

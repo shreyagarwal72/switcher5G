@@ -8,7 +8,7 @@ import androidx.compose.runtime.setValue
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.ui.theme.ColorStyle
 
-enum class ActivationMethod { SHIZUKU, DIRECT_ADB }
+enum class ActivationMethod { AUTO, SHIZUKU, ROOT, DIRECT_ADB, RADIO_INFO }
 enum class AppThemeMode { SYSTEM, DARK, LIGHT }
 enum class AppFont { SYSTEM, NUNITO, INTER, OUTFIT, LEXEND, MANROPE, GROTESK }
 
@@ -152,8 +152,8 @@ class AppPreferences(context: Context) {
         private set
 
     private fun readActivationMethod(): ActivationMethod {
-        val name = prefs.getString(KEY_ACTIVATION_METHOD, ActivationMethod.SHIZUKU.name)
-        return runCatching { ActivationMethod.valueOf(name ?: ActivationMethod.SHIZUKU.name) }.getOrDefault(ActivationMethod.SHIZUKU)
+        val name = prefs.getString(KEY_ACTIVATION_METHOD, ActivationMethod.AUTO.name)
+        return runCatching { ActivationMethod.valueOf(name ?: ActivationMethod.AUTO.name) }.getOrDefault(ActivationMethod.AUTO)
     }
 
     private fun readDefaultNetworkMode(): NetworkMode {

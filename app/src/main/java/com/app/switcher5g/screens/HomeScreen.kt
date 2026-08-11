@@ -58,17 +58,24 @@ fun MainScreen(
             startDestination = "home",
             modifier = Modifier.fillMaxSize(),
             enterTransition = {
-                fadeIn(tween(180)) + slideInHorizontally(tween(240)) { it / 8 } +
-                        scaleIn(initialScale = 0.97f, animationSpec = tween(240))
+                fadeIn(tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing)) +
+                        slideInHorizontally(tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { (it * 0.15f).toInt() } +
+                        scaleIn(initialScale = 0.94f, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing))
             },
             exitTransition = {
-                fadeOut(tween(140)) + slideOutHorizontally(tween(240)) { -it / 8 }
+                fadeOut(tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) +
+                        slideOutHorizontally(tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { (-it * 0.15f).toInt() } +
+                        scaleOut(targetScale = 0.94f, animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing))
             },
             popEnterTransition = {
-                fadeIn(tween(180)) + slideInHorizontally(tween(240)) { -it / 8 }
+                fadeIn(tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing)) +
+                        slideInHorizontally(tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { (-it * 0.15f).toInt() } +
+                        scaleIn(initialScale = 0.94f, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing))
             },
             popExitTransition = {
-                fadeOut(tween(140)) + slideOutHorizontally(tween(240)) { it / 8 }
+                fadeOut(tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) +
+                        slideOutHorizontally(tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { (it * 0.15f).toInt() } +
+                        scaleOut(targetScale = 0.94f, animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing))
             },
         ) {
             composable("home") {
@@ -448,7 +455,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
                 isSwitching = true
                 statusText = "Applying network mode switch…"
                 scope.launch {
-                    val result = manager.switchTo(selectedMode, selectedSubId)
+                    val result = manager.switchTo(selectedMode, selectedSubId, prefs.activationMethod)
                     statusText = when (result) {
                         is SwitchResult.Success -> "✅ ${result.message}"
                         is SwitchResult.Failure -> "⚠️ ${result.reason}"

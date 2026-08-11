@@ -14,6 +14,8 @@ import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
 import kotlin.coroutines.resume
 
+import com.app.switcher5g.util.ActivationMethod
+
 enum class NetworkMode { NR_ONLY, NR_LTE, LTE_ONLY }
 
 sealed class SwitchResult {
@@ -105,46 +107,93 @@ class NetworkModeManager(private val context: Context) {
         return@withContext listOf(1, 2)
     }
 
-    suspend fun switchTo(mode: NetworkMode, overrideSubId: Int? = null): SwitchResult = withContext(Dispatchers.IO) {
-        AppLogger.i("NetworkModeManager", "Initiating network mode switch to $mode (subId=$overrideSubId)")
+    suspend fun switchTo(
+        mode: NetworkMode,
+        overrideSubId: Int? = null,
+        method: ActivationMethod = ActivationMethod.AUTO,
+    ): SwitchResult = withContext(Dispatchers.IO) {
+        AppLogger.i("NetworkModeManager", "Initiating network mode switch to $mode (subId=$overrideSubId, method=$method)")
 
-        // Strategy 1: Shizuku IPC Service
-        if (ShizukuHelper.hasPermission() && ensureBound()) {
-            val svc = service
-            if (svc != null) {
-                try {
-                    val subId = overrideSubId ?: run {
-                        val detected = svc.defaultDataSubId
-                        if (detected != -1 && detected != 2147483647) detected
-                        else {
-                            val available = svc.availableSubIds
-                            if (available.isNotEmpty()) available[0] else 1
+        when (method) {
+            ActivationMethod.ROOT -> {
+                if (RootHelper.isRootAvailable()) {
+                    val rootResult = RootHelper.switchNetworkMode(mode, overrideSubId ?: 1)
+                    if (rootResult is SwitchResult.Success) return@withContext rootResult
+                    return@withContext SwitchResult.Failure("Root switch failed. Grant root permission in Superuser/Magisk app.")
+                }
+                return@withContext SwitchResult.Failure("Root binary (su) not detected on this device.")
+            }
+            ActivationMethod.SHIZUKU -> {
+                if (ShizukuHelper.hasPermission() && ensureBound()) {
+                    val svc = service
+                    if (svc != null) {
+                        try {
+                            val subId = overrideSubId ?: run {
+                                val detected = svc.defaultDataSubId
+                                if (detected != -1 && detected != 2147483647) detected
+                                else {
+                                    val available = svc.availableSubIds
+                                    if (available.isNotEmpty()) available[0] else 1
+                                }
+                            }
+                            val result = svc.setNetworkMode(subId, mode.name)
+                            if (result.startsWith("OK")) {
+                                return@withContext SwitchResult.Success("Switched to ${mode.name} via Shizuku ($result)")
+                            }
+                        } catch (t: Throwable) {
+                            AppLogger.w("NetworkModeManager", "Shizuku switch failed", t)
                         }
                     }
-                    val result = svc.setNetworkMode(subId, mode.name)
-                    if (result.startsWith("OK")) {
-                        return@withContext SwitchResult.Success("Switched to ${mode.name} via Shizuku ($result)")
+                }
+                return@withContext SwitchResult.Failure("Shizuku service not running or authorized.")
+            }
+            ActivationMethod.RADIO_INFO -> {
+                val launched = launchRadioInfo(context)
+                if (launched) {
+                    return@withContext SwitchResult.Success("Opened System Radio Info. Select ${mode.name} in Network Type menu.")
+                }
+                return@withContext SwitchResult.Failure("Could not launch RadioInfo activity.")
+            }
+            else -> { // AUTO & DIRECT_ADB
+                // Strategy 1: Shizuku IPC Service
+                if (ShizukuHelper.hasPermission() && ensureBound()) {
+                    val svc = service
+                    if (svc != null) {
+                        try {
+                            val subId = overrideSubId ?: run {
+                                val detected = svc.defaultDataSubId
+                                if (detected != -1 && detected != 2147483647) detected
+                                else {
+                                    val available = svc.availableSubIds
+                                    if (available.isNotEmpty()) available[0] else 1
+                                }
+                            }
+                            val result = svc.setNetworkMode(subId, mode.name)
+                            if (result.startsWith("OK")) {
+                                return@withContext SwitchResult.Success("Switched to ${mode.name} via Shizuku ($result)")
+                            }
+                        } catch (t: Throwable) {
+                            AppLogger.w("NetworkModeManager", "Shizuku switch failed, falling back to Root/RadioInfo", t)
+                        }
                     }
-                } catch (t: Throwable) {
-                    AppLogger.w("NetworkModeManager", "Shizuku switch failed, falling back to Root/RadioInfo", t)
+                }
+
+                // Strategy 2: Direct Root Shell (`su`) Execution
+                if (RootHelper.isRootAvailable()) {
+                    val rootResult = RootHelper.switchNetworkMode(mode, overrideSubId ?: 1)
+                    if (rootResult is SwitchResult.Success) {
+                        return@withContext rootResult
+                    }
+                }
+
+                // Strategy 3: System Radio Testing Menu (`RadioInfo`) Fallback (Standalone unrooted device)
+                val launched = launchRadioInfo(context)
+                if (launched) {
+                    SwitchResult.Success("Opened System Radio Info. Select ${mode.name} in Network Type menu.")
+                } else {
+                    SwitchResult.Failure("Copy ADB command, grant Shizuku permission, or use Root to switch.")
                 }
             }
-        }
-
-        // Strategy 2: Direct Root Shell (`su`) Execution
-        if (RootHelper.isRootAvailable()) {
-            val rootResult = RootHelper.switchNetworkMode(mode, overrideSubId ?: 1)
-            if (rootResult is SwitchResult.Success) {
-                return@withContext rootResult
-            }
-        }
-
-        // Strategy 3: System Radio Testing Menu (`RadioInfo`) Fallback (Standalone unrooted device)
-        val launched = launchRadioInfo(context)
-        if (launched) {
-            SwitchResult.Success("Opened System Radio Info. Select ${mode.name} in Network Type menu.")
-        } else {
-            SwitchResult.Failure("Copy ADB command, grant Shizuku permission, or use Root to switch.")
         }
     }
 
