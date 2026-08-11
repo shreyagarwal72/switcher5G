@@ -34,9 +34,10 @@
             </intent-filter>
         </activity>
 
+        <!-- Mode 1: Quick Settings Power Switcher Tile -->
         <service
             android:name=".tile.NetworkTileService"
-            android:label="5G Switcher"
+            android:label="5G Power Switcher"
             android:icon="@drawable/ic_5g_tile"
             android:exported="true"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
@@ -44,6 +45,34 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+
+        <!-- Mode 2: Quick Settings Manual RadioInfo Tile -->
+        <service
+            android:name=".tile.ManualRadioInfoTileService"
+            android:label="Manual 5G Settings"
+            android:icon="@drawable/ic_5g_tile"
+            android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- Home Screen App Widget -->
+        <receiver
+            android:name=".widget.SwitcherWidgetProvider"
+            android:label="5G Switcher Widget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.app.switcher5g.widget.ACTION_SWITCH_SA" />
+                <action android:name="com.app.switcher5g.widget.ACTION_SWITCH_NSA" />
+                <action android:name="com.app.switcher5g.widget.ACTION_SWITCH_LTE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/switcher_widget_info" />
+        </receiver>
 
         <receiver
             android:name=".receiver.TermuxReceiver"

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Switcher5G</string>
+    <string name="widget_description">1-tap 5G SA / 5G NSA / 4G LTE mode switcher widget</string>
+</resources>
