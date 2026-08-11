@@ -343,11 +343,67 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        // Open Source Card
+        // Telegram & Community Support Card
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .entrance(4)
+                .border(
+                    1.dp,
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                    RoundedCornerShape(24.dp),
+                ),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)),
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        Icons.Rounded.Send,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = "Telegram Support & Community",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+
+                Text(
+                    text = "Join @championworkspace on Telegram for direct support, updates, feature requests, and community discussions.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Button(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/championworkspace"))
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .bouncyClickable {},
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                ) {
+                    Icon(Icons.Rounded.Send, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Join Telegram Channel (@championworkspace)", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold))
+                }
+            }
+        }
+
+        // Open Source & Links Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .entrance(5)
                 .border(
                     1.dp,
                     MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
@@ -374,18 +430,29 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     )
                 }
 
-                Row(
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/championworkspace"))
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.bouncyClickable {},
+                    ) {
+                        Icon(Icons.Rounded.Send, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Telegram", style = MaterialTheme.typography.labelMedium)
+                    }
+
                     OutlinedButton(
                         onClick = {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/shreyagarwal72/switcher5G"))
                             context.startActivity(intent)
                         },
-                        modifier = Modifier
-                            .weight(1f)
-                            .bouncyClickable {},
+                        modifier = Modifier.bouncyClickable {},
                     ) {
                         Icon(Icons.Rounded.Code, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
@@ -397,9 +464,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app"))
                             context.startActivity(intent)
                         },
-                        modifier = Modifier
-                            .weight(1f)
-                            .bouncyClickable {},
+                        modifier = Modifier.bouncyClickable {},
                     ) {
                         Icon(Icons.Rounded.Security, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
