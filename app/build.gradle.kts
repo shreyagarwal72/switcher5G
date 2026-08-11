@@ -22,17 +22,19 @@ android {
             val alias = System.getenv("RELEASE_KEY_ALIAS") ?: project.findProperty("RELEASE_KEY_ALIAS")?.toString()
             val keyPass = System.getenv("RELEASE_KEY_PASSWORD") ?: project.findProperty("RELEASE_KEY_PASSWORD")?.toString()
 
-            if (ksFile.exists() && !storePass.isNullOrEmpty()) {
+            if (ksFile.exists()) {
                 storeFile = ksFile
-                storePassword = storePass
-                keyAlias = alias ?: ""
-                keyPassword = keyPass ?: storePass
+                storePassword = if (!storePass.isNullOrEmpty()) storePass else "switcher5gpass"
+                keyAlias = if (!alias.isNullOrEmpty()) alias else "switcher5g"
+                keyPassword = if (!keyPass.isNullOrEmpty()) keyPass else storePassword
             } else {
                 val debugKs = getByName("debug")
-                storeFile = debugKs.storeFile
-                storePassword = debugKs.storePassword
-                keyAlias = debugKs.keyAlias
-                keyPassword = debugKs.keyPassword
+                if (debugKs.storeFile?.exists() == true) {
+                    storeFile = debugKs.storeFile
+                    storePassword = debugKs.storePassword
+                    keyAlias = debugKs.keyAlias
+                    keyPassword = debugKs.keyPassword
+                }
             }
         }
     }

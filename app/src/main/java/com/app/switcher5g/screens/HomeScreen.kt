@@ -116,6 +116,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
     var isScanningSims by remember { mutableStateOf(false) }
     var shizukuReady by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
     var rootReady by remember { mutableStateOf(false) }
+    val isPrivileged = shizukuReady || rootReady
     var showSetupDialog by remember { mutableStateOf(false) }
     var showManual5gDialog by remember { mutableStateOf(false) }
     var updateInfo by remember { mutableStateOf<com.app.switcher5g.update.UpdateInfo?>(null) }
@@ -216,7 +217,6 @@ fun HomeScreenContent(prefs: AppPreferences) {
             )
 
             // Setup / Status Pill Badge
-            val isPrivileged = shizukuReady || rootReady
             val badgeLabel = when {
                 shizukuReady -> "Shizuku Active"
                 rootReady -> "Root Active"

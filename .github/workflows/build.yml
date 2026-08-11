@@ -29,12 +29,24 @@ jobs:
         with:
           gradle-version: "8.7"
 
-      - name: Decode Release Keystore
+      - name: Decode or Generate Release Keystore
         env:
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
         run: |
           if [ -n "$RELEASE_KEYSTORE_BASE64" ]; then
+            echo "Decoding RELEASE_KEYSTORE_BASE64 from secrets..."
             echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > app/release.keystore
+          else
+            echo "Generating release keystore..."
+            keytool -genkeypair -v \
+              -keystore app/release.keystore \
+              -alias switcher5g \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass switcher5gpass \
+              -keypass switcher5gpass \
+              -dname "CN=Switcher5G, OU=Mobile, O=OpenSource, L=City, ST=State, C=US"
           fi
 
       - name: Build Release APK
