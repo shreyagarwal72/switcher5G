@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # needed to publish/update GitHub Releases and commit locked signing key
+      contents: write   # needed to publish/update GitHub Releases
 
     steps:
       - name: Checkout
@@ -29,28 +29,18 @@ jobs:
         with:
           gradle-version: "8.7"
 
-      - name: Ensure Permanent Release Keystore
+      - name: Decode Release Keystore
+        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
         run: |
-          if [ ! -f app/release.keystore ]; then
-            echo "Generating permanent release keystore to lock signature..."
-            keytool -genkeypair -v \
-              -keystore app/release.keystore \
-              -alias switcher5g \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -storepass switcher5gpass \
-              -keypass switcher5gpass \
-              -dname "CN=Switcher5G, OU=Mobile, O=OpenSource, L=City, ST=State, C=US"
-            
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add app/release.keystore
-            git commit -m "chore: lock release.keystore binary in repository to preserve APK signing signature forever"
-            git push origin main || true
-          fi
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > app/release.keystore
 
       - name: Build Release APK
+        env:
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: gradle assembleRelease --no-daemon
 
       - name: Upload APK artifact
@@ -62,8 +52,8 @@ jobs:
 
       - name: Create or Update GitHub Release with Signed APK
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          tag_name: "v1.0.0"
-          name: "Switcher 5G Release v1.0.0 (Initial Stable Release)"
           files: app/build/outputs/apk/release/*.apk
           generate_release_notes: true
+

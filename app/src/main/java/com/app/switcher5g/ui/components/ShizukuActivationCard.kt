@@ -6,7 +6,6 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,26 +15,38 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.app.switcher5g.network.RootHelper
 import com.app.switcher5g.network.ShizukuHelper
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ShizukuActivationCard(
     modifier: Modifier = Modifier,
     onStatusChanged: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     var isChecking by remember { mutableStateOf(false) }
     var isAvailable by remember { mutableStateOf(ShizukuHelper.isAvailable()) }
     var hasPermission by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
+    var isRootAvailable by remember { mutableStateOf(RootHelper.isRootAvailable()) }
+    var isRootGranted by remember { mutableStateOf(false) }
+
     var showGuide by remember { mutableStateOf(false) }
     var selectedCommandIndex by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        if (isRootAvailable) {
+            isRootGranted = RootHelper.isRootGranted()
+        }
+    }
 
     val commands = remember<List<Pair<String, String>>> {
         listOf(
@@ -48,8 +59,9 @@ fun ShizukuActivationCard(
     val currentCommand = commands[selectedCommandIndex].second
 
     val (statusText, badgeColor, textColor) = when {
-        hasPermission -> Triple("ACTIVE & AUTHORIZED", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
-        isAvailable -> Triple("RUNNING (NEEDS PERMISSION)", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
+        hasPermission -> Triple("SHIZUKU ACTIVE", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
+        isRootGranted -> Triple("ROOT (SU) ACTIVE", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
+        isAvailable -> Triple("NEEDS PERMISSION", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
         else -> Triple("NOT RUNNING", MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
     }
 
@@ -59,7 +71,7 @@ fun ShizukuActivationCard(
             .animateContentSize()
             .border(
                 1.dp,
-                if (hasPermission) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                if (hasPermission || isRootGranted) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                 else MaterialTheme.colorScheme.error.copy(alpha = 0.4f),
                 RoundedCornerShape(24.dp),
             ),
@@ -82,10 +94,10 @@ fun ShizukuActivationCard(
                     Icon(
                         Icons.Rounded.Security,
                         contentDescription = null,
-                        tint = if (hasPermission) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        tint = if (hasPermission || isRootGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                     )
                     Text(
-                        text = "Shizuku Service Status",
+                        text = "Privileges & Setup",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
@@ -104,57 +116,79 @@ fun ShizukuActivationCard(
             }
 
             Text(
-                text = if (hasPermission)
-                    "Shizuku service is connected with privileged shell permissions."
-                else
-                    "Shizuku service must be started via ADB command, Wireless Debugging, or Root to execute network mode switches.",
+                text = when {
+                    hasPermission -> "Shizuku service is connected with privileged shell permissions."
+                    isRootGranted -> "Root shell (su) access is granted to Switcher 5G."
+                    isRootAvailable -> "Root binary (su) is available. Tap 'Grant Root Permission' or set up Shizuku."
+                    else -> "Shizuku service must be started via ADB command, Wireless Debugging, or Root to execute 1-tap network switches."
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            // Action Buttons
-            Row(
+            // Action Buttons FlowRow (guarantees no text squeezing or line overflows on small screens)
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (isAvailable && !hasPermission) {
                     Button(
                         onClick = {
                             ShizukuHelper.requestPermission()
                             hasPermission = ShizukuHelper.hasPermission()
-                            onStatusChanged(hasPermission)
+                            onStatusChanged(hasPermission || isRootGranted)
                         },
-                        modifier = Modifier
-                            .weight(1f)
-                            .bouncyClickable {},
+                        modifier = Modifier.bouncyClickable {},
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     ) {
-                        Text("Grant Permission")
+                        Text("Grant Shizuku Permission", style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+
+                if (isRootAvailable && !isRootGranted) {
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                val granted = RootHelper.requestRootAccess()
+                                isRootGranted = granted
+                                onStatusChanged(hasPermission || isRootGranted)
+                            }
+                        },
+                        modifier = Modifier.bouncyClickable {},
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                    ) {
+                        Icon(Icons.Rounded.Terminal, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Grant Root Permission", style = MaterialTheme.typography.labelMedium)
                     }
                 }
 
                 OutlinedButton(
                     onClick = {
-                        isChecking = true
-                        isAvailable = ShizukuHelper.isAvailable()
-                        hasPermission = ShizukuHelper.hasPermission()
-                        onStatusChanged(hasPermission)
-                        isChecking = false
-                        Toast.makeText(
-                            context,
-                            if (hasPermission) "✅ Shizuku connected & authorized!"
-                            else if (isAvailable) "⚠️ Shizuku running. Permission required."
-                            else "❌ Shizuku not running.",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        scope.launch {
+                            isChecking = true
+                            isAvailable = ShizukuHelper.isAvailable()
+                            hasPermission = ShizukuHelper.hasPermission()
+                            isRootAvailable = RootHelper.isRootAvailable()
+                            if (isRootAvailable) {
+                                isRootGranted = RootHelper.isRootGranted()
+                            }
+                            onStatusChanged(hasPermission || isRootGranted)
+                            isChecking = false
+                            val msg = when {
+                                hasPermission -> "✅ Shizuku connected & authorized!"
+                                isRootGranted -> "✅ Root shell (su) authorized!"
+                                isAvailable -> "⚠️ Shizuku running. Permission required."
+                                else -> "❌ Shizuku not running."
+                            }
+                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        }
                     },
-                    modifier = Modifier
-                        .weight(1f)
-                        .bouncyClickable {},
+                    modifier = Modifier.bouncyClickable {},
                 ) {
                     if (isChecking) {
-                        FancyCircularOrbLoader(size = 18.dp)
+                        FancyCircularOrbLoader(size = 16.dp)
                     } else {
                         Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                     }
@@ -178,7 +212,7 @@ fun ShizukuActivationCard(
             }
 
             // ADB Command Activation Box
-            if (!hasPermission) {
+            if (!hasPermission && !isRootGranted) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -211,10 +245,11 @@ fun ShizukuActivationCard(
                         }
                     }
 
-                    // Command selector chips
-                    Row(
+                    // Command selector chips using FlowRow
+                    FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         commands.forEachIndexed { idx, pair ->
                             FilterChip(

@@ -11,18 +11,22 @@ android {
         applicationId = "com.app.switcher5g"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
     }
 
     signingConfigs {
         create("release") {
             val ksFile = rootProject.file("app/release.keystore")
-            if (ksFile.exists()) {
+            val storePass = System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: project.findProperty("RELEASE_KEYSTORE_PASSWORD")?.toString()
+            val alias = System.getenv("RELEASE_KEY_ALIAS") ?: project.findProperty("RELEASE_KEY_ALIAS")?.toString()
+            val keyPass = System.getenv("RELEASE_KEY_PASSWORD") ?: project.findProperty("RELEASE_KEY_PASSWORD")?.toString()
+
+            if (ksFile.exists() && !storePass.isNullOrEmpty()) {
                 storeFile = ksFile
-                storePassword = "switcher5gpass"
-                keyAlias = "switcher5g"
-                keyPassword = "switcher5gpass"
+                storePassword = storePass
+                keyAlias = alias ?: ""
+                keyPassword = keyPass ?: storePass
             } else {
                 val debugKs = getByName("debug")
                 storeFile = debugKs.storeFile

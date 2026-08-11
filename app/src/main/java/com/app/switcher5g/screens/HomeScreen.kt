@@ -35,6 +35,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.network.NetworkModeManager
+import com.app.switcher5g.network.RootHelper
 import com.app.switcher5g.network.ShizukuHelper
 import com.app.switcher5g.network.SwitchResult
 import com.app.switcher5g.ui.components.*
@@ -114,13 +115,17 @@ fun HomeScreenContent(prefs: AppPreferences) {
     var isSwitching by remember { mutableStateOf(false) }
     var isScanningSims by remember { mutableStateOf(false) }
     var shizukuReady by remember { mutableStateOf(ShizukuHelper.hasPermission()) }
+    var rootReady by remember { mutableStateOf(false) }
     var showSetupDialog by remember { mutableStateOf(false) }
     var showManual5gDialog by remember { mutableStateOf(false) }
     var updateInfo by remember { mutableStateOf<com.app.switcher5g.update.UpdateInfo?>(null) }
     var showUpdateDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        if (prefs.autoScanSims && ShizukuHelper.hasPermission()) {
+        if (RootHelper.isRootAvailable()) {
+            rootReady = RootHelper.isRootGranted()
+        }
+        if (prefs.autoScanSims && (shizukuReady || rootReady)) {
             isScanningSims = true
             val ids = manager.getAvailableSubIds()
             availableSubIds = ids
@@ -150,7 +155,14 @@ fun HomeScreenContent(prefs: AppPreferences) {
     if (showSetupDialog) {
         ShizukuSetupDialog(
             onDismissRequest = { showSetupDialog = false },
-            onStatusUpdated = { shizukuReady = it },
+            onStatusUpdated = {
+                shizukuReady = ShizukuHelper.hasPermission()
+                scope.launch {
+                    if (RootHelper.isRootAvailable()) {
+                        rootReady = RootHelper.isRootGranted()
+                    }
+                }
+            },
         )
     }
 
@@ -204,9 +216,15 @@ fun HomeScreenContent(prefs: AppPreferences) {
             )
 
             // Setup / Status Pill Badge
+            val isPrivileged = shizukuReady || rootReady
+            val badgeLabel = when {
+                shizukuReady -> "Shizuku Active"
+                rootReady -> "Root Active"
+                else -> "Setup / ADB"
+            }
             Surface(
                 shape = CircleShape,
-                color = if (shizukuReady) MaterialTheme.colorScheme.primaryContainer
+                color = if (isPrivileged) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.tertiaryContainer,
                 modifier = Modifier
                     .bouncyClickable(scaleDown = 0.92f) { showSetupDialog = true }
@@ -218,22 +236,22 @@ fun HomeScreenContent(prefs: AppPreferences) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = if (shizukuReady) Icons.Rounded.CheckCircle else Icons.Rounded.Security,
+                        imageVector = if (isPrivileged) Icons.Rounded.CheckCircle else Icons.Rounded.Security,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                        tint = if (isPrivileged) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
                     )
                     Text(
-                        text = if (shizukuReady) "Shizuku Active" else "Setup / ADB",
+                        text = badgeLabel,
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                        color = if (shizukuReady) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                        color = if (isPrivileged) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
                     )
                 }
             }
         }
 
         // ONE-TIME Setup Banner (Appears only 1 time on Home Screen until dismissed)
-        if (!prefs.hasDismissedSetupCard && !shizukuReady) {
+        if (!prefs.hasDismissedSetupCard && !isPrivileged) {
             ElevatedCard(
                 modifier = Modifier
                     .fillMaxWidth()

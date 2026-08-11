@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.app.switcher5g.network.ShizukuHelper
 import com.app.switcher5g.ui.components.FancyCircularOrbLoader
 import com.app.switcher5g.ui.components.FancyLinearLoadingBar
+import com.app.switcher5g.ui.components.LinearRipplingWavyProgressIndicator
 import com.app.switcher5g.ui.components.bouncyClickable
 import com.app.switcher5g.ui.components.entrance
 import com.app.switcher5g.update.UpdateInfo

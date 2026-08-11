@@ -132,9 +132,11 @@ class NetworkModeManager(private val context: Context) {
         }
 
         // Strategy 2: Direct Root Shell (`su`) Execution
-        val rootResult = tryRootSwitch(mode, overrideSubId ?: 1)
-        if (rootResult is SwitchResult.Success) {
-            return@withContext rootResult
+        if (RootHelper.isRootAvailable()) {
+            val rootResult = RootHelper.switchNetworkMode(mode, overrideSubId ?: 1)
+            if (rootResult is SwitchResult.Success) {
+                return@withContext rootResult
+            }
         }
 
         // Strategy 3: System Radio Testing Menu (`RadioInfo`) Fallback (Standalone unrooted device)
@@ -142,33 +144,7 @@ class NetworkModeManager(private val context: Context) {
         if (launched) {
             SwitchResult.Success("Opened System Radio Info. Select ${mode.name} in Network Type menu.")
         } else {
-            SwitchResult.Failure("Copy ADB command or grant Shizuku permission to switch.")
-        }
-    }
-
-    private fun tryRootSwitch(mode: NetworkMode, subId: Int): SwitchResult {
-        val modeId = when (mode) {
-            NetworkMode.NR_ONLY -> 28 // NETWORK_MODE_NR_ONLY (5G SA)
-            NetworkMode.NR_LTE -> 26  // NETWORK_MODE_NR_LTE_GSM_WCDMA (5G NSA)
-            NetworkMode.LTE_ONLY -> 11 // NETWORK_MODE_LTE_ONLY (4G LTE)
-        }
-        return try {
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "cmd phone set-preferred-network-mode -s $subId $modeId || cmd phone set-preferred-network-mode $modeId"))
-            val exitCode = process.waitFor()
-            if (exitCode == 0) {
-                AppLogger.i("NetworkModeManager", "Successfully set network mode $mode via Root shell")
-                SwitchResult.Success("Applied ${mode.name} via Root shell.")
-            } else {
-                val process2 = Runtime.getRuntime().exec(arrayOf("su", "-c", "settings put global preferred_network_mode$subId $modeId"))
-                val exit2 = process2.waitFor()
-                if (exit2 == 0) {
-                    SwitchResult.Success("Applied ${mode.name} via Root settings.")
-                } else {
-                    SwitchResult.Failure("Root execution returned code $exitCode")
-                }
-            }
-        } catch (t: Throwable) {
-            SwitchResult.Failure("Root unavailable.")
+            SwitchResult.Failure("Copy ADB command, grant Shizuku permission, or use Root to switch.")
         }
     }
 
