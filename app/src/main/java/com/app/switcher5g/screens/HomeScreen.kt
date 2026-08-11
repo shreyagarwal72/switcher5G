@@ -116,7 +116,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
     val manager = remember { NetworkModeManager(context.applicationContext) }
 
     var selectedMode by remember { mutableStateOf(prefs.defaultNetworkMode) }
-    var availableSubIds by remember { mutableStateOf<List<Int>>(listOf(1)) }
+    var availableSubIds by remember { mutableStateOf<List<Int>>(listOf(1, 2)) }
     var selectedSubId by remember { mutableStateOf<Int?>(null) }
     var statusText by remember { mutableStateOf("Ready to switch network mode.") }
     var isSwitching by remember { mutableStateOf(false) }

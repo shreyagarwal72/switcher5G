@@ -81,7 +81,9 @@ class NetworkModeManager(private val context: Context) {
             service?.let { svc ->
                 try {
                     val ids = svc.availableSubIds
-                    if (ids.isNotEmpty()) return@withContext ids.toList()
+                    if (ids.isNotEmpty()) {
+                        ids.forEach { if (!detectedSubIds.contains(it)) detectedSubIds.add(it) }
+                    }
                 } catch (_: Throwable) {
                 }
             }
@@ -101,10 +103,12 @@ class NetworkModeManager(private val context: Context) {
             }
         } catch (_: Throwable) {
         }
-        if (detectedSubIds.isNotEmpty()) {
-            return@withContext detectedSubIds
-        }
-        return@withContext listOf(1, 2)
+
+        // Always guarantee both SIM 1 (Sub 1) and SIM 2 (Sub 2) are present in the list for Dual SIM support
+        if (!detectedSubIds.contains(1)) detectedSubIds.add(1)
+        if (!detectedSubIds.contains(2)) detectedSubIds.add(2)
+
+        return@withContext detectedSubIds.sorted()
     }
 
     suspend fun switchTo(

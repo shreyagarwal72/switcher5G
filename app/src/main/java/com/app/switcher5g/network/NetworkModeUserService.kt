@@ -311,12 +311,12 @@ class NetworkModeUserService : IUserService.Stub() {
             } catch (_: Throwable) {}
         }
 
-        if (subIds.isEmpty()) {
-            subIds.add(1)
-        }
+        if (!subIds.contains(1)) subIds.add(1)
+        if (!subIds.contains(2)) subIds.add(2)
 
-        AppLogger.i("UserService", "Available Sub IDs resolved: $subIds")
-        return subIds.toIntArray()
+        val sortedSubIds = subIds.sorted().toIntArray()
+        AppLogger.i("UserService", "Available Sub IDs resolved: ${sortedSubIds.toList()}")
+        return sortedSubIds
     }
 
     override fun destroy() {
