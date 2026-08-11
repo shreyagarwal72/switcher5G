@@ -4,8 +4,10 @@ import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.service.quicksettings.TileService
 import android.widget.Toast
+import com.app.switcher5g.util.AppLogger
 
 /**
  * Native RadioInfo & Hidden Testing Menu launcher based on OpenAppsLabs/5G.
@@ -52,14 +54,14 @@ object Manual5gSwitchHelper {
     fun openRadioInfo(context: Context): Boolean {
         val component = cachedComponent ?: preResolve(context)
 
-        if (component == null) {
-            Toast.makeText(context, "Radio Info / 5G menu not supported on this ROM", Toast.LENGTH_SHORT).show()
-            return false
-        }
-
         val intent = Intent().apply {
-            this.component = component
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (component != null) {
+                this.component = component
+            } else {
+                action = Intent.ACTION_MAIN
+                setClassName("com.android.settings", "com.android.settings.RadioInfo")
+            }
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
 
         return if (context is TileService) {
@@ -88,19 +90,37 @@ object Manual5gSwitchHelper {
     }
 
     private fun startActivityFromTile(tileService: TileService, intent: Intent): Boolean {
-        return try {
-            val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            val pendingIntent = PendingIntent.getActivity(
-                tileService,
-                0,
-                intent,
-                flags,
-            )
-            tileService.startActivityAndCollapse(pendingIntent)
-            true
-        } catch (_: Exception) {
-            cachedComponent = null
-            false
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
+        // 1. Android 14+ (API 34+) require PendingIntent for TileService.startActivityAndCollapse
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            try {
+                val pendingIntent = PendingIntent.getActivity(
+                    tileService,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+                val method = TileService::class.java.getMethod("startActivityAndCollapse", PendingIntent::class.java)
+                method.invoke(tileService, pendingIntent)
+                AppLogger.i("Manual5gSwitchHelper", "Launched activity from Tile via PendingIntent (Android 14+)")
+                return true
+            } catch (t: Throwable) {
+                AppLogger.w("Manual5gSwitchHelper", "Android 14 startActivityAndCollapse(PendingIntent) failed", t)
+            }
         }
+
+        // 2. Android 7.0 - 13 (API 24 - 33) use Intent version of TileService.startActivityAndCollapse
+        try {
+            val method = TileService::class.java.getMethod("startActivityAndCollapse", Intent::class.java)
+            method.invoke(tileService, intent)
+            AppLogger.i("Manual5gSwitchHelper", "Launched activity from Tile via Intent (Android 7-13)")
+            return true
+        } catch (t: Throwable) {
+            AppLogger.w("Manual5gSwitchHelper", "startActivityAndCollapse(Intent) failed", t)
+        }
+
+        // 3. Fallback: launch activity directly via context
+        return tryStartActivity(tileService.applicationContext, intent)
     }
 }

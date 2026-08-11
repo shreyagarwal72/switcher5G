@@ -1,10 +1,10 @@
 package com.app.switcher5g.tile
 
-import android.content.Intent
 import android.content.SharedPreferences
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
+import com.app.switcher5g.network.Manual5gSwitchHelper
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.network.NetworkModeManager
 import com.app.switcher5g.network.RootHelper
@@ -19,7 +19,10 @@ import kotlinx.coroutines.launch
 
 /**
  * Quick Settings Tile Mode 1: Power User Mode Switcher.
- * Cycles 5G SA (NR_ONLY) -> 5G NSA (NR_LTE) -> 4G LTE (LTE_ONLY) -> 5G SA... on each tap directly in quick settings.
+ * Cycles per tap across 3 options:
+ * 1. 5G SA (NR_ONLY)
+ * 2. 5G NSA (NR_LTE)
+ * 3. 4G LTE (LTE_ONLY)
  */
 class NetworkTileService : TileService() {
 
@@ -43,8 +46,9 @@ class NetworkTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
-        val next = nextMode(currentMode())
-        AppLogger.i("NetworkTileService", "Power tile clicked; switching to $next using method ${appPrefs.activationMethod}")
+        val current = currentMode()
+        val next = nextMode(current)
+        AppLogger.i("NetworkTileService", "Power tile clicked: $current -> $next")
 
         qsTile?.apply {
             state = Tile.STATE_UNAVAILABLE
@@ -52,10 +56,10 @@ class NetworkTileService : TileService() {
             updateTile()
         }
 
-        val shizukuReady = ShizukuHelper.hasPermission()
-
         scope.launch {
+            val shizukuReady = ShizukuHelper.hasPermission()
             val rootReady = RootHelper.isRootAvailable() && RootHelper.isRootGranted()
+
             val targetMethod = when {
                 shizukuReady -> ActivationMethod.SHIZUKU
                 rootReady -> ActivationMethod.ROOT
@@ -65,14 +69,9 @@ class NetworkTileService : TileService() {
 
             val result = manager.switchTo(next, method = targetMethod)
 
-            if (result is SwitchResult.Success && result.message.contains("Opened System Radio Info")) {
-                // Launch RadioInfo using TileService.startActivityAndCollapse
-                val radioIntent = Intent().apply {
-                    action = Intent.ACTION_MAIN
-                    setClassName("com.android.settings", "com.android.settings.RadioInfo")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                }
-                runCatching { startActivityAndCollapse(radioIntent) }
+            if (result is SwitchResult.Success && result.message.contains("Radio Info")) {
+                // If fallback to RadioInfo occurred, safely open RadioInfo testing menu
+                Manual5gSwitchHelper.openRadioInfo(this@NetworkTileService)
             }
 
             CoroutineScope(Dispatchers.Main).launch {
@@ -113,9 +112,9 @@ class NetworkTileService : TileService() {
             state = Tile.STATE_ACTIVE
             label = "5G Power Switcher"
             subtitle = when (mode) {
-                NetworkMode.NR_ONLY -> "5G SA (NR)"
-                NetworkMode.NR_LTE -> "5G NSA (NR/LTE)"
-                NetworkMode.LTE_ONLY -> "4G LTE"
+                NetworkMode.NR_ONLY -> "1. 5G SA"
+                NetworkMode.NR_LTE -> "2. 5G NSA"
+                NetworkMode.LTE_ONLY -> "3. 4G LTE"
             }
             updateTile()
         }

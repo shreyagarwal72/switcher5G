@@ -1,15 +1,13 @@
 package com.app.switcher5g.tile
 
-import android.content.ComponentName
-import android.content.Intent
-import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import com.app.switcher5g.MainActivity
+import com.app.switcher5g.network.Manual5gSwitchHelper
 import com.app.switcher5g.util.AppLogger
 
 /**
  * Quick Settings Tile Mode 2: Opens System Manual 5G / RadioInfo Settings (*#*#4636#*#*).
+ * Immediately collapses notification shade and launches manual 5G testing settings.
  */
 class ManualRadioInfoTileService : TileService() {
 
@@ -26,30 +24,17 @@ class ManualRadioInfoTileService : TileService() {
     override fun onClick() {
         super.onClick()
         AppLogger.i("ManualRadioInfoTileService", "Opening manual RadioInfo settings from QS tile")
-        
-        val radioInfoIntent = Intent().apply {
-            action = Intent.ACTION_MAIN
-            setClassName("com.android.settings", "com.android.settings.RadioInfo")
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        }
-
         try {
-            startActivityAndCollapse(radioInfoIntent)
-        } catch (t: Throwable) {
-            AppLogger.w("ManualRadioInfoTileService", "Direct RadioInfo failed, attempting TestingSettings fallback", t)
-            val testingIntent = Intent().apply {
-                action = Intent.ACTION_MAIN
-                setClassName("com.android.settings", "com.android.settings.TestingSettings")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            }
-            try {
-                startActivityAndCollapse(testingIntent)
-            } catch (_: Throwable) {
-                val appIntent = Intent(applicationContext, MainActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            val launched = Manual5gSwitchHelper.openRadioInfo(this)
+            if (launched) {
+                qsTile?.apply {
+                    state = Tile.STATE_ACTIVE
+                    subtitle = "Opened Settings"
+                    updateTile()
                 }
-                runCatching { startActivityAndCollapse(appIntent) }
             }
+        } catch (e: Exception) {
+            AppLogger.e("ManualRadioInfoTileService", "Failed to launch RadioInfo from QS tile", e)
         }
     }
 }
