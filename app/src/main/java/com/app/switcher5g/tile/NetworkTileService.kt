@@ -1,12 +1,16 @@
 package com.app.switcher5g.tile
 
+import android.content.Intent
 import android.content.SharedPreferences
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.network.NetworkModeManager
+import com.app.switcher5g.network.RootHelper
+import com.app.switcher5g.network.ShizukuHelper
 import com.app.switcher5g.network.SwitchResult
+import com.app.switcher5g.util.ActivationMethod
 import com.app.switcher5g.util.AppLogger
 import com.app.switcher5g.util.AppPreferences
 import kotlinx.coroutines.CoroutineScope
@@ -15,11 +19,11 @@ import kotlinx.coroutines.launch
 
 /**
  * Quick Settings Tile Mode 1: Power User Mode Switcher.
- * Cycles 5G SA (NR_ONLY) -> 5G NSA (NR_LTE) -> 4G LTE (LTE_ONLY) -> 5G SA... on each tap.
+ * Cycles 5G SA (NR_ONLY) -> 5G NSA (NR_LTE) -> 4G LTE (LTE_ONLY) -> 5G SA... on each tap directly in quick settings.
  */
 class NetworkTileService : TileService() {
 
-    private val scope = CoroutineScope(Dispatchers.Main)
+    private val scope = CoroutineScope(Dispatchers.IO)
     private lateinit var tilePrefs: SharedPreferences
     private lateinit var appPrefs: AppPreferences
     private lateinit var manager: NetworkModeManager
@@ -48,22 +52,46 @@ class NetworkTileService : TileService() {
             updateTile()
         }
 
+        val shizukuReady = ShizukuHelper.hasPermission()
+        val rootReady = RootHelper.isRootAvailable() && RootHelper.isRootGranted()
+
         scope.launch {
-            when (val result = manager.switchTo(next, method = appPrefs.activationMethod)) {
-                is SwitchResult.Success -> {
-                    AppLogger.i("NetworkTileService", "Power tile switch success: ${result.message}")
-                    tilePrefs.edit().putString(KEY_MODE, next.name).apply()
-                    renderTile(next)
-                    Toast.makeText(applicationContext, "✅ ${result.message}", Toast.LENGTH_SHORT).show()
+            val targetMethod = when {
+                shizukuReady -> ActivationMethod.SHIZUKU
+                rootReady -> ActivationMethod.ROOT
+                appPrefs.activationMethod == ActivationMethod.RADIO_INFO -> ActivationMethod.RADIO_INFO
+                else -> ActivationMethod.AUTO
+            }
+
+            val result = manager.switchTo(next, method = targetMethod)
+
+            if (result is SwitchResult.Success && result.message.contains("Opened System Radio Info")) {
+                // Launch RadioInfo using TileService.startActivityAndCollapse
+                val radioIntent = Intent().apply {
+                    action = Intent.ACTION_MAIN
+                    setClassName("com.android.settings", "com.android.settings.RadioInfo")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 }
-                is SwitchResult.Failure -> {
-                    AppLogger.e("NetworkTileService", "Power tile switch failed: ${result.reason}")
-                    qsTile?.apply {
-                        state = Tile.STATE_INACTIVE
-                        subtitle = "Failed"
-                        updateTile()
+                runCatching { startActivityAndCollapse(radioIntent) }
+            }
+
+            CoroutineScope(Dispatchers.Main).launch {
+                when (result) {
+                    is SwitchResult.Success -> {
+                        AppLogger.i("NetworkTileService", "Power tile switch success: ${result.message}")
+                        tilePrefs.edit().putString(KEY_MODE, next.name).apply()
+                        renderTile(next)
+                        Toast.makeText(applicationContext, "✅ ${result.message}", Toast.LENGTH_SHORT).show()
                     }
-                    Toast.makeText(applicationContext, "⚠️ ${result.reason}", Toast.LENGTH_LONG).show()
+                    is SwitchResult.Failure -> {
+                        AppLogger.e("NetworkTileService", "Power tile switch failed: ${result.reason}")
+                        qsTile?.apply {
+                            state = Tile.STATE_INACTIVE
+                            subtitle = "Failed"
+                            updateTile()
+                        }
+                        Toast.makeText(applicationContext, "⚠️ ${result.reason}", Toast.LENGTH_LONG).show()
+                    }
                 }
             }
         }

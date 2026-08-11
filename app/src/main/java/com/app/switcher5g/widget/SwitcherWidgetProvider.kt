@@ -12,22 +12,25 @@ import com.app.switcher5g.MainActivity
 import com.app.switcher5g.R
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.network.NetworkModeManager
+import com.app.switcher5g.network.RootHelper
+import com.app.switcher5g.network.ShizukuHelper
 import com.app.switcher5g.network.SwitchResult
+import com.app.switcher5g.util.ActivationMethod
 import com.app.switcher5g.util.AppLogger
-import com.app.switcher5g.util.AppPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
  * Home Screen App Widget for Switcher 5G.
- * Allows 1-tap mode switching directly from Home Screen.
+ * Uses Shizuku IPC or Root (su) power user service directly on widget background threads.
+ * Does NOT open any settings screens or activities when buttons are pressed.
  */
 class SwitcherWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         for (appWidgetId in appWidgetIds) {
-            updateWidgetView(context, appWidgetManager, appWidgetId, "Ready")
+            updateWidgetView(context, appWidgetManager, appWidgetId, "Tap mode to switch")
         }
     }
 
@@ -42,17 +45,29 @@ class SwitcherWidgetProvider : AppWidgetProvider() {
         }
 
         if (targetMode != null) {
-            AppLogger.i("SwitcherWidgetProvider", "Widget button tapped: switching to $targetMode")
+            AppLogger.i("SwitcherWidgetProvider", "Widget button tapped: switching to $targetMode via Shizuku/Root only")
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val prefs = AppPreferences(context.applicationContext)
                     val manager = NetworkModeManager(context.applicationContext)
-                    val result = manager.switchTo(targetMode, method = prefs.activationMethod)
+                    
+                    // Check if Shizuku or Root is available for 1-tap background switch
+                    val shizukuReady = ShizukuHelper.hasPermission()
+                    val rootReady = RootHelper.isRootAvailable() && RootHelper.isRootGranted()
+
+                    val result: SwitchResult = when {
+                        shizukuReady -> manager.switchTo(targetMode, method = ActivationMethod.SHIZUKU)
+                        rootReady -> manager.switchTo(targetMode, method = ActivationMethod.ROOT)
+                        else -> manager.switchTo(targetMode, method = ActivationMethod.AUTO).let { autoRes ->
+                            if (autoRes is SwitchResult.Success && autoRes.message.contains("RadioInfo")) {
+                                SwitchResult.Failure("Shizuku or Root access required for 1-tap widget switch.")
+                            } else autoRes
+                        }
+                    }
 
                     val statusMsg = when (result) {
-                        is SwitchResult.Success -> "Switched to ${targetMode.name}"
-                        is SwitchResult.Failure -> "Failed: ${result.reason}"
+                        is SwitchResult.Success -> "✅ Switched to ${targetMode.name}"
+                        is SwitchResult.Failure -> "⚠️ ${result.reason}"
                     }
 
                     // Update all widget instances
@@ -61,12 +76,14 @@ class SwitcherWidgetProvider : AppWidgetProvider() {
                     val widgetIds = appWidgetManager.getAppWidgetIds(componentName)
 
                     for (widgetId in widgetIds) {
-                        updateWidgetView(context, appWidgetManager, widgetId, statusMsg, targetMode)
+                        updateWidgetView(context, appWidgetManager, widgetId, statusMsg, if (result is SwitchResult.Success) targetMode else null)
                     }
 
                     CoroutineScope(Dispatchers.Main).launch {
                         Toast.makeText(context, statusMsg, Toast.LENGTH_SHORT).show()
                     }
+                } catch (t: Throwable) {
+                    AppLogger.e("SwitcherWidgetProvider", "Widget switch error", t)
                 } finally {
                     pendingResult.finish()
                 }
@@ -97,7 +114,7 @@ class SwitcherWidgetProvider : AppWidgetProvider() {
             }
             views.setTextViewText(R.id.widget_status, modeLabel)
 
-            // SA Intent
+            // SA Intent (Direct background broadcast)
             val saIntent = Intent(context, SwitcherWidgetProvider::class.java).apply { action = ACTION_SWITCH_SA }
             val saPendingIntent = PendingIntent.getBroadcast(
                 context, 1, saIntent,
@@ -105,7 +122,7 @@ class SwitcherWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.btn_widget_sa, saPendingIntent)
 
-            // NSA Intent
+            // NSA Intent (Direct background broadcast)
             val nsaIntent = Intent(context, SwitcherWidgetProvider::class.java).apply { action = ACTION_SWITCH_NSA }
             val nsaPendingIntent = PendingIntent.getBroadcast(
                 context, 2, nsaIntent,
@@ -113,7 +130,7 @@ class SwitcherWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.btn_widget_nsa, nsaPendingIntent)
 
-            // LTE Intent
+            // LTE Intent (Direct background broadcast)
             val lteIntent = Intent(context, SwitcherWidgetProvider::class.java).apply { action = ACTION_SWITCH_LTE }
             val ltePendingIntent = PendingIntent.getBroadcast(
                 context, 3, lteIntent,
@@ -121,13 +138,15 @@ class SwitcherWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.btn_widget_lte, ltePendingIntent)
 
-            // App Open Intent
-            val appIntent = Intent(context, MainActivity::class.java)
+            // Header tap opens Main App
+            val appIntent = Intent(context, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
             val appPendingIntent = PendingIntent.getActivity(
                 context, 4, appIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(R.id.widget_root, appPendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_title, appPendingIntent)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
