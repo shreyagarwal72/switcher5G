@@ -52,30 +52,45 @@ fun MainScreen(
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route ?: "home"
 
-    Box(modifier = modifier.fillMaxSize()) {
+    fun routeIndex(route: String?): Int = when (route) {
+        "home" -> 0
+        "settings" -> 1
+        "about" -> 2
+        else -> 0
+    }
+
+    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         NavHost(
             navController = navController,
             startDestination = "home",
             modifier = Modifier.fillMaxSize(),
             enterTransition = {
-                fadeIn(tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing)) +
-                        slideInHorizontally(tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { (it * 0.15f).toInt() } +
-                        scaleIn(initialScale = 0.94f, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing))
+                val isForward = routeIndex(targetState.destination.route) > routeIndex(initialState.destination.route)
+                val initialOffset = if (isForward) { fullWidth: Int -> fullWidth } else { fullWidth: Int -> -fullWidth / 3 }
+                slideInHorizontally(
+                    initialOffsetX = initialOffset,
+                    animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                ) + fadeIn(tween(300)) + scaleIn(initialScale = 0.94f, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing))
             },
             exitTransition = {
-                fadeOut(tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) +
-                        slideOutHorizontally(tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { (-it * 0.15f).toInt() } +
-                        scaleOut(targetScale = 0.94f, animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing))
+                val isForward = routeIndex(targetState.destination.route) > routeIndex(initialState.destination.route)
+                val targetOffset = if (isForward) { fullWidth: Int -> -fullWidth / 3 } else { fullWidth: Int -> fullWidth }
+                slideOutHorizontally(
+                    targetOffsetX = targetOffset,
+                    animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                ) + fadeOut(tween(250)) + scaleOut(targetScale = 0.94f, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing))
             },
             popEnterTransition = {
-                fadeIn(tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing)) +
-                        slideInHorizontally(tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { (-it * 0.15f).toInt() } +
-                        scaleIn(initialScale = 0.94f, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing))
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth -> -fullWidth / 3 },
+                    animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                ) + fadeIn(tween(300)) + scaleIn(initialScale = 0.94f, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing))
             },
             popExitTransition = {
-                fadeOut(tween(200, easing = androidx.compose.animation.core.FastOutLinearInEasing)) +
-                        slideOutHorizontally(tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { (it * 0.15f).toInt() } +
-                        scaleOut(targetScale = 0.94f, animationSpec = tween(300, easing = androidx.compose.animation.core.FastOutSlowInEasing))
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+                ) + fadeOut(tween(250)) + scaleOut(targetScale = 0.94f, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing))
             },
         ) {
             composable("home") {
