@@ -36,7 +36,7 @@ import com.app.switcher5g.update.UpdateManager
 import com.app.switcher5g.util.MarkdownUtils
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AboutScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
