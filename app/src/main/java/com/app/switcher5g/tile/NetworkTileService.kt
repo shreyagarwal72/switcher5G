@@ -53,9 +53,9 @@ class NetworkTileService : TileService() {
         }
 
         val shizukuReady = ShizukuHelper.hasPermission()
-        val rootReady = RootHelper.isRootAvailable() && RootHelper.isRootGranted()
 
         scope.launch {
+            val rootReady = RootHelper.isRootAvailable() && RootHelper.isRootGranted()
             val targetMethod = when {
                 shizukuReady -> ActivationMethod.SHIZUKU
                 rootReady -> ActivationMethod.ROOT
