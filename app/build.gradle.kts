@@ -22,19 +22,28 @@ android {
             val alias = System.getenv("RELEASE_KEY_ALIAS") ?: project.findProperty("RELEASE_KEY_ALIAS")?.toString()
             val keyPass = System.getenv("RELEASE_KEY_PASSWORD") ?: project.findProperty("RELEASE_KEY_PASSWORD")?.toString()
 
+            if (!ksFile.exists()) {
+                ksFile.parentFile?.mkdirs()
+                runCatching {
+                    ProcessBuilder(
+                        "keytool", "-genkeypair", "-v",
+                        "-keystore", ksFile.absolutePath,
+                        "-alias", "switcher5g",
+                        "-keyalg", "RSA",
+                        "-keysize", "2048",
+                        "-validity", "10000",
+                        "-storepass", "switcher5gpass",
+                        "-keypass", "switcher5gpass",
+                        "-dname", "CN=Switcher5G, OU=Mobile, O=OpenSource, L=City, ST=State, C=US"
+                    ).start().waitFor()
+                }
+            }
+
             if (ksFile.exists()) {
                 storeFile = ksFile
                 storePassword = if (!storePass.isNullOrEmpty()) storePass else "switcher5gpass"
                 keyAlias = if (!alias.isNullOrEmpty()) alias else "switcher5g"
                 keyPassword = if (!keyPass.isNullOrEmpty()) keyPass else storePassword
-            } else {
-                val debugKs = getByName("debug")
-                if (debugKs.storeFile?.exists() == true) {
-                    storeFile = debugKs.storeFile
-                    storePassword = debugKs.storePassword
-                    keyAlias = debugKs.keyAlias
-                    keyPassword = debugKs.keyPassword
-                }
             }
         }
     }
