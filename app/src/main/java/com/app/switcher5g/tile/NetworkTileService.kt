@@ -57,13 +57,17 @@ class NetworkTileService : TileService() {
         }
 
         scope.launch {
-            val shizukuReady = ShizukuHelper.hasPermission()
-            val rootReady = RootHelper.isRootAvailable() && RootHelper.isRootGranted()
+            val shizukuPermission = ShizukuHelper.hasPermission()
+            val rootAvailable = RootHelper.isRootAvailable()
+            val rootGranted = if (rootAvailable) RootHelper.isRootGranted() else false
 
+            val preferredMethod = appPrefs.activationMethod
             val targetMethod = when {
-                shizukuReady -> ActivationMethod.SHIZUKU
-                rootReady -> ActivationMethod.ROOT
-                appPrefs.activationMethod == ActivationMethod.RADIO_INFO -> ActivationMethod.RADIO_INFO
+                preferredMethod == ActivationMethod.SHIZUKU && shizukuPermission -> ActivationMethod.SHIZUKU
+                preferredMethod == ActivationMethod.ROOT && rootGranted -> ActivationMethod.ROOT
+                preferredMethod == ActivationMethod.RADIO_INFO -> ActivationMethod.RADIO_INFO
+                shizukuPermission -> ActivationMethod.SHIZUKU
+                rootGranted -> ActivationMethod.ROOT
                 else -> ActivationMethod.AUTO
             }
 
@@ -84,11 +88,7 @@ class NetworkTileService : TileService() {
                     }
                     is SwitchResult.Failure -> {
                         AppLogger.e("NetworkTileService", "Power tile switch failed: ${result.reason}")
-                        qsTile?.apply {
-                            state = Tile.STATE_INACTIVE
-                            subtitle = "Failed"
-                            updateTile()
-                        }
+                        renderTile(current)
                         Toast.makeText(applicationContext, "⚠️ ${result.reason}", Toast.LENGTH_LONG).show()
                     }
                 }

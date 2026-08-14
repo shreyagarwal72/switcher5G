@@ -1,4 +1,4 @@
-name: Build & Release Signed APK
+name: Build & Release Switcher 5G APK
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
       contents: write   # needed to publish/update GitHub Releases
 
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -50,24 +50,34 @@ jobs:
               -dname "CN=Switcher5G, OU=Mobile, O=OpenSource, L=City, ST=State, C=US"
           fi
 
-      - name: Build Release APK
+      - name: Build Debug & Release APKs
         env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: gradle assembleRelease --no-daemon
+        run: gradle assemble --no-daemon
 
-      - name: Upload APK artifact
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: switcher5g-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+
+      - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: switcher5g-release-apk
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
-      - name: Create or Update GitHub Release with Signed APK
+      - name: Create or Update GitHub Release with APKs
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: app/build/outputs/apk/release/*.apk
+          files: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/apk/debug/*.apk
           generate_release_notes: true
+
 
