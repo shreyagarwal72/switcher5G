@@ -122,7 +122,14 @@ object RootHelper {
             return@withContext SwitchResult.Success("Applied ${mode.name} via Root (cmd phone default)")
         }
 
-        // 4. Fallback: settings put global preferred_network_mode
+        // 4. Try service call phone (legacy Android root service call)
+        val cmdServiceCall = runSuCommand("service call phone 143 i32 $subId i32 $modeId")
+        if (cmdServiceCall.isSuccess && !cmdServiceCall.output.contains("Parcel")) {
+            AppLogger.i("RootHelper", "Root switch succeeded with service call phone")
+            return@withContext SwitchResult.Success("Applied ${mode.name} via Root (service call)")
+        }
+
+        // 5. Fallback: settings put global preferred_network_mode
         val cmd3 = runSuCommand("settings put global preferred_network_mode$subId $modeId && settings put global preferred_network_mode $modeId")
         if (cmd3.isSuccess) {
             AppLogger.i("RootHelper", "Root switch succeeded with settings put global")
