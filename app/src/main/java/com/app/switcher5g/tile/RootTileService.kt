@@ -71,7 +71,7 @@ class RootTileService : TileService() {
                 return@launch
             }
 
-            val subId = appPrefs.selectedSimSubId
+            val subId = 1
             val result = manager.switchTo(next, overrideSubId = subId, method = ActivationMethod.ROOT)
 
             CoroutineScope(Dispatchers.Main).launch {
