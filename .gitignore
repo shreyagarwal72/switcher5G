@@ -15,3 +15,6 @@ local.properties
 *.iml
 .DS_Store
 captures/
+
+# F-Droid Fastlane metadata directory (if maintained out of tree)
+# fastlane/
