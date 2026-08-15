@@ -1,0 +1,22 @@
+{
+  "id": "switcher5g",
+  "name": "Switcher 5G",
+  "description": "5G Standalone (SA), 5G Non-Standalone (NSA), and 4G LTE Network Switcher for Android with Shizuku & Root support.",
+  "icon": "https://raw.githubusercontent.com/shreyagarwal72/switcher5G/main/docs/images/app_icon.jpg",
+  "version": "1.0.1",
+  "latestVersion": "1.0.1",
+  "downloadUrl": "https://github.com/shreyagarwal72/switcher5G/releases/download/v1.0.1/switcher5g-release.apk",
+  "repoUrl": "https://github.com/shreyagarwal72/switcher5G",
+  "githubRepo": "shreyagarwal72/switcher5G",
+  "releaseKeyword": "release",
+  "packageName": "com.app.switcher5g",
+  "category": "Utility",
+  "platform": "Android",
+  "size": "Varies",
+  "author": "Shrey Agarwal",
+  "screenshots": [
+    "https://raw.githubusercontent.com/shreyagarwal72/switcher5G/main/docs/images/screenshot_dashboard.jpg",
+    "https://raw.githubusercontent.com/shreyagarwal72/switcher5G/main/docs/images/screenshot_setup.jpg",
+    "https://raw.githubusercontent.com/shreyagarwal72/switcher5G/main/docs/images/screenshot_settings.jpg"
+  ]
+}
