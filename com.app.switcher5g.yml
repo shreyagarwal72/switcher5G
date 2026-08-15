@@ -1,0 +1,38 @@
+categories:
+  - System
+  - Connectivity
+License: MIT
+AuthorName: Shrey Agarwal
+AuthorWebSite: https://github.com/shreyagarwal72
+SourceCode: https://github.com/shreyagarwal72/switcher5G
+IssueTracker: https://github.com/shreyagarwal72/switcher5G/issues
+Changelog: https://github.com/shreyagarwal72/switcher5G/releases
+
+AutoName: Switcher 5G
+Summary: 5G SA, 5G NSA, and 4G LTE Network Switcher for Android
+Description: |-
+  Switcher 5G lets you seamlessly manage and switch mobile network modes on Android devices.
+
+  Features:
+  - 1-Tap Network Mode Switching (5G SA / NR Only, 5G NSA / NR & LTE, 4G LTE Only)
+  - Shizuku Binder IPC integration (no root required)
+  - Root (su) execution support for rooted devices
+  - Dual-SIM (SIM1 & SIM2) support
+  - 1-Tap Home Screen App Widget
+  - Quick Settings Status Bar Tiles
+
+RepoType: git
+Repo: https://github.com/shreyagarwal72/switcher5G.git
+
+Builds:
+  - versionName: 1.0.1
+    versionCode: 2
+    commit: v1.0.1
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version %v
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.1
+CurrentCode: 2
