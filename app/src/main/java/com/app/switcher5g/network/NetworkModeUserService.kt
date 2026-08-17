@@ -30,7 +30,7 @@ class NetworkModeUserService : IUserService.Stub() {
     // Bitmasks for AOSP Telephony allowed network types across all global carriers
     private val BITMASK_NR = 1L shl (TelephonyManager.NETWORK_TYPE_NR - 1)           // 1L shl 19 = 524288L (Bit 20)
     private val BITMASK_LTE = 1L shl (TelephonyManager.NETWORK_TYPE_LTE - 1)         // 1L shl 12 = 4096L (Bit 13)
-    private val BITMASK_LTE_CA = 1L shl (TelephonyManager.NETWORK_TYPE_LTE_CA - 1)   // 1L shl 18 = 262144L (Bit 19)
+    private val BITMASK_LTE_CA = 1L shl 18                                            // 1L shl 18 = 262144L (Bit 19)
     private val BITMASK_UMTS = 1L shl (TelephonyManager.NETWORK_TYPE_UMTS - 1)       // 1L shl 2 = 4L (Bit 3)
     private val BITMASK_HSDPA = 1L shl (TelephonyManager.NETWORK_TYPE_HSDPA - 1)     // 1L shl 7 = 128L (Bit 8)
     private val BITMASK_HSUPA = 1L shl (TelephonyManager.NETWORK_TYPE_HSUPA - 1)     // 1L shl 8 = 256L (Bit 9)

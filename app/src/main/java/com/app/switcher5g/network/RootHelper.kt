@@ -147,8 +147,8 @@ object RootHelper {
             return@withContext SwitchResult.Success("Applied ${mode.name} via Root settings")
         }
 
-        AppLogger.w("RootHelper", "Root switch commands failed. Err: ${cmd1.error}")
-        SwitchResult.Failure("Root switch failed: ${cmd1.error.ifBlank { "Exit code ${cmd1.exitCode}" }}")
+        AppLogger.w("RootHelper", "Root switch commands failed.")
+        SwitchResult.Failure("Root switch failed across all candidate methods.")
     }
 
     data class CommandResult(

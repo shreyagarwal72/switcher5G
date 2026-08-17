@@ -81,44 +81,46 @@ class ToggleNetworkTileService : TileService() {
     override fun onClick() {
         super.onClick()
 
-        val shizukuPermission = ShizukuHelper.hasPermission()
-        val rootAvailable = RootHelper.isRootAvailable()
-        val rootGranted = if (rootAvailable) RootHelper.isRootGranted() else false
-        val preferredMethod = appPrefs.activationMethod
-
-        val isAuthorized = when (preferredMethod) {
-            ActivationMethod.SHIZUKU -> shizukuPermission
-            ActivationMethod.ROOT -> rootGranted
-            ActivationMethod.RADIO_INFO -> true
-            else -> shizukuPermission || rootGranted
-        }
-
-        if (!isAuthorized) {
-            renderPermissionErrorState()
-            val msg = when (preferredMethod) {
-                ActivationMethod.SHIZUKU -> "⚠️ Shizuku permission required to switch network mode."
-                ActivationMethod.ROOT -> "⚠️ Root (su) permission required to switch network mode."
-                else -> "⚠️ Permission required. Grant Shizuku or Root access in Switcher5G."
-            }
-            Toast.makeText(applicationContext, msg, Toast.LENGTH_LONG).show()
-            return
-        }
-
-        val mode1 = appPrefs.toggleMode1
-        val mode2 = appPrefs.toggleMode2
-        val currentActive = appPrefs.currentActiveMode
-
-        // Determine target mode to switch to
-        val targetMode = if (currentActive == mode1) mode2 else mode1
-        AppLogger.i("ToggleNetworkTileService", "Toggle tile clicked: active=$currentActive -> target=$targetMode (mode1=$mode1, mode2=$mode2)")
-
-        qsTile?.apply {
-            state = Tile.STATE_UNAVAILABLE
-            subtitle = "Switching to ${formatModeShort(targetMode)}..."
-            updateTile()
-        }
-
         scope.launch {
+            val shizukuPermission = ShizukuHelper.hasPermission()
+            val rootAvailable = RootHelper.isRootAvailable()
+            val rootGranted = if (rootAvailable) RootHelper.isRootGranted() else false
+            val preferredMethod = appPrefs.activationMethod
+
+            val isAuthorized = when (preferredMethod) {
+                ActivationMethod.SHIZUKU -> shizukuPermission
+                ActivationMethod.ROOT -> rootGranted
+                ActivationMethod.RADIO_INFO -> true
+                else -> shizukuPermission || rootGranted
+            }
+
+            if (!isAuthorized) {
+                renderPermissionErrorState()
+                val msg = when (preferredMethod) {
+                    ActivationMethod.SHIZUKU -> "⚠️ Shizuku permission required to switch network mode."
+                    ActivationMethod.ROOT -> "⚠️ Root (su) permission required to switch network mode."
+                    else -> "⚠️ Permission required. Grant Shizuku or Root access in Switcher5G."
+                }
+                CoroutineScope(Dispatchers.Main).launch {
+                    Toast.makeText(applicationContext, msg, Toast.LENGTH_LONG).show()
+                }
+                return@launch
+            }
+
+            val mode1 = appPrefs.toggleMode1
+            val mode2 = appPrefs.toggleMode2
+            val currentActive = appPrefs.currentActiveMode
+
+            // Determine target mode to switch to
+            val targetMode = if (currentActive == mode1) mode2 else mode1
+            AppLogger.i("ToggleNetworkTileService", "Toggle tile clicked: active=$currentActive -> target=$targetMode (mode1=$mode1, mode2=$mode2)")
+
+            qsTile?.apply {
+                state = Tile.STATE_UNAVAILABLE
+                subtitle = "Switching to ${formatModeShort(targetMode)}..."
+                updateTile()
+            }
+
             val targetMethod = when {
                 preferredMethod == ActivationMethod.SHIZUKU && shizukuPermission -> ActivationMethod.SHIZUKU
                 preferredMethod == ActivationMethod.ROOT && rootGranted -> ActivationMethod.ROOT
@@ -153,34 +155,36 @@ class ToggleNetworkTileService : TileService() {
     }
 
     private fun updateTileState() {
-        val shizukuPermission = ShizukuHelper.hasPermission()
-        val rootAvailable = RootHelper.isRootAvailable()
-        val rootGranted = if (rootAvailable) RootHelper.isRootGranted() else false
-        val preferredMethod = appPrefs.activationMethod
+        scope.launch {
+            val shizukuPermission = ShizukuHelper.hasPermission()
+            val rootAvailable = RootHelper.isRootAvailable()
+            val rootGranted = if (rootAvailable) RootHelper.isRootGranted() else false
+            val preferredMethod = appPrefs.activationMethod
 
-        val isAuthorized = when (preferredMethod) {
-            ActivationMethod.SHIZUKU -> shizukuPermission
-            ActivationMethod.ROOT -> rootGranted
-            ActivationMethod.RADIO_INFO -> true
-            else -> shizukuPermission || rootGranted
-        }
+            val isAuthorized = when (preferredMethod) {
+                ActivationMethod.SHIZUKU -> shizukuPermission
+                ActivationMethod.ROOT -> rootGranted
+                ActivationMethod.RADIO_INFO -> true
+                else -> shizukuPermission || rootGranted
+            }
 
-        if (!isAuthorized) {
-            renderPermissionErrorState()
-            return
-        }
+            if (!isAuthorized) {
+                renderPermissionErrorState()
+                return@launch
+            }
 
-        val mode1 = appPrefs.toggleMode1
-        val mode2 = appPrefs.toggleMode2
-        val currentActive = appPrefs.currentActiveMode
+            val mode1 = appPrefs.toggleMode1
+            val mode2 = appPrefs.toggleMode2
+            val currentActive = appPrefs.currentActiveMode
 
-        val isMode1Active = currentActive == mode1
+            val isMode1Active = currentActive == mode1
 
-        qsTile?.apply {
-            state = if (isMode1Active) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-            label = formatModeShort(currentActive)
-            subtitle = "Tap to switch to ${formatModeShort(if (isMode1Active) mode2 else mode1)}"
-            updateTile()
+            qsTile?.apply {
+                state = if (isMode1Active) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+                label = formatModeShort(currentActive)
+                subtitle = "Tap to switch to ${formatModeShort(if (isMode1Active) mode2 else mode1)}"
+                updateTile()
+            }
         }
     }
 

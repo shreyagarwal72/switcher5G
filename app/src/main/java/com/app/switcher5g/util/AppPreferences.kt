@@ -16,7 +16,7 @@ enum class AppFont { SYSTEM, NUNITO, INTER, OUTFIT, LEXEND, MANROPE, GROTESK }
  * Reactive SharedPreferences wrapper backed by Compose mutableStateOf properties.
  * Setting any preference instantly triggers an automatic app-wide re-render / theme refresh.
  */
-class AppPreferences(context: Context) {
+class AppPreferences(private val context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("switcher5g_settings", Context.MODE_PRIVATE)
 
