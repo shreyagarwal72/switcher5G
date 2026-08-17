@@ -41,11 +41,11 @@ fun NetworkModeSlider(
             .alpha(if (enabled) 1f else 0.5f),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // Step Labels Above StrideSlider - padded to align with track thumb inset
+        // Step Labels Above StrideSlider
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp),
+                .padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {

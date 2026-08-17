@@ -78,28 +78,25 @@ fun StrideSlider(
                     .clip(RoundedCornerShape(50))
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest),
             ) {
-                val availableWidth = maxWidth
-                val travel = (availableWidth - ThumbSize - ThumbInset * 2).coerceAtLeast(0.dp)
+                val travel = maxWidth - ThumbSize - ThumbInset * 2
                 val thumbStart = ThumbInset + travel * fraction
-                val thumbCenter = thumbStart + ThumbSize / 2
 
                 // Rolling: one full turn per circumference travelled
                 val circumference = ThumbSize.value * Math.PI.toFloat()
-                val rollDegrees = if (circumference > 0f) (travel.value * fraction / circumference) * 360f else 0f
+                val rollDegrees = (travel.value * fraction / circumference) * 360f
 
-                // Deep filled section — fills track up to the center of the thumb
+                // Deep filled section — its rounded cap sits just past the thumb
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .width(thumbCenter)
-                        .clip(RoundedCornerShape(topStartPercent = 50, bottomStartPercent = 50, topEndPercent = 0, bottomEndPercent = 0))
+                        .width(thumbStart + ThumbSize + ThumbInset)
+                        .clip(RoundedCornerShape(50))
                         .background(
                             if (enabled) MaterialTheme.colorScheme.primaryContainer
                             else MaterialTheme.colorScheme.outlineVariant,
                         ),
                 )
-
-                // Scalloped cookie thumb, rolling precisely centered vertically and aligned horizontally
+                // Scalloped cookie thumb, rolling as it travels
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
