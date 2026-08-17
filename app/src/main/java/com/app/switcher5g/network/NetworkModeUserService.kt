@@ -27,17 +27,38 @@ class NetworkModeUserService : IUserService.Stub() {
     private val REASON_USER = 0
     private val REASON_CARRIER = 2
 
-    // Bitmasks for AOSP Telephony allowed network types
-    private val BITMASK_NR = 1L shl (TelephonyManager.NETWORK_TYPE_NR - 1)       // 1L shl 19 = 524288L
-    private val BITMASK_LTE = 1L shl (TelephonyManager.NETWORK_TYPE_LTE - 1)     // 1L shl 12 = 4096L
-    private val BITMASK_UMTS = 1L shl (TelephonyManager.NETWORK_TYPE_UMTS - 1)   // 1L shl 2 = 4L
-    private val BITMASK_GSM = 1L shl (TelephonyManager.NETWORK_TYPE_GSM - 1)     // 1L shl 16 or 1L shl 0
+    // Bitmasks for AOSP Telephony allowed network types across all global carriers
+    private val BITMASK_NR = 1L shl (TelephonyManager.NETWORK_TYPE_NR - 1)           // 1L shl 19 = 524288L (Bit 20)
+    private val BITMASK_LTE = 1L shl (TelephonyManager.NETWORK_TYPE_LTE - 1)         // 1L shl 12 = 4096L (Bit 13)
+    private val BITMASK_LTE_CA = 1L shl (TelephonyManager.NETWORK_TYPE_LTE_CA - 1)   // 1L shl 18 = 262144L (Bit 19)
+    private val BITMASK_UMTS = 1L shl (TelephonyManager.NETWORK_TYPE_UMTS - 1)       // 1L shl 2 = 4L (Bit 3)
+    private val BITMASK_HSDPA = 1L shl (TelephonyManager.NETWORK_TYPE_HSDPA - 1)     // 1L shl 7 = 128L (Bit 8)
+    private val BITMASK_HSUPA = 1L shl (TelephonyManager.NETWORK_TYPE_HSUPA - 1)     // 1L shl 8 = 256L (Bit 9)
+    private val BITMASK_HSPA = 1L shl (TelephonyManager.NETWORK_TYPE_HSPA - 1)       // 1L shl 9 = 512L (Bit 10)
+    private val BITMASK_HSPAP = 1L shl (TelephonyManager.NETWORK_TYPE_HSPAP - 1)     // 1L shl 14 = 16384L (Bit 15)
+    private val BITMASK_GSM = 1L shl (TelephonyManager.NETWORK_TYPE_GSM - 1)         // 1L shl 15 = 32768L (Bit 16)
+    private val BITMASK_GPRS = 1L shl (TelephonyManager.NETWORK_TYPE_GPRS - 1)       // 1L shl 0 = 1L (Bit 1)
+    private val BITMASK_EDGE = 1L shl (TelephonyManager.NETWORK_TYPE_EDGE - 1)       // 1L shl 1 = 2L (Bit 2)
+    private val BITMASK_CDMA = 1L shl (TelephonyManager.NETWORK_TYPE_CDMA - 1)       // 1L shl 3 = 8L (Bit 4)
+    private val BITMASK_EVDO_0 = 1L shl (TelephonyManager.NETWORK_TYPE_EVDO_0 - 1)   // 1L shl 4 = 16L (Bit 5)
+    private val BITMASK_EVDO_A = 1L shl (TelephonyManager.NETWORK_TYPE_EVDO_A - 1)   // 1L shl 5 = 32L (Bit 6)
+    private val BITMASK_EVDO_B = 1L shl (TelephonyManager.NETWORK_TYPE_EVDO_B - 1)   // 1L shl 11 = 2048L (Bit 12)
+    private val BITMASK_1xRTT = 1L shl (TelephonyManager.NETWORK_TYPE_1xRTT - 1)     // 1L shl 6 = 64L (Bit 7)
+    private val BITMASK_TD_SCDMA = 1L shl (TelephonyManager.NETWORK_TYPE_TD_SCDMA - 1) // 1L shl 16 = 65536L (Bit 17)
+
+    // Full global legacy network bitmask covering all 2G/3G/4G standards
+    private val BITMASK_ALL_LEGACY = BITMASK_LTE or BITMASK_LTE_CA or BITMASK_UMTS or BITMASK_HSDPA or
+            BITMASK_HSUPA or BITMASK_HSPA or BITMASK_HSPAP or BITMASK_GSM or BITMASK_GPRS or
+            BITMASK_EDGE or BITMASK_CDMA or BITMASK_EVDO_0 or BITMASK_EVDO_A or BITMASK_EVDO_B or
+            BITMASK_1xRTT or BITMASK_TD_SCDMA
 
     // Mode Constants (RILConstants / TelephonyManager)
     private val NETWORK_MODE_NR_ONLY = 28                 // 5G SA Only
+    private val NETWORK_MODE_NR_LTE_CDMA_EVDO_GSM_WCDMA = 27 // 5G NSA Global (NR + LTE + CDMA + EvDo + GSM + WCDMA)
     private val NETWORK_MODE_NR_LTE_GSM_WCDMA = 26       // 5G NSA (NR + LTE + 3G + 2G)
     private val NETWORK_MODE_NR_LTE = 24                 // 5G NSA (NR + LTE)
     private val NETWORK_MODE_LTE_ONLY = 11               // 4G LTE Only
+    private val NETWORK_MODE_LTE_CDMA_EVDO_GSM_WCDMA = 10 // 4G Global (LTE + CDMA + EvDo + GSM + WCDMA)
     private val NETWORK_MODE_LTE_GSM_WCDMA = 9           // 4G LTE + 3G + 2G
 
     private fun unwrapThrowable(t: Throwable): Throwable {
@@ -61,19 +82,23 @@ class NetworkModeUserService : IUserService.Stub() {
 
         val preferredModeInt: Int
         val allowedMask: Long
+        val fallbackModeInts: List<Int>
 
         when (mode.uppercase()) {
             "NR_ONLY" -> {
                 preferredModeInt = NETWORK_MODE_NR_ONLY // 28
-                allowedMask = BITMASK_NR // 524288L (Bit 19: NETWORK_TYPE_NR)
+                fallbackModeInts = listOf(NETWORK_MODE_NR_ONLY)
+                allowedMask = BITMASK_NR // 524288L (Bit 20: NETWORK_TYPE_NR)
             }
             "NR_LTE" -> {
-                preferredModeInt = NETWORK_MODE_NR_LTE_GSM_WCDMA // 26
-                allowedMask = BITMASK_NR or BITMASK_LTE or BITMASK_UMTS or BITMASK_GSM // 528391L
+                preferredModeInt = NETWORK_MODE_NR_LTE_CDMA_EVDO_GSM_WCDMA // 27 (Global)
+                fallbackModeInts = listOf(NETWORK_MODE_NR_LTE_CDMA_EVDO_GSM_WCDMA, NETWORK_MODE_NR_LTE_GSM_WCDMA, NETWORK_MODE_NR_LTE)
+                allowedMask = BITMASK_NR or BITMASK_ALL_LEGACY
             }
             "LTE_ONLY" -> {
                 preferredModeInt = NETWORK_MODE_LTE_ONLY // 11
-                allowedMask = BITMASK_LTE // 4096L (Bit 12: NETWORK_TYPE_LTE)
+                fallbackModeInts = listOf(NETWORK_MODE_LTE_ONLY, NETWORK_MODE_LTE_CDMA_EVDO_GSM_WCDMA, NETWORK_MODE_LTE_GSM_WCDMA)
+                allowedMask = BITMASK_LTE or BITMASK_LTE_CA // 4096L + 262144L
             }
             else -> {
                 val err = "ERROR: Unknown mode '$mode'"
@@ -108,21 +133,23 @@ class NetworkModeUserService : IUserService.Stub() {
                 }
 
                 // 1b: setPreferredNetworkType(subId, modeInt) / setPreferredNetworkType(modeInt)
-                try {
-                    val m = tm.javaClass.getMethod("setPreferredNetworkType", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
-                    m.invoke(tm, targetSubId, preferredModeInt)
-                    val msg = "OK: Mode set to $mode (modeInt=$preferredModeInt) on subId=$targetSubId via TelephonyManager"
-                    AppLogger.i("UserService", msg)
-                    return msg
-                } catch (_: Throwable) {
+                for (mInt in fallbackModeInts) {
                     try {
-                        val m = tm.javaClass.getMethod("setPreferredNetworkType", Int::class.javaPrimitiveType)
-                        m.invoke(tm, preferredModeInt)
-                        val msg = "OK: Mode set to $mode (modeInt=$preferredModeInt) via TelephonyManager"
+                        val m = tm.javaClass.getMethod("setPreferredNetworkType", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
+                        m.invoke(tm, targetSubId, mInt)
+                        val msg = "OK: Mode set to $mode (modeInt=$mInt) on subId=$targetSubId via TelephonyManager"
                         AppLogger.i("UserService", msg)
                         return msg
-                    } catch (t: Throwable) {
-                        errors.add("TM.setPreferredNetworkType: ${unwrapThrowable(t).message}")
+                    } catch (_: Throwable) {
+                        try {
+                            val m = tm.javaClass.getMethod("setPreferredNetworkType", Int::class.javaPrimitiveType)
+                            m.invoke(tm, mInt)
+                            val msg = "OK: Mode set to $mode (modeInt=$mInt) via TelephonyManager"
+                            AppLogger.i("UserService", msg)
+                            return msg
+                        } catch (t: Throwable) {
+                            errors.add("TM.setPreferredNetworkType($mInt): ${unwrapThrowable(t).message}")
+                        }
                     }
                 }
 
@@ -149,26 +176,38 @@ class NetworkModeUserService : IUserService.Stub() {
                 val iTelephony = asInterface.invoke(null, binder)
 
                 if (iTelephony != null) {
-                    // Try setPreferredNetworkType(subId, modeInt)
+                    // Try setPreferredNetworkType(subId, modeInt) across fallback mode ints
                     val setPrefMethod = iTelephony.javaClass.methods.firstOrNull {
                         it.name == "setPreferredNetworkType" && it.parameterCount == 2
                     }
                     if (setPrefMethod != null) {
-                        setPrefMethod.invoke(iTelephony, targetSubId, preferredModeInt)
-                        val msg = "OK: Mode set to $mode (modeInt=$preferredModeInt) via ITelephony.setPreferredNetworkType"
-                        AppLogger.i("UserService", msg)
-                        return msg
+                        for (mInt in fallbackModeInts) {
+                            try {
+                                setPrefMethod.invoke(iTelephony, targetSubId, mInt)
+                                val msg = "OK: Mode set to $mode (modeInt=$mInt) via ITelephony.setPreferredNetworkType"
+                                AppLogger.i("UserService", msg)
+                                return msg
+                            } catch (t: Throwable) {
+                                errors.add("ITelephony.setPreferredNetworkType($mInt): ${unwrapThrowable(t).message}")
+                            }
+                        }
                     }
 
-                    // Try setAllowedNetworkTypesForReason(subId, reason, allowedMask)
+                    // Try setAllowedNetworkTypesForReason(subId, reason, allowedMask) for REASON_USER & REASON_CARRIER
                     val setAllowedMethod = iTelephony.javaClass.methods.firstOrNull {
                         it.name == "setAllowedNetworkTypesForReason" && it.parameterCount == 3
                     }
                     if (setAllowedMethod != null) {
-                        setAllowedMethod.invoke(iTelephony, targetSubId, REASON_USER, allowedMask)
-                        val msg = "OK: Mode set to $mode (mask=$allowedMask) via ITelephony.setAllowedNetworkTypesForReason"
-                        AppLogger.i("UserService", msg)
-                        return msg
+                        for (reason in intArrayOf(REASON_USER, REASON_CARRIER)) {
+                            try {
+                                setAllowedMethod.invoke(iTelephony, targetSubId, reason, allowedMask)
+                                val msg = "OK: Mode set to $mode (reason=$reason, mask=$allowedMask) via ITelephony.setAllowedNetworkTypesForReason"
+                                AppLogger.i("UserService", msg)
+                                return msg
+                            } catch (t: Throwable) {
+                                errors.add("ITelephony.setAllowedNetworkTypesForReason($reason): ${unwrapThrowable(t).message}")
+                            }
+                        }
                     }
                 }
             }
@@ -179,14 +218,20 @@ class NetworkModeUserService : IUserService.Stub() {
         // ---------------------------------------------------------------------
         // Strategy 3: Direct Shell `cmd phone` & `settings` commands (executed inside Shell process)
         // ---------------------------------------------------------------------
-        val shellCommands = listOf(
-            arrayOf("cmd", "phone", "set-preferred-network-mode", "-s", targetSubId.toString(), preferredModeInt.toString()),
-            arrayOf("cmd", "phone", "set-preferred-network-mode", preferredModeInt.toString()),
-            arrayOf("cmd", "phone", "set-allowed-network-types", "-s", targetSubId.toString(), "-r", "0", allowedMask.toString()),
-            arrayOf("cmd", "phone", "set-allowed-network-types", "-r", "0", allowedMask.toString()),
-            arrayOf("settings", "put", "global", "preferred_network_mode$targetSubId", preferredModeInt.toString()),
-            arrayOf("settings", "put", "global", "preferred_network_mode", preferredModeInt.toString()),
-        )
+        val shellCommands = mutableListOf<Array<String>>()
+
+        for (mInt in fallbackModeInts) {
+            shellCommands.add(arrayOf("cmd", "phone", "set-preferred-network-mode", "-s", targetSubId.toString(), mInt.toString()))
+            shellCommands.add(arrayOf("cmd", "phone", "set-preferred-network-mode", mInt.toString()))
+        }
+        for (reason in intArrayOf(REASON_USER, REASON_CARRIER)) {
+            shellCommands.add(arrayOf("cmd", "phone", "set-allowed-network-types", "-s", targetSubId.toString(), "-r", reason.toString(), allowedMask.toString()))
+            shellCommands.add(arrayOf("cmd", "phone", "set-allowed-network-types", "-r", reason.toString(), allowedMask.toString()))
+        }
+        for (mInt in fallbackModeInts) {
+            shellCommands.add(arrayOf("settings", "put", "global", "preferred_network_mode$targetSubId", mInt.toString()))
+            shellCommands.add(arrayOf("settings", "put", "global", "preferred_network_mode", mInt.toString()))
+        }
 
         for (cmd in shellCommands) {
             try {

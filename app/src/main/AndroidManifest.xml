@@ -71,6 +71,18 @@
             </intent-filter>
         </service>
 
+        <!-- Mode 4: Quick Settings 2-Mode Custom Toggle Tile -->
+        <service
+            android:name=".tile.ToggleNetworkTileService"
+            android:label="5G Toggle Tile"
+            android:icon="@drawable/ic_5g_tile"
+            android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
         <!-- Home Screen App Widget -->
         <receiver
             android:name=".widget.SwitcherWidgetProvider"

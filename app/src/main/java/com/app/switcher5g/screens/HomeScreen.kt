@@ -470,10 +470,13 @@ fun HomeScreenContent(prefs: AppPreferences) {
                 isSwitching = true
                 statusText = "Applying network mode switch…"
                 scope.launch {
-                    val result = manager.switchTo(selectedMode, selectedSubId, prefs.activationMethod)
-                    statusText = when (result) {
-                        is SwitchResult.Success -> "✅ ${result.message}"
-                        is SwitchResult.Failure -> "⚠️ ${result.reason}"
+                    val res = manager.switchTo(selectedMode, overrideSubId = selectedSubId, method = prefs.activationMethod)
+                    statusText = when (res) {
+                        is SwitchResult.Success -> {
+                            prefs.currentActiveMode = selectedMode
+                            "✅ ${res.message}"
+                        }
+                        is SwitchResult.Failure -> "⚠️ ${res.reason}"
                     }
                     isSwitching = false
                 }

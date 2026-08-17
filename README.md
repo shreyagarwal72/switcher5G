@@ -17,7 +17,7 @@
   <br />
 
   <a href="https://github.com/shreyagarwal72/switcher5G/releases/latest">
-    <img src="https://img.shields.io/badge/Download_Latest_Release_APK-v1.0.1-green?style=for-the-badge&logo=android" alt="Download APK Button" />
+    <img src="https://img.shields.io/badge/Download_Latest_Release_APK-v1.0.2-green?style=for-the-badge&logo=android" alt="Download APK Button" />
   </a>
 
 </div>
@@ -43,6 +43,7 @@
 * **1-Tap Home Screen App Widget**: Perform 1-tap background network mode switching directly from your Android Home Screen without opening settings.
 * **Dual Quick Settings (QS) Tiles**:
   * **5G Power Switcher Tile**: 1-tap mode cycling directly in status bar quick settings.
+  * **5G Custom 2-Mode Toggle Tile**: 1-tap toggling between user-configurable network modes.
   * **Manual 5G Settings Tile**: 1-tap shortcut to open system `RadioInfo` testing menu (`*#*#4636#*#*`).
 * **Android 14 Predictive Back & Motion**: Full predictive back gesture support with Material 3 Shared Axis motion transitions.
 * **Root (`su`) & Shizuku First-Class Support**: Native Kotlin `RootHelper` execution for rooted users, and Shizuku binder IPC for unrooted users.
@@ -67,7 +68,7 @@ Get the latest signed release APK directly from GitHub Releases:
 
 | Release | Download Link | Type |
 | :--- | :--- | :--- |
-| **v1.0.1 (Latest Release)** | [**Download switcher5g-release.apk**](https://github.com/shreyagarwal72/switcher5G/releases/latest) | Signed Production APK |
+| **v1.0.2 (Latest Release)** | [**Download switcher5g-release.apk**](https://github.com/shreyagarwal72/switcher5G/releases/latest) | Signed Production APK |
 
 </div>
 

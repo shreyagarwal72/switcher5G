@@ -241,6 +241,68 @@ fun SettingsScreen(
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
+                Text(
+                    text = "Quick Settings Toggle Modes (2-Mode Tile):",
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+
+                Text(
+                    text = "First Mode:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    NetworkMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = prefs.toggleMode1 == mode,
+                            onClick = { prefs.toggleMode1 = mode },
+                            label = {
+                                Text(
+                                    text = when (mode) {
+                                        NetworkMode.NR_ONLY -> "5G SA"
+                                        NetworkMode.NR_LTE -> "5G NSA"
+                                        NetworkMode.LTE_ONLY -> "4G LTE"
+                                    },
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                )
+                            },
+                        )
+                    }
+                }
+
+                Text(
+                    text = "Second Mode:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    NetworkMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = prefs.toggleMode2 == mode,
+                            onClick = { prefs.toggleMode2 = mode },
+                            label = {
+                                Text(
+                                    text = when (mode) {
+                                        NetworkMode.NR_ONLY -> "5G SA"
+                                        NetworkMode.NR_LTE -> "5G NSA"
+                                        NetworkMode.LTE_ONLY -> "4G LTE"
+                                    },
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                )
+                            },
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+
                 SettingToggleRow(
                     title = "Auto-scan SIMs on Launch",
                     subtitle = "Automatically detect active Dual-SIM subscriptions on open",

@@ -67,7 +67,7 @@ fun UpdateAvailableDialog(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        text = updateInfo.releaseNotes,
+                        text = com.app.switcher5g.util.MarkdownUtils.parseMarkdown(updateInfo.releaseNotes),
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(12.dp),

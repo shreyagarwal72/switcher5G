@@ -192,10 +192,70 @@ class AppPreferences(context: Context) {
 
     private fun readHasSeenManual5gDialog(): Boolean = prefs.getBoolean(KEY_HAS_SEEN_MANUAL_5G_DIALOG, false)
 
+    var toggleMode1: NetworkMode
+        get() = toggleMode1State
+        set(value) {
+            toggleMode1State = value
+            prefs.edit().putString(KEY_TOGGLE_MODE_1, value.name).apply()
+            notifyTileUpdate()
+        }
+
+    var toggleMode2: NetworkMode
+        get() = toggleMode2State
+        set(value) {
+            toggleMode2State = value
+            prefs.edit().putString(KEY_TOGGLE_MODE_2, value.name).apply()
+            notifyTileUpdate()
+        }
+
+    var currentActiveMode: NetworkMode
+        get() = currentActiveModeState
+        set(value) {
+            currentActiveModeState = value
+            prefs.edit().putString(KEY_CURRENT_ACTIVE_MODE, value.name).apply()
+            notifyTileUpdate()
+        }
+
+    var toggleMode1State by mutableStateOf(readToggleMode1())
+        private set
+
+    var toggleMode2State by mutableStateOf(readToggleMode2())
+        private set
+
+    var currentActiveModeState by mutableStateOf(readCurrentActiveMode())
+        private set
+
+    private fun readToggleMode1(): NetworkMode {
+        val name = prefs.getString(KEY_TOGGLE_MODE_1, NetworkMode.NR_LTE.name)
+        return runCatching { NetworkMode.valueOf(name ?: NetworkMode.NR_LTE.name) }.getOrDefault(NetworkMode.NR_LTE)
+    }
+
+    private fun readToggleMode2(): NetworkMode {
+        val name = prefs.getString(KEY_TOGGLE_MODE_2, NetworkMode.LTE_ONLY.name)
+        return runCatching { NetworkMode.valueOf(name ?: NetworkMode.LTE_ONLY.name) }.getOrDefault(NetworkMode.LTE_ONLY)
+    }
+
+    private fun readCurrentActiveMode(): NetworkMode {
+        val name = prefs.getString(KEY_CURRENT_ACTIVE_MODE, defaultNetworkMode.name)
+        return runCatching { NetworkMode.valueOf(name ?: defaultNetworkMode.name) }.getOrDefault(defaultNetworkMode)
+    }
+
+    fun notifyTileUpdate() {
+        try {
+            val intent = android.content.Intent(ACTION_NETWORK_MODE_CHANGED).apply {
+                setPackage(context.packageName)
+            }
+            context.sendBroadcast(intent)
+        } catch (_: Throwable) {}
+    }
+
     fun exportToJsonString(): String {
         val json = org.json.JSONObject()
         json.put("activationMethod", activationMethod.name)
         json.put("defaultNetworkMode", defaultNetworkMode.name)
+        json.put("toggleMode1", toggleMode1.name)
+        json.put("toggleMode2", toggleMode2.name)
+        json.put("currentActiveMode", currentActiveMode.name)
         json.put("themeMode", themeMode.name)
         json.put("amoled", amoled)
         json.put("paletteId", paletteId)
@@ -218,6 +278,15 @@ class AppPreferences(context: Context) {
             }
             if (json.has("defaultNetworkMode")) {
                 runCatching { defaultNetworkMode = NetworkMode.valueOf(json.getString("defaultNetworkMode")) }
+            }
+            if (json.has("toggleMode1")) {
+                runCatching { toggleMode1 = NetworkMode.valueOf(json.getString("toggleMode1")) }
+            }
+            if (json.has("toggleMode2")) {
+                runCatching { toggleMode2 = NetworkMode.valueOf(json.getString("toggleMode2")) }
+            }
+            if (json.has("currentActiveMode")) {
+                runCatching { currentActiveMode = NetworkMode.valueOf(json.getString("currentActiveMode")) }
             }
             if (json.has("themeMode")) {
                 runCatching { themeMode = AppThemeMode.valueOf(json.getString("themeMode")) }
@@ -259,8 +328,12 @@ class AppPreferences(context: Context) {
     }
 
     companion object {
+        const val ACTION_NETWORK_MODE_CHANGED = "com.app.switcher5g.ACTION_NETWORK_MODE_CHANGED"
         private const val KEY_ACTIVATION_METHOD = "activation_method"
         private const val KEY_DEFAULT_MODE = "default_network_mode"
+        private const val KEY_TOGGLE_MODE_1 = "toggle_mode_1"
+        private const val KEY_TOGGLE_MODE_2 = "toggle_mode_2"
+        private const val KEY_CURRENT_ACTIVE_MODE = "current_active_mode"
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_AMOLED = "amoled"
         private const val KEY_PALETTE_ID = "palette_id"

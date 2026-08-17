@@ -81,58 +81,69 @@ object RootHelper {
      * Executes network mode switch via root `cmd phone` or `settings put` APIs.
      */
     suspend fun switchNetworkMode(mode: NetworkMode, subId: Int): SwitchResult = withContext(Dispatchers.IO) {
-        val modeId = when (mode) {
-            NetworkMode.NR_ONLY -> 28 // NETWORK_MODE_NR_ONLY (5G SA)
-            NetworkMode.NR_LTE -> 26  // NETWORK_MODE_NR_LTE_GSM_WCDMA (5G NSA)
-            NetworkMode.LTE_ONLY -> 11 // NETWORK_MODE_LTE_ONLY (4G LTE)
+        val modeIds = when (mode) {
+            NetworkMode.NR_ONLY -> listOf(28) // NETWORK_MODE_NR_ONLY (5G SA)
+            NetworkMode.NR_LTE -> listOf(27, 26, 24) // 5G NSA Global (NR+LTE+CDMA+GSM+WCDMA), NR+LTE+GSM+WCDMA, NR+LTE
+            NetworkMode.LTE_ONLY -> listOf(11, 10, 9) // 4G LTE Only, 4G Global, LTE+GSM+WCDMA
         }
 
+        // Full global legacy network bitmask covering all 2G/3G/4G standards
+        // NR (1L shl 19 = 524288L) | LTE (4096L) | LTE_CA (262144L) | UMTS/GSM/CDMA/EvDo/TDSCDMA etc.
         val allowedMask = when (mode) {
             NetworkMode.NR_ONLY -> 524288L // BITMASK_NR (1L shl 19)
-            NetworkMode.NR_LTE -> 528391L  // NR + LTE + UMTS + GSM
-            NetworkMode.LTE_ONLY -> 4096L   // BITMASK_LTE (1L shl 12)
+            NetworkMode.NR_LTE -> 524288L or 262144L or 65536L or 32768L or 16384L or 4096L or 2048L or 512L or 256L or 128L or 64L or 32L or 16L or 8L or 4L or 2L or 1L // NR + ALL LEGACY
+            NetworkMode.LTE_ONLY -> 4096L or 262144L // BITMASK_LTE | BITMASK_LTE_CA
         }
 
-        AppLogger.i("RootHelper", "Attempting Root switch to $mode (modeId=$modeId, mask=$allowedMask, subId=$subId)")
+        AppLogger.i("RootHelper", "Attempting Root switch to $mode (modeIds=$modeIds, mask=$allowedMask, subId=$subId)")
 
         // 1. Try cmd phone set-preferred-network-mode (-s subId modeId)
-        val cmd1 = runSuCommand("cmd phone set-preferred-network-mode -s $subId $modeId")
-        if (cmd1.isSuccess) {
-            AppLogger.i("RootHelper", "Root switch succeeded with cmd phone set-preferred-network-mode -s $subId")
-            return@withContext SwitchResult.Success("Applied ${mode.name} via Root (cmd phone)")
+        for (mId in modeIds) {
+            val cmd1 = runSuCommand("cmd phone set-preferred-network-mode -s $subId $mId")
+            if (cmd1.isSuccess) {
+                AppLogger.i("RootHelper", "Root switch succeeded with cmd phone set-preferred-network-mode -s $subId $mId")
+                return@withContext SwitchResult.Success("Applied ${mode.name} via Root (cmd phone)")
+            }
         }
 
-        // 2. Try cmd phone set-allowed-network-types (Android 11+ preferred API)
-        val cmdAllowed = runSuCommand("cmd phone set-allowed-network-types -s $subId -r 0 $allowedMask")
-        if (cmdAllowed.isSuccess) {
-            AppLogger.i("RootHelper", "Root switch succeeded with cmd phone set-allowed-network-types -s $subId")
-            return@withContext SwitchResult.Success("Applied ${mode.name} via Root (allowed network types)")
-        }
+        // 2. Try cmd phone set-allowed-network-types across REASON_USER (0) and REASON_CARRIER (2)
+        for (reason in intArrayOf(0, 2)) {
+            val cmdAllowed = runSuCommand("cmd phone set-allowed-network-types -s $subId -r $reason $allowedMask")
+            if (cmdAllowed.isSuccess) {
+                AppLogger.i("RootHelper", "Root switch succeeded with cmd phone set-allowed-network-types -s $subId -r $reason")
+                return@withContext SwitchResult.Success("Applied ${mode.name} via Root (allowed network types reason=$reason)")
+            }
 
-        val cmdAllowedDefault = runSuCommand("cmd phone set-allowed-network-types -r 0 $allowedMask")
-        if (cmdAllowedDefault.isSuccess) {
-            AppLogger.i("RootHelper", "Root switch succeeded with cmd phone set-allowed-network-types default")
-            return@withContext SwitchResult.Success("Applied ${mode.name} via Root (allowed network types default)")
+            val cmdAllowedDefault = runSuCommand("cmd phone set-allowed-network-types -r $reason $allowedMask")
+            if (cmdAllowedDefault.isSuccess) {
+                AppLogger.i("RootHelper", "Root switch succeeded with cmd phone set-allowed-network-types default -r $reason")
+                return@withContext SwitchResult.Success("Applied ${mode.name} via Root (allowed network types default reason=$reason)")
+            }
         }
 
         // 3. Try cmd phone set-preferred-network-mode (default sub)
-        val cmd2 = runSuCommand("cmd phone set-preferred-network-mode $modeId")
-        if (cmd2.isSuccess) {
-            AppLogger.i("RootHelper", "Root switch succeeded with cmd phone set-preferred-network-mode default")
-            return@withContext SwitchResult.Success("Applied ${mode.name} via Root (cmd phone default)")
+        for (mId in modeIds) {
+            val cmd2 = runSuCommand("cmd phone set-preferred-network-mode $mId")
+            if (cmd2.isSuccess) {
+                AppLogger.i("RootHelper", "Root switch succeeded with cmd phone set-preferred-network-mode default $mId")
+                return@withContext SwitchResult.Success("Applied ${mode.name} via Root (cmd phone default)")
+            }
         }
 
         // 4. Try service call phone (legacy Android root service call)
-        val cmdServiceCall = runSuCommand("service call phone 143 i32 $subId i32 $modeId")
-        if (cmdServiceCall.isSuccess && !cmdServiceCall.output.contains("Parcel")) {
-            AppLogger.i("RootHelper", "Root switch succeeded with service call phone")
-            return@withContext SwitchResult.Success("Applied ${mode.name} via Root (service call)")
+        for (mId in modeIds) {
+            val cmdServiceCall = runSuCommand("service call phone 143 i32 $subId i32 $mId")
+            if (cmdServiceCall.isSuccess && !cmdServiceCall.output.contains("Parcel")) {
+                AppLogger.i("RootHelper", "Root switch succeeded with service call phone $mId")
+                return@withContext SwitchResult.Success("Applied ${mode.name} via Root (service call)")
+            }
         }
 
         // 5. Fallback: settings put global preferred_network_mode
-        val cmd3 = runSuCommand("settings put global preferred_network_mode$subId $modeId && settings put global preferred_network_mode $modeId")
+        val primaryModeId = modeIds.first()
+        val cmd3 = runSuCommand("settings put global preferred_network_mode$subId $primaryModeId && settings put global preferred_network_mode $primaryModeId")
         if (cmd3.isSuccess) {
-            AppLogger.i("RootHelper", "Root switch succeeded with settings put global")
+            AppLogger.i("RootHelper", "Root switch succeeded with settings put global $primaryModeId")
             return@withContext SwitchResult.Success("Applied ${mode.name} via Root settings")
         }
 
