@@ -119,6 +119,7 @@ fun StrideFloatingNav(
         }
     }
 }
+}
 
 @Composable
 private fun FloatingNavTabItem(
