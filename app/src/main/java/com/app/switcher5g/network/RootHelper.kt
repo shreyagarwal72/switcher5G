@@ -83,8 +83,8 @@ object RootHelper {
     suspend fun switchNetworkMode(mode: NetworkMode, subId: Int): SwitchResult = withContext(Dispatchers.IO) {
         val modeIds = when (mode) {
             NetworkMode.NR_ONLY -> listOf(28) // NETWORK_MODE_NR_ONLY (5G SA)
-            NetworkMode.NR_LTE -> listOf(27, 26, 24) // 5G NSA Global (NR+LTE+CDMA+GSM+WCDMA), NR+LTE+GSM+WCDMA, NR+LTE
-            NetworkMode.LTE_ONLY -> listOf(11, 10, 9) // 4G LTE Only, 4G Global, LTE+GSM+WCDMA
+            NetworkMode.NR_LTE -> listOf(26, 27, 24, 23, 33) // NR+LTE+GSM+WCDMA (Airtel/VI primary), Global, NR+LTE, etc.
+            NetworkMode.LTE_ONLY -> listOf(11, 9, 10, 12) // 4G LTE Only, LTE+GSM+WCDMA (Airtel/VI), 4G Global, LTE+WCDMA
         }
 
         // Full global legacy network bitmask covering all 2G/3G/4G standards

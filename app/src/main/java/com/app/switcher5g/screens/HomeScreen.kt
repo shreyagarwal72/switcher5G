@@ -207,8 +207,11 @@ fun HomeScreenContent(prefs: AppPreferences) {
         modeName = selectedMode.label(),
     )
 
+    val scrollState = rememberScrollState()
+
     ExpressivePullToRefreshBox(
         isRefreshing = isScanningSims,
+        canPull = { scrollState.value == 0 },
         onRefresh = {
             scope.launch {
                 isScanningSims = true
@@ -224,7 +227,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
                 .padding(bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),

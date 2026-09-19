@@ -55,11 +55,14 @@ class NetworkModeUserService : IUserService.Stub() {
     // Mode Constants (RILConstants / TelephonyManager)
     private val NETWORK_MODE_NR_ONLY = 28                 // 5G SA Only
     private val NETWORK_MODE_NR_LTE_CDMA_EVDO_GSM_WCDMA = 27 // 5G NSA Global (NR + LTE + CDMA + EvDo + GSM + WCDMA)
-    private val NETWORK_MODE_NR_LTE_GSM_WCDMA = 26       // 5G NSA (NR + LTE + 3G + 2G)
+    private val NETWORK_MODE_NR_LTE_GSM_WCDMA = 26       // 5G NSA (NR + LTE + 3G + 2G) - Airtel & VI standard
     private val NETWORK_MODE_NR_LTE = 24                 // 5G NSA (NR + LTE)
+    private val NETWORK_MODE_NR_LTE_WCDMA = 23           // 5G NSA (NR + LTE + WCDMA)
+    private val NETWORK_MODE_NR_LTE_TDSCDMA_CDMA_EVDO_GSM_WCDMA = 33 // Full multi-mode NR
     private val NETWORK_MODE_LTE_ONLY = 11               // 4G LTE Only
     private val NETWORK_MODE_LTE_CDMA_EVDO_GSM_WCDMA = 10 // 4G Global (LTE + CDMA + EvDo + GSM + WCDMA)
-    private val NETWORK_MODE_LTE_GSM_WCDMA = 9           // 4G LTE + 3G + 2G
+    private val NETWORK_MODE_LTE_GSM_WCDMA = 9           // 4G LTE + 3G + 2G - Airtel & VI 4G standard
+    private val NETWORK_MODE_LTE_WCDMA = 12              // 4G LTE + WCDMA
 
     private fun unwrapThrowable(t: Throwable): Throwable {
         var current: Throwable = t
@@ -91,13 +94,25 @@ class NetworkModeUserService : IUserService.Stub() {
                 allowedMask = BITMASK_NR // 524288L (Bit 20: NETWORK_TYPE_NR)
             }
             "NR_LTE" -> {
-                preferredModeInt = NETWORK_MODE_NR_LTE_CDMA_EVDO_GSM_WCDMA // 27 (Global)
-                fallbackModeInts = listOf(NETWORK_MODE_NR_LTE_CDMA_EVDO_GSM_WCDMA, NETWORK_MODE_NR_LTE_GSM_WCDMA, NETWORK_MODE_NR_LTE)
+                // Tuned for Airtel & Vodafone Idea (VI) NSA setups (Option 3x with LTE anchors)
+                preferredModeInt = NETWORK_MODE_NR_LTE_GSM_WCDMA // 26
+                fallbackModeInts = listOf(
+                    NETWORK_MODE_NR_LTE_GSM_WCDMA, // 26 (Airtel & VI primary)
+                    NETWORK_MODE_NR_LTE_CDMA_EVDO_GSM_WCDMA, // 27 (Global)
+                    NETWORK_MODE_NR_LTE, // 24 (NR + LTE)
+                    NETWORK_MODE_NR_LTE_WCDMA, // 23
+                    NETWORK_MODE_NR_LTE_TDSCDMA_CDMA_EVDO_GSM_WCDMA, // 33
+                )
                 allowedMask = BITMASK_NR or BITMASK_ALL_LEGACY
             }
             "LTE_ONLY" -> {
                 preferredModeInt = NETWORK_MODE_LTE_ONLY // 11
-                fallbackModeInts = listOf(NETWORK_MODE_LTE_ONLY, NETWORK_MODE_LTE_CDMA_EVDO_GSM_WCDMA, NETWORK_MODE_LTE_GSM_WCDMA)
+                fallbackModeInts = listOf(
+                    NETWORK_MODE_LTE_ONLY, // 11
+                    NETWORK_MODE_LTE_GSM_WCDMA, // 9 (Airtel & VI standard 4G)
+                    NETWORK_MODE_LTE_CDMA_EVDO_GSM_WCDMA, // 10
+                    NETWORK_MODE_LTE_WCDMA, // 12
+                )
                 allowedMask = BITMASK_LTE or BITMASK_LTE_CA // 4096L + 262144L
             }
             else -> {
@@ -237,14 +252,15 @@ class NetworkModeUserService : IUserService.Stub() {
             shellCommands.add(arrayOf("cmd", "phone", "set-allowed-network-types", allowedMask.toString()))
         }
 
-        // Samsung One UI global settings and multi-SIM properties
-        for (mInt in fallbackModeInts) {
-            shellCommands.add(arrayOf("settings", "put", "global", "preferred_network_mode$targetSubId", mInt.toString()))
-            shellCommands.add(arrayOf("settings", "put", "global", "preferred_network_mode", mInt.toString()))
-            shellCommands.add(arrayOf("settings", "put", "global", "preferred_network_mode1", mInt.toString()))
-            shellCommands.add(arrayOf("settings", "put", "global", "preferred_network_mode2", mInt.toString()))
-            shellCommands.add(arrayOf("settings", "put", "global", "preferred_network_mode_sub$targetSubId", mInt.toString()))
-        }
+        // Ensure global settings preferred_network_mode is updated across all subIds & slots
+        val primaryInt = fallbackModeInts.first()
+        try {
+            Runtime.getRuntime().exec(arrayOf("settings", "put", "global", "preferred_network_mode$targetSubId", primaryInt.toString())).waitFor()
+            Runtime.getRuntime().exec(arrayOf("settings", "put", "global", "preferred_network_mode", primaryInt.toString())).waitFor()
+            Runtime.getRuntime().exec(arrayOf("settings", "put", "global", "preferred_network_mode1", primaryInt.toString())).waitFor()
+            Runtime.getRuntime().exec(arrayOf("settings", "put", "global", "preferred_network_mode2", primaryInt.toString())).waitFor()
+            Runtime.getRuntime().exec(arrayOf("settings", "put", "global", "preferred_network_mode_sub$targetSubId", primaryInt.toString())).waitFor()
+        } catch (_: Throwable) {}
 
         for (cmd in shellCommands) {
             try {
