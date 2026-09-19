@@ -103,13 +103,11 @@ fun MainScreen(
             }
         }
 
+        // Petal's floating bar applies its own navigation-bar inset and bottom margin.
         StrideFloatingNav(
             currentRoute = currentRoute,
             onNavigate = { route -> navController.navigateSingleTop(route) },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(bottom = 16.dp),
+            modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
 }
@@ -385,7 +383,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
                     }
 
                     if (isScanningSims) {
-                        FancyCircularOrbLoader(size = 24.dp)
+                        FancyCircularOrbLoader(size = 24.dp, color = MaterialTheme.colorScheme.primary)
                     } else {
                         IconButton(
                             onClick = {

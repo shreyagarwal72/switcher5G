@@ -2,37 +2,48 @@
 
 package com.app.switcher5g.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CellTower
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -46,21 +57,27 @@ data class NavDestination(
     val route: String,
     val label: String,
     val icon: ImageVector,
+    /** Extra icon rotation (degrees) applied with a spring while the tab is selected. */
+    val selectedRotation: Float = 0f,
 )
 
 val switcherDestinations = listOf(
     NavDestination(route = "home", label = "Switcher", icon = Icons.Rounded.CellTower),
-    NavDestination(route = "settings", label = "Settings", icon = Icons.Rounded.Settings),
+    NavDestination(route = "settings", label = "Settings", icon = Icons.Rounded.Settings, selectedRotation = 90f),
     NavDestination(route = "about", label = "About", icon = Icons.Rounded.Info),
 )
 
 /**
- * Material 3 Expressive Floating Bottom Navigation Bar ported from Petal Browser.
- * Features:
- * - HorizontalFloatingToolbar with surfaceContainer styling
- * - Expressive pill expansion spring physics with low-bouncy overshoot
- * - Tactile press scaling (bouncy touch feedback)
- * - Borderless containment styling
+ * Floating bottom navigation bar, ported 1:1 from Petal Browser's `PetalBottomNavBar`
+ * (floating style):
+ *
+ * - Material 3 Expressive [HorizontalFloatingToolbar] on a `surfaceContainer` vibrant container
+ * - soft primary-tinted shadow plus Petal's faint gradient outline
+ * - selected item grows into a `primaryContainer` pill and reveals its label with a low-bouncy spring
+ * - bouncy press-scale feedback, icon scale pop (and rotation where set) on selection
+ *
+ * The bar handles the navigation-bar inset and bottom margin itself, exactly like Petal, so
+ * callers only need to align it to the bottom of their container.
  */
 @Composable
 fun StrideFloatingNav(
@@ -68,57 +85,72 @@ fun StrideFloatingNav(
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shadowElevation = 16.dp,
-        tonalElevation = 6.dp,
+    Box(
         modifier = modifier
-            .wrapContentWidth()
-            .height(64.dp)
-            .shadow(
-                elevation = 16.dp,
-                shape = CircleShape,
-                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f),
-            )
-            .clip(CircleShape),
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(bottom = 12.dp, start = 16.dp, end = 16.dp),
+        contentAlignment = Alignment.BottomCenter,
     ) {
-        Row(
+        // Material 3 Expressive Floating Toolbar with styled surfaceContainer for proper theme presentation
+        val toolbarColors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(
+            toolbarContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+            toolbarContentColor = MaterialTheme.colorScheme.onSurface,
+        )
+
+        HorizontalFloatingToolbar(
+            expanded = true,
             modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 6.dp)
-                .fillMaxHeight(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .wrapContentWidth()
+                .height(64.dp)
+                .shadow(16.dp, CircleShape, spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f))
+                .border(
+                    0.75.dp,
+                    Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f),
+                        ),
+                    ),
+                    CircleShape,
+                )
+                .clip(CircleShape),
+            colors = toolbarColors,
         ) {
             switcherDestinations.forEachIndexed { index, dest ->
-                val isSelected = currentRoute == dest.route
                 FloatingNavTabItem(
-                    selected = isSelected,
+                    selected = currentRoute == dest.route,
                     label = dest.label,
                     index = index,
-                icon = { selected, tint ->
-                    val iconScale by animateFloatAsState(
-                        targetValue = if (selected) 1.15f else 1.0f,
-                        animationSpec = spring(dampingRatio = 0.65f, stiffness = 400f),
-                        label = "icon_scale_$index",
-                    )
-                    Icon(
-                        imageVector = dest.icon,
-                        contentDescription = dest.label,
-                        tint = tint,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .graphicsLayer {
-                                scaleX = iconScale
-                                scaleY = iconScale
-                            },
-                    )
-                },
-                onClick = { onNavigate(dest.route) },
-            )
+                    icon = { isSelected, tint ->
+                        val rotationAngle by animateFloatAsState(
+                            targetValue = if (isSelected) dest.selectedRotation else 0f,
+                            animationSpec = spring(dampingRatio = 0.68f, stiffness = 450f),
+                            label = "nav_rotation_$index",
+                        )
+                        val iconScale by animateFloatAsState(
+                            targetValue = if (isSelected) 1.15f else 1.0f,
+                            animationSpec = spring(dampingRatio = 0.65f, stiffness = 400f),
+                            label = "nav_scale_$index",
+                        )
+                        Icon(
+                            imageVector = dest.icon,
+                            contentDescription = dest.label,
+                            tint = tint,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .graphicsLayer {
+                                    rotationZ = rotationAngle
+                                    scaleX = iconScale
+                                    scaleY = iconScale
+                                },
+                        )
+                    },
+                    onClick = { onNavigate(dest.route) },
+                )
+            }
         }
     }
-}
 }
 
 @Composable
@@ -133,7 +165,7 @@ private fun FloatingNavTabItem(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
-    // Bouncy touch feedback press scale from Petal
+    // Bouncy touch feedback press scale
     val pressScale by animateFloatAsState(
         targetValue = if (isPressed) 0.90f else 1.0f,
         animationSpec = spring(

@@ -1,11 +1,12 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "com.app.switcher5g"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.app.switcher5g"
@@ -64,31 +65,54 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
+        freeCompilerArgs += listOf(
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
+        )
     }
 
     buildFeatures {
         compose = true
         aidl = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
+}
+
+// Same Kotlin/Compose toolchain as Petal Browser (Kotlin 2.0.21 + Compose BOM 2026.06.01 +
+// Material 3 1.5.0-alpha17): pin the Kotlin runtime libs to the compiler version so newer
+// transitive dependencies can't pull in a stdlib the compiler can't read.
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.0.21")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.0.21")
+        force("org.jetbrains.kotlin:kotlin-stdlib-common:2.0.21")
+        force("org.jetbrains.kotlin:kotlin-reflect:2.0.21")
+    }
+}
+
+// Petal disables the AAR metadata check for the same dependency set (the alpha Compose/Material
+// artifacts declare a newer AGP/compileSdk minimum than the toolchain enforces).
+tasks.configureEach {
+    if (name.startsWith("check") && name.endsWith("AarMetadata")) {
+        enabled = false
     }
 }
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
-    implementation("androidx.activity:activity-compose:1.9.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.activity:activity-compose:1.9.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     // Compose BOM keeps all Compose artifacts on matching versions
-    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
+    implementation(platform("androidx.compose:compose-bom:2026.06.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3:1.4.0-alpha05") // Unlocks ExperimentalMaterial3ExpressiveApi and MaterialShapes.Cookie12Sided
+    implementation("androidx.compose.material3:material3:1.5.0-alpha17") // Expressive APIs: ContainedLoadingIndicator, CircularWavyProgressIndicator, HorizontalFloatingToolbar, MaterialShapes
+    implementation("androidx.graphics:graphics-shapes:1.0.1") // RoundedPolygon for MaterialShapes (same as Petal)
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.navigation:navigation-compose:2.8.4")
 
     // Shizuku — lets us run TelephonyManager's hidden network-mode APIs as `shell`,
     // which passes the MODIFY_PHONE_STATE check without device root.

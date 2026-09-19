@@ -181,7 +181,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                     }
 
                     if (isCheckingUpdate) {
-                        FancyCircularOrbLoader(size = 22.dp)
+                        FancyCircularOrbLoader(size = 22.dp, color = MaterialTheme.colorScheme.primary)
                     } else {
                         OutlinedButton(
                             onClick = {

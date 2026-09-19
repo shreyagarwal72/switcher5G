@@ -14,16 +14,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -31,11 +29,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 
 /**
- * Zenith-style Material 3 Expressive contained loading indicator ported directly from Petal Browser.
+ * Zenith-style Material 3 Expressive contained loading indicator, ported 1:1 from Petal Browser
+ * (`com.petal.browser.compose.composable.ContainedLoadingIndicator.kt`).
  *
- * The container uses the theme primary color and the animated indicator uses onPrimary,
- * so it automatically follows light/dark and dynamic color schemes.
+ * The container uses the theme primary color and the morphing indicator uses onPrimary, so it
+ * follows light/dark, dynamic color and the app palette automatically.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ZenithContainedLoadingIndicator(
     modifier: Modifier = Modifier,
@@ -51,35 +51,19 @@ fun ZenithContainedLoadingIndicator(
         label = "ZenithContainedLoadingIndicatorColor",
     )
 
-    Surface(
-        modifier = modifier
-            .requiredSize(40.dp)
-            .shadow(elevation = 6.dp, shape = CircleShape, clip = false)
-            .semantics { stateDescription = "Loading..." },
-        shape = CircleShape,
-        color = containerColor,
-        shadowElevation = 6.dp,
-        tonalElevation = 4.dp,
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(10.dp),
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.requiredSize(20.dp),
-                color = indicatorColor,
-                strokeWidth = 2.5.dp,
-                trackColor = containerColor.copy(alpha = 0.2f),
-            )
-        }
-    }
+    ContainedLoadingIndicator(
+        modifier = modifier.semantics { stateDescription = "Loading..." },
+        containerColor = containerColor,
+        indicatorColor = indicatorColor,
+    )
 }
 
 /**
  * RefreshBar pull-to-refresh loading indicator utilizing [ZenithContainedLoadingIndicator]
- * ported directly from Petal Browser (`com.petal.browser.compose.composable.RefreshBarLoadingIndicator`).
+ * (`RefreshBarLoadingIndicator` in Petal). Driven purely by [isRefreshing] and [pullProgress]
+ * (0f..1f): it scales/fades in while the user pulls, then pins and spins while refreshing.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun RefreshBarLoadingIndicator(
     isRefreshing: Boolean,

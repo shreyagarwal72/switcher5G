@@ -1,63 +1,38 @@
 package com.app.switcher5g.ui.components
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Glowing circular particle/orb loader ring with smooth rotation and color transitions.
+ * The app-wide circular loader. It used to be a plain rotating arc; it now renders Petal's
+ * circular wavy loader ([PetalCircularWavyProgressIndicator]) so every spinner in the app
+ * (buttons, cards, dialogs, the switching overlay) shares the same Material 3 Expressive look.
+ *
+ * The name and [size] parameter are kept so existing call sites keep working.
+ * [color] defaults to the surrounding content color, so the spinner is readable on filled
+ * buttons (onPrimary), outlined/text buttons (primary) and plain surfaces alike; the track is
+ * a faint tint of the same color. Stroke and wavelength scale with [size] so the small 16-24dp
+ * button spinners keep a clean wave instead of a thick, lumpy ring.
  */
 @Composable
 fun FancyCircularOrbLoader(
     modifier: Modifier = Modifier,
     size: Dp = 48.dp,
     strokeWidth: Dp = 4.dp,
+    color: Color = Color.Unspecified,
 ) {
-    val transition = rememberInfiniteTransition(label = "orbLoader")
-    val rotation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1100, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "rotation",
+    val indicatorColor = if (color.isSpecified) color else LocalContentColor.current
+    PetalCircularWavyProgressIndicator(
+        modifier = modifier,
+        color = indicatorColor,
+        trackColor = indicatorColor.copy(alpha = 0.22f),
+        size = size,
+        strokeWidth = minOf(strokeWidth, size * 0.12f),
+        wavelength = size * 0.41f,
     )
-
-    val primary = MaterialTheme.colorScheme.primary
-    val tertiary = MaterialTheme.colorScheme.tertiary
-
-    Canvas(modifier = modifier.size(size)) {
-        val sweepAngle = 270f
-        val strokePx = strokeWidth.toPx()
-
-        drawArc(
-            brush = Brush.sweepGradient(
-                colors = listOf(
-                    primary.copy(alpha = 0.1f),
-                    primary,
-                    tertiary,
-                    primary.copy(alpha = 0.1f),
-                ),
-            ),
-            startAngle = rotation,
-            sweepAngle = sweepAngle,
-            useCenter = false,
-            style = Stroke(width = strokePx, cap = StrokeCap.Round),
-        )
-    }
 }

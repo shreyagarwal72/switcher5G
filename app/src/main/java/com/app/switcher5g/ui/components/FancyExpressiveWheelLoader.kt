@@ -44,7 +44,7 @@ fun FancyExpressiveWheelLoader(
         )
 
         // Inner circular orb
-        FancyCircularOrbLoader(size = (size * 0.75f).dp)
+        FancyCircularOrbLoader(size = (size * 0.75f).dp, color = color)
     }
 }
 
