@@ -14,8 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /**
- * Top refresh progress indicator wrapping Petal's [LinearRipplingWavyProgressIndicator]
- * and [ExpressivePullToRefreshWaterRipple].
+ * Top refresh progress indicator wrapping Petal's website loading bar [PetalFancyWebLoadingBar].
  */
 @Composable
 fun RefreshProgressBar(
@@ -36,9 +35,9 @@ fun RefreshProgressBar(
                 .padding(vertical = 4.dp),
             contentAlignment = Alignment.Center,
         ) {
-            LinearRipplingWavyProgressIndicator(
+            PetalFancyWebLoadingBar(
                 progress = progress,
-                label = label,
+                visible = isRefreshing,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

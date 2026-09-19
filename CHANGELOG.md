@@ -9,7 +9,7 @@ All notable changes to **Switcher 5G** are documented in this file.
 ### 🎨 Material 3 Expressive UI & Petal Integration
 * **Petal Floating Navigation Bar**: Recreated the bottom navigation bar with Petal's `HorizontalFloatingToolbar` featuring animated `FloatingNavTabItem` pill spring physics, smooth label expansion (`0.dp` to `72.dp`), tactile press feedback scaling (`0.90f`), and borderless `surfaceContainer` containment.
 * **Petal ContainedLoadingIndicator Pull-to-Refresh**: Integrated Petal's exact `RefreshBarLoadingIndicator` visual with `ZenithContainedLoadingIndicator` (40.dp container pill with primary container and onPrimary spinner), driven by a non-blocking `NestedScrollConnection` that seamlessly resolves gesture conflicts with scrollable content.
-* **Linear Rippling Wavy Progress Loader**: Replaced the linear wavy progress indicator with Petal's exact continuous sine-wave canvas loader (`LinearRipplingWavyProgressIndicator`) featuring 4.5dp height, smooth 1100ms cycle animations, and dual-tone shimmer gradients.
+* **Petal Website Loading Linear Wavy Progress Bar**: Replaced the linear loading indicator with Petal's exact website loading progress bar (`PetalFancyWebLoadingBar` powered by AndroidX Material 3 Expressive `LinearWavyProgressIndicator`), supporting both determinate and indeterminate wavy progress across refresh actions, SIM scanning, and APK update downloads.
 * **Borderless Material 3 Expressive Containments**:
   * Removed all 1dp stroke borders across all surfaces and cards (`ElevatedCard`, `Surface`, dialogs, setup banners, SIM subscription cards, and mode sliders).
   * Standardized surface hierarchies using `PetalContainments` defaults (`shape = 24.dp`, tonal elevation, and expressive padding).
