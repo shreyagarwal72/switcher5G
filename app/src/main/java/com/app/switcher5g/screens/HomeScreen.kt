@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -208,79 +207,91 @@ fun HomeScreenContent(prefs: AppPreferences) {
         modeName = selectedMode.label(),
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp)
-            .padding(bottom = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ExpressivePullToRefreshBox(
+        isRefreshing = isScanningSims,
+        onRefresh = {
+            scope.launch {
+                isScanningSims = true
+                val ids = manager.getAvailableSubIds()
+                availableSubIds = ids
+                if (ids.isNotEmpty() && selectedSubId == null) selectedSubId = ids[0]
+                isScanningSims = false
+            }
+        },
+        modifier = Modifier.fillMaxSize(),
     ) {
-        RefreshProgressBar(
-            isRefreshing = isSwitching || isScanningSims,
-            label = if (isSwitching) "Executing network mode switch…" else "Scanning active SIM cards…",
-            modifier = Modifier.entrance(0),
-        )
-
-        // Top Header
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 2.dp)
-                .entrance(0),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+                .fillMaxSize()
+                .statusBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .padding(bottom = 96.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                text = "Switcher 5G",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground,
+            RefreshProgressBar(
+                isRefreshing = isSwitching || isScanningSims,
+                label = if (isSwitching) "Executing network mode switch…" else "Scanning active SIM cards…",
+                modifier = Modifier.entrance(0),
             )
 
-            // Setup / Status Pill Badge
-            val badgeLabel = when {
-                shizukuReady -> "Shizuku Active"
-                rootReady -> "Root Active"
-                else -> "Setup / ADB"
-            }
-            Surface(
-                shape = CircleShape,
-                color = if (isPrivileged) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.tertiaryContainer,
-                modifier = Modifier
-                    .bouncyClickable(scaleDown = 0.92f) { showSetupDialog = true }
-                    .shadow(4.dp, CircleShape),
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = if (isPrivileged) Icons.Rounded.CheckCircle else Icons.Rounded.Security,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = if (isPrivileged) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
-                    )
-                    Text(
-                        text = badgeLabel,
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                        color = if (isPrivileged) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
-                    )
-                }
-            }
-        }
-
-        // ONE-TIME Setup Banner (Appears only 1 time on Home Screen until dismissed)
-        if (!prefs.hasDismissedSetupCard && !isPrivileged) {
-            ElevatedCard(
+            // Top Header
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .entrance(1)
-                    .border(1.dp, MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
-                shape = RoundedCornerShape(20.dp),
+                    .padding(top = 2.dp)
+                    .entrance(0),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                Text(
+                    text = "Switcher 5G",
+                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+
+                // Setup / Status Pill Badge
+                val badgeLabel = when {
+                    shizukuReady -> "Shizuku Active"
+                    rootReady -> "Root Active"
+                    else -> "Setup / ADB"
+                }
+                Surface(
+                    shape = CircleShape,
+                    color = if (isPrivileged) MaterialTheme.colorScheme.primaryContainer
+                    else MaterialTheme.colorScheme.tertiaryContainer,
+                    modifier = Modifier
+                        .bouncyClickable(scaleDown = 0.92f) { showSetupDialog = true }
+                        .shadow(4.dp, CircleShape),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = if (isPrivileged) Icons.Rounded.CheckCircle else Icons.Rounded.Security,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = if (isPrivileged) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                        )
+                        Text(
+                            text = badgeLabel,
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = if (isPrivileged) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                        )
+                    }
+                }
+            }
+
+            // ONE-TIME Setup Banner (Appears only 1 time on Home Screen until dismissed)
+            if (!prefs.hasDismissedSetupCard && !isPrivileged) {
+                ElevatedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .entrance(1),
+                    shape = RoundedCornerShape(20.dp),
+                ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -343,8 +354,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(3)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
+                .entrance(3),
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(
@@ -422,8 +432,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(4)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
+                .entrance(4),
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(
@@ -504,28 +513,52 @@ fun HomeScreenContent(prefs: AppPreferences) {
             }
         }
 
-        // Manual 5G System Switcher Button Card (OpenAppsLabs/5G)
-        OutlinedButton(
-            onClick = {
-                if (!prefs.hasSeenManual5gDialog) {
-                    showManual5gDialog = true
-                } else {
-                    com.app.switcher5g.network.Manual5gSwitchHelper.openRadioInfo(context)
-                }
-            },
+        // Manual 5G & Band Lock Section
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
-                .entrance(5)
-                .bouncyClickable {},
-            shape = RoundedCornerShape(16.dp),
+                .entrance(5),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon(Icons.Rounded.NetworkCheck, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Manual 5G Switch (System RadioInfo)",
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-            )
+            OutlinedButton(
+                onClick = {
+                    if (!prefs.hasSeenManual5gDialog) {
+                        showManual5gDialog = true
+                    } else {
+                        com.app.switcher5g.network.Manual5gSwitchHelper.openRadioInfo(context)
+                    }
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp)
+                    .bouncyClickable {},
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Icon(Icons.Rounded.NetworkCheck, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Radio Info",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                )
+            }
+
+            OutlinedButton(
+                onClick = {
+                    com.app.switcher5g.network.Manual5gSwitchHelper.openBandSelection(context)
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp)
+                    .bouncyClickable {},
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Icon(Icons.Rounded.SettingsCell, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Lock Bands",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                )
+            }
         }
 
         // Status Card
@@ -553,6 +586,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
             }
         }
 
+        }
     }
 }
 

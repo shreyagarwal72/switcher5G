@@ -5,8 +5,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -269,7 +267,6 @@ fun PreferredNetworkModeSlider(
                 Surface(
                     shape = CircleShape,
                     color = activePrimaryColor.copy(alpha = 0.15f),
-                    border = BorderStroke(1.dp, activePrimaryColor.copy(alpha = 0.4f)),
                 ) {
                     Text(
                         text = activeSpec.badge,

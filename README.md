@@ -17,7 +17,7 @@
   <br />
 
   <a href="https://github.com/shreyagarwal72/switcher5G/releases/latest">
-    <img src="https://img.shields.io/badge/Download_Latest_Release_APK-v1.0.2-green?style=for-the-badge&logo=android" alt="Download APK Button" />
+    <img src="https://img.shields.io/badge/Download_Latest_Release_APK-v1.0.5-green?style=for-the-badge&logo=android" alt="Download APK Button" />
   </a>
 
 </div>

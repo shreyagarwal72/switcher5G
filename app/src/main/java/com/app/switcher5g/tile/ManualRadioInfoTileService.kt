@@ -15,26 +15,46 @@ class ManualRadioInfoTileService : TileService() {
         super.onStartListening()
         qsTile?.apply {
             state = Tile.STATE_INACTIVE
-            label = "Manual 5G Settings"
-            subtitle = "Open RadioInfo"
+            label = "5G Settings & Bands"
+            subtitle = "Tap: App | Double: Radio"
             updateTile()
         }
     }
 
+    private var lastClickTime = 0L
+
     override fun onClick() {
         super.onClick()
-        AppLogger.i("ManualRadioInfoTileService", "Opening manual RadioInfo settings from QS tile")
+        val currentTime = System.currentTimeMillis()
+        val isDoubleTap = (currentTime - lastClickTime) < 500
+        lastClickTime = currentTime
+
+        AppLogger.i("ManualRadioInfoTileService", "QS tile clicked (isDoubleTap=$isDoubleTap)")
+
         try {
-            val launched = Manual5gSwitchHelper.openRadioInfo(this)
-            if (launched) {
-                qsTile?.apply {
-                    state = Tile.STATE_ACTIVE
-                    subtitle = "Opened Settings"
-                    updateTile()
+            if (isDoubleTap) {
+                // Double tap directly launches the RadioInfo / Band Selection Testing Activity
+                val launched = Manual5gSwitchHelper.openBandSelection(this)
+                if (launched) {
+                    qsTile?.apply {
+                        state = Tile.STATE_ACTIVE
+                        subtitle = "Opened Radio/Bands"
+                        updateTile()
+                    }
+                }
+            } else {
+                // Single tap opens the Switcher 5G application directly (resolves Issue #3)
+                val launched = Manual5gSwitchHelper.openMainActivity(this)
+                if (launched) {
+                    qsTile?.apply {
+                        state = Tile.STATE_ACTIVE
+                        subtitle = "Opened App"
+                        updateTile()
+                    }
                 }
             }
         } catch (e: Exception) {
-            AppLogger.e("ManualRadioInfoTileService", "Failed to launch RadioInfo from QS tile", e)
+            AppLogger.e("ManualRadioInfoTileService", "Failed to launch from QS tile", e)
         }
     }
 }

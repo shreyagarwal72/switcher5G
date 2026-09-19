@@ -6,7 +6,6 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -68,13 +67,7 @@ fun ShizukuActivationCard(
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
-            .animateContentSize()
-            .border(
-                1.dp,
-                if (hasPermission || isRootGranted) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                else MaterialTheme.colorScheme.error.copy(alpha = 0.4f),
-                RoundedCornerShape(24.dp),
-            ),
+            .animateContentSize(),
         shape = RoundedCornerShape(24.dp),
     ) {
         Column(

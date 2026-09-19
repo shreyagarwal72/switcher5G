@@ -6,7 +6,6 @@ import android.os.Build
 import android.telephony.TelephonyManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -89,11 +88,6 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .entrance(1)
-                .border(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                    RoundedCornerShape(28.dp),
-                )
                 .shadow(6.dp, RoundedCornerShape(28.dp)),
             shape = RoundedCornerShape(28.dp),
         ) {
@@ -139,7 +133,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                             ),
                         )
                         Text(
-                            text = "Version $appVersion — Initial Stable Release",
+                            text = "Version $appVersion — Material 3 Expressive",
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.primary,
                         )
@@ -159,12 +153,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(2)
-                .border(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                    RoundedCornerShape(24.dp),
-                ),
+                .entrance(2),
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(
@@ -309,12 +298,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(3)
-                .border(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                    RoundedCornerShape(24.dp),
-                ),
+                .entrance(3),
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(
@@ -347,12 +331,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(4)
-                .border(
-                    1.dp,
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                    RoundedCornerShape(24.dp),
-                ),
+                .entrance(4),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)),
         ) {
@@ -403,12 +382,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(5)
-                .border(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                    RoundedCornerShape(24.dp),
-                ),
+                .entrance(5),
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(

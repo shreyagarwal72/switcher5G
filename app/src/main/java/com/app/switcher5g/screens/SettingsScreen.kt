@@ -6,7 +6,6 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -86,8 +85,7 @@ fun SettingsScreen(
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(1)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
+                .entrance(1),
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(
@@ -188,8 +186,7 @@ fun SettingsScreen(
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(2)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
+                .entrance(2),
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(
@@ -359,8 +356,7 @@ fun SettingsScreen(
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(3)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
+                .entrance(3),
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(
@@ -422,8 +418,7 @@ fun SettingsScreen(
         ElevatedCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .entrance(4)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp)),
+                .entrance(4),
             shape = RoundedCornerShape(24.dp),
         ) {
             Column(

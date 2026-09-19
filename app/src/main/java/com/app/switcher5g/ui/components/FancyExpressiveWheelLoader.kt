@@ -71,12 +71,7 @@ fun NetworkModeSwitchLoadingOverlay(
                 shadowElevation = 16.dp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-                        RoundedCornerShape(28.dp),
-                    ),
+                    .padding(16.dp),
             ) {
                 Column(
                     modifier = Modifier.padding(28.dp),

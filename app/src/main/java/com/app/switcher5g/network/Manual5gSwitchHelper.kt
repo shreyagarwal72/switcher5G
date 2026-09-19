@@ -71,6 +71,57 @@ object Manual5gSwitchHelper {
         }
     }
 
+    /**
+     * Dedicated Band Selection / Band Locking menu launcher.
+     * Attempts Samsung ServiceMode, AOSP BandMode, Qualcomm & MediaTek band lock activities.
+     */
+    fun openBandSelection(context: Context): Boolean {
+        val bandComponents = arrayOf(
+            Pair("com.android.settings", "com.android.settings.BandMode"),
+            Pair("com.sec.android.app.servicemodeapp", "com.sec.android.app.servicemodeapp.ServiceModeApp"),
+            Pair("com.sec.android.RilServiceModeApp", "com.sec.android.RilServiceModeApp.ServiceMode"),
+            Pair("com.qualcomm.qti.networksetting", "com.qualcomm.qti.networksetting.MobileNetworkSettings"),
+            Pair("com.mediatek.engineermode", "com.mediatek.engineermode.bandselect.BandSelect"),
+            Pair("com.mediatek.engineermode", "com.mediatek.engineermode.modemtest.ModemTestActivity"),
+            Pair("com.android.phone", "com.android.phone.settings.RadioInfo"),
+            Pair("com.android.settings", "com.android.settings.RadioInfo"),
+        )
+
+        for (comp in bandComponents) {
+            val componentName = ComponentName(comp.first, comp.second)
+            if (isActivityExists(context, componentName)) {
+                val intent = Intent().apply {
+                    this.component = componentName
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                }
+                val launched = if (context is TileService) {
+                    startActivityFromTile(context, intent)
+                } else {
+                    tryStartActivity(context, intent)
+                }
+                if (launched) return true
+            }
+        }
+
+        // Fallback to general RadioInfo if specific band mode activity is restricted
+        return openRadioInfo(context)
+    }
+
+    /**
+     * Helper to navigate the user directly into Switcher 5G app from QS Tiles.
+     */
+    fun openMainActivity(context: Context): Boolean {
+        val intent = Intent().apply {
+            setClassName(context.packageName, "com.app.switcher5g.MainActivity")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        }
+        return if (context is TileService) {
+            startActivityFromTile(context, intent)
+        } else {
+            tryStartActivity(context, intent)
+        }
+    }
+
     private fun isActivityExists(context: Context, componentName: ComponentName): Boolean {
         return try {
             val info = context.packageManager.getActivityInfo(componentName, 0)

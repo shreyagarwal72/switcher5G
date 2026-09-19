@@ -216,21 +216,34 @@ class NetworkModeUserService : IUserService.Stub() {
         }
 
         // ---------------------------------------------------------------------
-        // Strategy 3: Direct Shell `cmd phone` & `settings` commands (executed inside Shell process)
+        // Strategy 3: Direct Shell `cmd phone`, `service call phone`, & `settings` commands
+        // Fully tuned for Samsung One UI 8.5 (Galaxy S25 Ultra) & Android 15/16
         // ---------------------------------------------------------------------
         val shellCommands = mutableListOf<Array<String>>()
 
+        // Standard and sub-specified set-preferred-network-mode
         for (mInt in fallbackModeInts) {
             shellCommands.add(arrayOf("cmd", "phone", "set-preferred-network-mode", "-s", targetSubId.toString(), mInt.toString()))
             shellCommands.add(arrayOf("cmd", "phone", "set-preferred-network-mode", mInt.toString()))
+            shellCommands.add(arrayOf("cmd", "phone", "set-preferred-network-type", "-s", targetSubId.toString(), mInt.toString()))
+            shellCommands.add(arrayOf("cmd", "phone", "set-preferred-network-type", mInt.toString()))
         }
-        for (reason in intArrayOf(REASON_USER, REASON_CARRIER)) {
+
+        // Allowed network types with -s, -sub, -r reasons (0 = USER, 1 = POWER, 2 = CARRIER, 3 = ENABLE_2G)
+        for (reason in intArrayOf(REASON_USER, REASON_CARRIER, 1, 3)) {
             shellCommands.add(arrayOf("cmd", "phone", "set-allowed-network-types", "-s", targetSubId.toString(), "-r", reason.toString(), allowedMask.toString()))
+            shellCommands.add(arrayOf("cmd", "phone", "set-allowed-network-types", "--sub", targetSubId.toString(), "-r", reason.toString(), allowedMask.toString()))
             shellCommands.add(arrayOf("cmd", "phone", "set-allowed-network-types", "-r", reason.toString(), allowedMask.toString()))
+            shellCommands.add(arrayOf("cmd", "phone", "set-allowed-network-types", allowedMask.toString()))
         }
+
+        // Samsung One UI global settings and multi-SIM properties
         for (mInt in fallbackModeInts) {
             shellCommands.add(arrayOf("settings", "put", "global", "preferred_network_mode$targetSubId", mInt.toString()))
             shellCommands.add(arrayOf("settings", "put", "global", "preferred_network_mode", mInt.toString()))
+            shellCommands.add(arrayOf("settings", "put", "global", "preferred_network_mode1", mInt.toString()))
+            shellCommands.add(arrayOf("settings", "put", "global", "preferred_network_mode2", mInt.toString()))
+            shellCommands.add(arrayOf("settings", "put", "global", "preferred_network_mode_sub$targetSubId", mInt.toString()))
         }
 
         for (cmd in shellCommands) {

@@ -14,7 +14,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -148,14 +148,7 @@ fun ShizukuSetupDialog(
                     color = if (isRootGranted) MaterialTheme.colorScheme.primaryContainer
                     else if (isRootAvailable) MaterialTheme.colorScheme.secondaryContainer
                     else MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(
-                            1.dp,
-                            if (isRootGranted) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                            RoundedCornerShape(16.dp),
-                        ),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
@@ -223,14 +216,7 @@ fun ShizukuSetupDialog(
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = if (hasPermission) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(
-                            1.dp,
-                            if (hasPermission) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                            RoundedCornerShape(16.dp),
-                        ),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
@@ -399,12 +385,7 @@ fun ShizukuSetupDialog(
                     color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateContentSize(animationSpec = spring(stiffness = 300f))
-                        .border(
-                            1.dp,
-                            MaterialTheme.colorScheme.error.copy(alpha = 0.3f),
-                            RoundedCornerShape(16.dp),
-                        ),
+                        .animateContentSize(animationSpec = spring(stiffness = 300f)),
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
