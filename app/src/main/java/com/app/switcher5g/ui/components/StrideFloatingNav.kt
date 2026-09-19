@@ -20,8 +20,6 @@ import androidx.compose.material.icons.rounded.CellTower
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingToolbarDefaults
-import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -70,14 +68,11 @@ fun StrideFloatingNav(
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val toolbarColors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(
-        toolbarContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-        toolbarContentColor = MaterialTheme.colorScheme.onSurface,
-    )
-
-    HorizontalFloatingToolbar(
-        expanded = true,
-        colors = toolbarColors,
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        shadowElevation = 16.dp,
+        tonalElevation = 6.dp,
         modifier = modifier
             .wrapContentWidth()
             .height(64.dp)
@@ -88,12 +83,19 @@ fun StrideFloatingNav(
             )
             .clip(CircleShape),
     ) {
-        switcherDestinations.forEachIndexed { index, dest ->
-            val isSelected = currentRoute == dest.route
-            FloatingNavTabItem(
-                selected = isSelected,
-                label = dest.label,
-                index = index,
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 8.dp, vertical = 6.dp)
+                .fillMaxHeight(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            switcherDestinations.forEachIndexed { index, dest ->
+                val isSelected = currentRoute == dest.route
+                FloatingNavTabItem(
+                    selected = isSelected,
+                    label = dest.label,
+                    index = index,
                 icon = { selected, tint ->
                     val iconScale by animateFloatAsState(
                         targetValue = if (selected) 1.15f else 1.0f,
