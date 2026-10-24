@@ -67,12 +67,12 @@ if(dark)d.style.background=g("s5g-amoled")==="true"?"#000":"#0d1513";}catch(e){}
  <li><strong>Signal readings stay on screen.</strong> Signal strength, band and SIM details are read from Android to show on your dashboard. They are not sent anywhere.</li>
 </ul>
 <h2>Permissions, and why</h2>
-<table><thead><tr><th scope="col">Permission</th><th scope="col">Used for</th></tr></thead><tbody>
+<div class="table-wrap"><table><thead><tr><th scope="col">Permission</th><th scope="col">Used for</th></tr></thead><tbody>
 <tr><th scope="row"><code>INTERNET</code></th><td>The optional update check and downloading an update you approve.</td></tr>
 <tr><th scope="row"><code>READ_PHONE_STATE</code></th><td>Finding your active SIMs and showing live signal data.</td></tr>
 <tr><th scope="row"><code>ACCESS_NETWORK_STATE</code></th><td>Knowing whether you are online before checking for updates.</td></tr>
 <tr><th scope="row"><code>REQUEST_INSTALL_PACKAGES</code></th><td>Installing an update APK after you tap to confirm.</td></tr>
-</tbody></table>
+</tbody></table></div>
 <p>Shizuku and root access are separate permissions you grant through the Shizuku app or your superuser manager. Switcher 5G uses them only to change your preferred network type.</p>
 <h2>Android backup</h2>
 <p>The app allows Android&rsquo;s own backup. If you have Google backup or a similar service on, your phone may include Switcher 5G&rsquo;s settings. That is controlled by your phone, not by this project.</p>

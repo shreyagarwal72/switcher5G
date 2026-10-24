@@ -81,8 +81,8 @@
 /* ---------- Compatibility ---------- */
 .compat{display:grid;gap:var(--gap)}
 @media (min-width:900px){.compat{grid-template-columns:1fr 1.25fr;align-items:start}}
-.table-wrap{overflow-x:auto;border-radius:var(--r-outer);background:var(--sc)}
-table{border-collapse:collapse;width:100%;min-width:520px}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r-outer);background:var(--sc);max-width:100%;margin:1.4em 0}
+table{border-collapse:collapse;width:100%;min-width:min(100%, 520px)}
 th,td{padding:16px 18px;text-align:left;vertical-align:top}
 th{font:700 .95rem var(--font-display);color:var(--on-surface-variant);background:var(--sc-high)}
 tbody tr + tr td,tbody tr + tr th{border-top:1.5px solid var(--outline-variant)}
@@ -143,22 +143,25 @@ td strong{font-family:var(--font-display)}
 .page-hero{padding-block:clamp(24px,5vw,56px) clamp(8px,2vw,20px)}
 .page-hero h1{font-size:clamp(2.3rem,6.4vw,4rem);margin-bottom:.3em}
 .page-hero .lead{margin-bottom:0}
-.prose{max-width:46rem}
+.prose{max-width:46rem;overflow-wrap:break-word}
+.prose table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.prose table thead,.prose table tbody,.prose table tr{width:100%}
 .prose h2{font-size:clamp(1.5rem,3.2vw,2rem);margin-top:2.2em}
 .prose h3{margin-top:1.8em}
 .prose ul,.prose ol{padding-left:1.3em}
-.prose li{margin:.35em 0}
+.prose li{margin:.35em 0;overflow-wrap:break-word}
 .prose li::marker{color:var(--primary)}
 .prose blockquote{margin:1.5em 0;padding:18px 22px;background:var(--sc);border-radius:var(--r-md);border-left:6px solid var(--primary)}
-.prose pre,.codeblock{background:var(--sc-highest);padding:18px 20px;border-radius:var(--r-md);overflow-x:auto;line-height:1.55;margin:1.2em 0;position:relative;font-size:.88rem}
+.prose pre,.codeblock{background:var(--sc-highest);padding:18px 20px;border-radius:var(--r-md);overflow-x:auto;-webkit-overflow-scrolling:touch;line-height:1.55;margin:1.2em 0;position:relative;font-size:.88rem;max-width:100%}
 .codeblock .copy{position:absolute;top:8px;right:8px}
-.prose pre code,.codeblock code{background:none;padding:0}
+.prose pre code,.codeblock code{background:none;padding:0;overflow-wrap:anywhere}
 .meta{color:var(--on-surface-variant);font-size:.95rem}
 .toc{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 0;padding:0;list-style:none}
 .toc a{display:inline-block;padding:8px 16px;border-radius:var(--r-pill);background:var(--sc-high);text-decoration:none;color:var(--on-surface);font:600 .93rem var(--font-display)}
 .toc a:hover{background:var(--secondary-container)}
-.callout{display:flex;gap:16px;padding:20px 22px;border-radius:var(--r-outer);background:var(--tertiary-container);color:var(--on-tertiary-container);margin:1.6em 0}
+.callout{display:flex;gap:16px;padding:20px 22px;border-radius:var(--r-outer);background:var(--tertiary-container);color:var(--on-tertiary-container);margin:1.6em 0;overflow-wrap:break-word;max-width:100%}
 .callout--info{background:var(--secondary-container);color:var(--on-secondary-container)}
+.callout > div{min-width:0;flex:1}
 .callout > div > :last-child{margin-bottom:0}
 .checklist{list-style:none;padding:0!important;display:grid;gap:2px}
 .checklist li{margin:0;display:flex;gap:14px;align-items:flex-start;padding:16px 20px;background:var(--sc);border-radius:var(--r-inner)}

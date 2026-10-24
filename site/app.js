@@ -9,7 +9,13 @@
   var REPO = "shreyagarwal72/switcher5G";
   var RELEASES = "https://github.com/" + REPO + "/releases/latest";
   var API = "https://api.github.com/repos/" + REPO + "/releases/latest";
-  var FALLBACK = { version: "2.0.0", date: "2026-10-24", url: RELEASES, size: null, sha: null };
+  var FALLBACK = {
+    version: "2.0.0",
+    date: "2026-10-24",
+    url: "https://github.com/" + REPO + "/releases/latest/download/switcher5g-release.apk",
+    size: null,
+    sha: null
+  };
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
   var mqDark = window.matchMedia("(prefers-color-scheme: dark)");
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -203,7 +209,11 @@
     fetch(API, { headers: { Accept: "application/vnd.github+json" }, signal: ctl ? ctl.signal : undefined })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (j) {
-        var apk = (j.assets || []).filter(function (a) { return /\.apk$/i.test(a.name); })[0];
+        var apks = (j.assets || []).filter(function (a) { return /\.apk$/i.test(a.name); });
+        // Prioritize release APKs (e.g. switcher5g-release.apk, app-release.apk) over debug APKs
+        var apk = apks.filter(function (a) { return /release/i.test(a.name) && !/debug/i.test(a.name); })[0]
+          || apks.filter(function (a) { return !/debug/i.test(a.name); })[0]
+          || apks[0];
         fillRelease({
           version: String(j.tag_name || FALLBACK.version).replace(/^v/i, ""),
           date: j.published_at || FALLBACK.date,
