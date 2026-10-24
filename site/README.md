@@ -31,7 +31,7 @@ site/
 
 | What | Where | How |
 | --- | --- | --- |
-| **Domain** | Every page's `<head>` (canonical, Open Graph, Twitter), `sitemap.xml`, `robots.txt`. Currently `https://switcher5g.example.com` | Find and replace that text with your real domain across the `site/` folder. |
+| **Domain** | Every page's `<head>` (canonical, Open Graph, Twitter), `sitemap.xml`, `robots.txt`. Currently `https://switcher-5g.vercel.app` | Find and replace that text with your real domain across the `site/` folder. |
 | **APK SHA-256** | `download.html`, shown in a yellow box | Fills in by itself when GitHub's release API returns the file digest. If it does not, replace the yellow text with the hash. |
 | **Verification tokens** | Commented-out `<meta>` tags in each page's `<head>` | Uncomment and paste your Google and Bing tokens. |
 | **Screenshots** | `site/assets/screens/` (`dashboard.webp`, `setup.webp`, `settings.webp`) | They are the three screenshots from your repo. Replace with new ones at 540x1196, keep the names. |

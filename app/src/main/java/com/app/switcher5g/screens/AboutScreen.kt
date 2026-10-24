@@ -1,66 +1,50 @@
 package com.app.switcher5g.screens
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.telephony.TelephonyManager
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import android.widget.Toast
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CellTower
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Code
-import androidx.compose.material.icons.rounded.Download
-import androidx.compose.material.icons.rounded.PermDeviceInformation
-import androidx.compose.material.icons.rounded.Public
-import androidx.compose.material.icons.rounded.Security
-import androidx.compose.material.icons.rounded.Send
-import androidx.compose.material.icons.rounded.SimCard
-import androidx.compose.material.icons.rounded.SystemUpdate
-import androidx.compose.material.icons.rounded.Android
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.app.switcher5g.R
 import com.app.switcher5g.network.ShizukuHelper
-import com.app.switcher5g.ui.components.PetalBadgeVariant
-import com.app.switcher5g.ui.components.PetalButton
-import com.app.switcher5g.ui.components.PetalButtonStyle
-import com.app.switcher5g.ui.components.PetalContainedLoadingIndicator
-import com.app.switcher5g.ui.components.PetalGroupItem
-import com.app.switcher5g.ui.components.PetalGroupPosition
-import com.app.switcher5g.ui.components.PetalGroupRow
-import com.app.switcher5g.ui.components.PetalScreenScaffold
-import com.app.switcher5g.ui.components.PetalSection
-import com.app.switcher5g.ui.components.entrance
-import com.app.switcher5g.ui.components.rememberPetalHeaderScrollBehavior
+import com.app.switcher5g.ui.components.*
+import com.app.switcher5g.ui.theme.ExpressiveShapeHolder
 import com.app.switcher5g.ui.theme.PetalMaterialShapes
-import com.app.switcher5g.ui.components.PetalShapedContainer
+import com.app.switcher5g.ui.theme.toShape
 import com.app.switcher5g.update.UpdateInfo
 import com.app.switcher5g.update.UpdateManager
 import com.app.switcher5g.util.MarkdownUtils
 import kotlinx.coroutines.launch
+
+private const val SITE_BASE_URL = "https://switcher-5g.vercel.app"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,6 +69,8 @@ fun AboutScreen(
     fun openLink(url: String) {
         runCatching {
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }.onFailure {
+            Toast.makeText(context, "Unable to open link", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -96,226 +82,214 @@ fun AboutScreen(
         onNavigateBack = onNavigateBack,
         modifier = modifier,
     ) {
-        // ---- Hero --------------------------------------------------------------------------
-        PetalGroupItem(
-            position = PetalGroupPosition.SINGLE,
+        // 1. Developer Hero Section (Adopted from Petal Browser)
+        DeveloperHeroSection(
+            versionName = appVersion,
+            onOpenUrl = { url -> openLink(url) },
             modifier = Modifier.entrance(0),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                PetalShapedContainer(
-                    shape = PetalMaterialShapes.Cookie12Sided.toShape(),
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    size = 96.dp,
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.CellTower,
-                        contentDescription = null,
-                        modifier = Modifier.size(46.dp),
-                    )
-                }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    Text(
-                        text = "Switcher 5G",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = "Version $appVersion",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
-                Text(
-                    text = "5G Standalone (SA), 5G Non-Standalone (NSA), and 4G LTE network mode switcher for Android.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
+        )
 
-        // ---- Updates -----------------------------------------------------------------------
+        // 2. Official Website & Documentation (Interactive FAQ, Architecture, etc.)
         PetalSection(
-            title = "Updates",
+            title = "Documentation & Web",
             modifier = Modifier.entrance(1),
         ) {
             row { position ->
                 PetalGroupRow(
-                    icon = Icons.Rounded.SystemUpdate,
-                    title = "Check for updates",
-                    subtitle = when {
-                        isCheckingUpdate -> "Checking for updates…"
-                        updateInfo == null -> "You are on v$appVersion"
-                        else -> "Last checked just now"
-                    },
+                    icon = Icons.Rounded.Quiz,
+                    title = "Frequently Asked Questions",
+                    subtitle = "Troubleshooting, carrier compatibility & usage guides",
                     position = position,
-                    badgeShape = PetalMaterialShapes.Sunny,
+                    onClick = { openLink("$SITE_BASE_URL/faq") },
+                    badgeShape = PetalMaterialShapes.Clover4Leaf,
+                    variant = PetalBadgeVariant.PRIMARY,
                     trailing = {
-                        if (isCheckingUpdate) {
-                            PetalContainedLoadingIndicator(size = 44.dp)
-                        } else {
-                            PetalButton(
-                                onClick = {
-                                    scope.launch {
-                                        isCheckingUpdate = true
-                                        val info = UpdateManager.checkForUpdates(currentVersion = appVersion)
-                                        updateInfo = info
-                                        isCheckingUpdate = false
-                                    }
-                                },
-                                style = PetalButtonStyle.TONAL,
-                                height = 40.dp,
-                            ) {
-                                Text("Check")
-                            }
-                        }
+                        Icon(
+                            imageVector = Icons.Rounded.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     },
                 )
             }
+            row { position ->
+                PetalGroupRow(
+                    icon = Icons.Rounded.Architecture,
+                    title = "System Architecture",
+                    subtitle = "Shizuku IPC binder & Samsung Knox bypass mechanics",
+                    position = position,
+                    onClick = { openLink("$SITE_BASE_URL/architecture") },
+                    badgeShape = PetalMaterialShapes.Burst,
+                    variant = PetalBadgeVariant.SECONDARY,
+                    trailing = {
+                        Icon(
+                            imageVector = Icons.Rounded.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
+                )
+            }
+            row { position ->
+                PetalGroupRow(
+                    icon = Icons.Rounded.DesignServices,
+                    title = "Material 3 Expressive Design",
+                    subtitle = "Design foundations, shapes, and tokens",
+                    position = position,
+                    onClick = { openLink("$SITE_BASE_URL/design") },
+                    badgeShape = PetalMaterialShapes.Flower,
+                    variant = PetalBadgeVariant.TERTIARY,
+                    trailing = {
+                        Icon(
+                            imageVector = Icons.Rounded.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
+                )
+            }
+            row { position ->
+                PetalGroupRow(
+                    icon = Icons.Rounded.Download,
+                    title = "Download Releases",
+                    subtitle = "Official APK mirrors, verify checksums & SHA-256",
+                    position = position,
+                    onClick = { openLink("$SITE_BASE_URL/download") },
+                    badgeShape = PetalMaterialShapes.Cookie6Sided,
+                    variant = PetalBadgeVariant.SURFACE_TONAL,
+                    trailing = {
+                        Icon(
+                            imageVector = Icons.Rounded.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
+                )
+            }
+        }
 
-            val info = updateInfo
-            if (info != null) {
-                row { position ->
-                    PetalGroupItem(
-                        position = position,
-                        color = if (info.hasUpdate) {
-                            MaterialTheme.colorScheme.primaryContainer
-                        } else {
-                            com.app.switcher5g.ui.components.petalGroupColor()
-                        },
+        // 3. Updates & Release Channel
+        PetalSection(
+            title = "Software Updates",
+            modifier = Modifier.entrance(2),
+        ) {
+            row { position ->
+                PetalGroupControlRow(
+                    icon = Icons.Rounded.SystemUpdate,
+                    title = "Switcher 5G v$appVersion",
+                    subtitle = when {
+                        isCheckingUpdate -> "Checking GitHub releases…"
+                        isDownloadingUpdate -> "Downloading ${(downloadProgress * 100).toInt()}%…"
+                        updateInfo == null -> "Latest production build installed"
+                        updateInfo!!.hasUpdate -> "Update available: v${updateInfo!!.latestVersion}"
+                        else -> "App is up to date"
+                    },
+                    position = position,
+                    badgeShape = PetalMaterialShapes.Gem,
+                    variant = if (updateInfo?.hasUpdate == true) PetalBadgeVariant.SECONDARY else PetalBadgeVariant.PRIMARY,
+                ) {
+                    AnimatedVisibility(
+                        visible = isDownloadingUpdate,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically(),
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            val onColor = if (info.hasUpdate) {
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.onSurface
-                            }
-                            Text(
-                                text = if (info.hasUpdate) {
-                                    "Update available: v${info.latestVersion}"
-                                } else {
-                                    "App is up to date (v${info.latestVersion})"
-                                },
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = onColor,
+                            PetalWebsiteLoadingIndicator(
+                                progress = downloadProgress,
+                                modifier = Modifier.fillMaxWidth(),
                             )
+                            Text(
+                                text = "Downloading update: ${(downloadProgress * 100).toInt()}%",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
 
-                            if (info.releaseNotes.isNotBlank()) {
-                                Text(
-                                    text = MarkdownUtils.parseMarkdown(info.releaseNotes),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (info.hasUpdate) onColor else MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-
-                            if (info.hasUpdate && info.isAvailable) {
-                                if (isDownloadingUpdate) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        PetalContainedLoadingIndicator(
-                                            size = 48.dp,
-                                            progress = { downloadProgress },
-                                        )
-                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                            Text(
-                                                text = "Downloading update…",
-                                                style = MaterialTheme.typography.labelLarge,
-                                                fontWeight = FontWeight.Bold,
-                                                color = onColor,
-                                            )
-                                            Text(
-                                                text = "${(downloadProgress * 100).toInt()}%",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = onColor,
-                                            )
-                                        }
-                                    }
-                                } else {
-                                    PetalButton(
-                                        onClick = {
-                                            scope.launch {
-                                                isDownloadingUpdate = true
-                                                downloadProgress = 0f
-                                                UpdateManager.downloadAndInstallApk(
-                                                    context = context,
-                                                    apkUrl = info.apkUrl,
-                                                    onProgress = { downloadProgress = it },
-                                                )
-                                                isDownloadingUpdate = false
-                                            }
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                    ) {
-                                        Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(18.dp))
-                                        Spacer(Modifier.width(8.dp))
-                                        Text("Download & install v${info.latestVersion}")
+                    if (updateInfo?.hasUpdate == true && !isDownloadingUpdate) {
+                        Spacer(Modifier.height(4.dp))
+                        PetalButton(
+                            onClick = {
+                                isDownloadingUpdate = true
+                                scope.launch {
+                                    val apk = UpdateManager.downloadUpdate(
+                                        context = context,
+                                        updateInfo = updateInfo!!,
+                                        onProgress = { p -> downloadProgress = p },
+                                    )
+                                    isDownloadingUpdate = false
+                                    if (apk != null) {
+                                        UpdateManager.installApk(context, apk)
+                                    } else {
+                                        Toast.makeText(context, "Download failed", Toast.LENGTH_SHORT).show()
                                     }
                                 }
-                            } else if (!info.hasUpdate) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.CheckCircle,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp),
-                                    )
-                                    Text(
-                                        text = "You are running the latest release.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
+                            },
+                            style = PetalButtonStyle.FILLED,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Download & Install v${updateInfo!!.latestVersion}")
+                        }
+                    } else if (!isDownloadingUpdate) {
+                        Spacer(Modifier.height(4.dp))
+                        PetalButton(
+                            onClick = {
+                                isCheckingUpdate = true
+                                scope.launch {
+                                    val info = UpdateManager.checkForUpdates(currentVersion = appVersion)
+                                    isCheckingUpdate = false
+                                    updateInfo = info
+                                    if (info != null && !info.hasUpdate) {
+                                        Toast.makeText(context, "You are on the latest version", Toast.LENGTH_SHORT).show()
+                                    }
                                 }
+                            },
+                            style = PetalButtonStyle.TONAL,
+                            enabled = !isCheckingUpdate,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            if (isCheckingUpdate) {
+                                PetalLoadingIndicator(size = 18.dp)
+                            } else {
+                                Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                             }
+                            Spacer(Modifier.width(6.dp))
+                            Text(if (isCheckingUpdate) "Checking…" else "Check for Updates")
                         }
                     }
                 }
             }
         }
 
-        // ---- System info -------------------------------------------------------------------
+        // 4. System Diagnostics & Telemetry
         val shizukuActive = remember { ShizukuHelper.hasPermission() }
         PetalSection(
-            title = "System",
-            modifier = Modifier.entrance(2),
+            title = "Device Telemetry",
+            modifier = Modifier.entrance(3),
         ) {
             row { position ->
-                InfoRow(Icons.Rounded.PermDeviceInformation, "Device", deviceModel, position, PetalMaterialShapes.Cookie6Sided)
+                InfoRow(Icons.Rounded.PermDeviceInformation, "Device Model", deviceModel, position, PetalMaterialShapes.Cookie6Sided)
             }
             row { position ->
-                InfoRow(Icons.Rounded.Android, "Android", androidVersion, position, PetalMaterialShapes.Clover4Leaf, PetalBadgeVariant.SECONDARY)
+                InfoRow(Icons.Rounded.Android, "Platform", androidVersion, position, PetalMaterialShapes.Clover4Leaf, PetalBadgeVariant.SECONDARY)
             }
             row { position ->
-                InfoRow(Icons.Rounded.SimCard, "Carrier", networkOperatorName, position, PetalMaterialShapes.Pentagon, PetalBadgeVariant.TERTIARY)
+                InfoRow(Icons.Rounded.SimCard, "Active Carrier", networkOperatorName, position, PetalMaterialShapes.Pentagon, PetalBadgeVariant.TERTIARY)
             }
             row { position ->
                 InfoRow(
                     icon = Icons.Rounded.Security,
-                    label = "Shizuku",
-                    value = if (shizukuActive) "Active & authorized" else "Disconnected",
+                    label = "Shizuku Service",
+                    value = if (shizukuActive) "Active & Authorized" else "Disconnected",
                     position = position,
                     shape = PetalMaterialShapes.Gem,
                     variant = if (shizukuActive) PetalBadgeVariant.PRIMARY else PetalBadgeVariant.SURFACE_TONAL,
@@ -323,16 +297,16 @@ fun AboutScreen(
             }
         }
 
-        // ---- Community & links -------------------------------------------------------------
+        // 5. Community & Open Source
         PetalSection(
-            title = "Community & source",
-            modifier = Modifier.entrance(3),
+            title = "Community & Source",
+            modifier = Modifier.entrance(4),
         ) {
             row { position ->
                 PetalGroupRow(
                     icon = Icons.Rounded.Send,
-                    title = "Telegram",
-                    subtitle = "@championworkspace: support, updates and feature requests",
+                    title = "Telegram Community",
+                    subtitle = "@championworkspace: Support, news & feature requests",
                     position = position,
                     onClick = { openLink("https://t.me/championworkspace") },
                     badgeShape = PetalMaterialShapes.Flower,
@@ -341,8 +315,8 @@ fun AboutScreen(
             row { position ->
                 PetalGroupRow(
                     icon = Icons.Rounded.Code,
-                    title = "GitHub",
-                    subtitle = "Source code and releases",
+                    title = "GitHub Repository",
+                    subtitle = "shreyagarwal72/switcher5G (Open source, MIT)",
                     position = position,
                     onClick = { openLink("https://github.com/shreyagarwal72/switcher5G") },
                     badgeShape = PetalMaterialShapes.Burst,
@@ -352,8 +326,8 @@ fun AboutScreen(
             row { position ->
                 PetalGroupRow(
                     icon = Icons.Rounded.Public,
-                    title = "Shizuku",
-                    subtitle = "Get Shizuku for in-app switching",
+                    title = "Shizuku Framework",
+                    subtitle = "Get Shizuku for rootless privileged switching",
                     position = position,
                     onClick = { openLink("https://shizuku.rikka.app") },
                     badgeShape = PetalMaterialShapes.SoftBurst,
@@ -364,13 +338,175 @@ fun AboutScreen(
     }
 }
 
+/**
+ * Developer Hero Section with 360° Infinite Cookie Rotation avatar,
+ * Vanshu Agarwal bio, and 3-pill segmented contact deck.
+ */
+@Composable
+private fun DeveloperHeroSection(
+    versionName: String,
+    onOpenUrl: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+
+    val infiniteTransition = rememberInfiniteTransition(label = "avatar_cookie_rotation")
+    val rotationDegrees by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 32000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "cookie_rotation",
+    )
+
+    PetalGroupItem(
+        position = PetalGroupPosition.SINGLE,
+        modifier = modifier,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            // Animated Rotating Cookie 12-Sided Avatar
+            Box(
+                modifier = Modifier
+                    .size(136.dp)
+                    .graphicsLayer { rotationZ = rotationDegrees }
+                    .clip(PetalMaterialShapes.Cookie12Sided.toShape())
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .clickable {
+                        Toast.makeText(context, "Vanshu Agarwal • @shreyagarwal72", Toast.LENGTH_SHORT).show()
+                        onOpenUrl("https://github.com/shreyagarwal72")
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.avatar_developer),
+                    contentDescription = "Developer Avatar",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(136.dp)
+                        .graphicsLayer { rotationZ = -rotationDegrees },
+                )
+            }
+
+            // Developer Title & Subtext
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = "Switcher 5G v$versionName",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = "Crafted by Vanshu Agarwal\nwith ❤️ from 🇮🇳",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp,
+                )
+            }
+
+            // Segmented 3-Pill Contact Deck (Website, Email, Telegram)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.padding(top = 4.dp),
+            ) {
+                // Official Website Pill
+                val webShape = RoundedCornerShape(
+                    topStart = 20.dp,
+                    bottomStart = 20.dp,
+                    topEnd = 6.dp,
+                    bottomEnd = 6.dp,
+                )
+                Button(
+                    onClick = { onOpenUrl(SITE_BASE_URL) },
+                    shape = webShape,
+                    contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Language,
+                        contentDescription = "Website",
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+
+                // Contact Email Pill
+                val emailShape = RoundedCornerShape(6.dp)
+                Button(
+                    onClick = {
+                        val mailUri = Uri.parse("mailto:hereyourchampion@gmail.com")
+                        val emailIntent = Intent(Intent.ACTION_SENDTO, mailUri).apply {
+                            putExtra(Intent.EXTRA_SUBJECT, "Hello from Switcher 5G")
+                        }
+                        try {
+                            context.startActivity(Intent.createChooser(emailIntent, "Send Email"))
+                        } catch (_: ActivityNotFoundException) {
+                            Toast.makeText(context, "No email client installed", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    shape = emailShape,
+                    contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Mail,
+                        contentDescription = "Contact Email",
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+
+                // Telegram Pill
+                val tgShape = RoundedCornerShape(
+                    topStart = 6.dp,
+                    bottomStart = 6.dp,
+                    topEnd = 20.dp,
+                    bottomEnd = 20.dp,
+                )
+                Button(
+                    onClick = { onOpenUrl("https://t.me/hereyourchampion") },
+                    shape = tgShape,
+                    contentPadding = PaddingValues(horizontal = 22.dp, vertical = 10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Send,
+                        contentDescription = "Telegram",
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun InfoRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     label: String,
     value: String,
     position: PetalGroupPosition,
-    shape: com.app.switcher5g.ui.theme.ExpressiveShapeHolder,
+    shape: ExpressiveShapeHolder,
     variant: PetalBadgeVariant = PetalBadgeVariant.PRIMARY,
 ) {
     PetalGroupRow(
