@@ -4,13 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.network.NetworkModeManager
 import com.app.switcher5g.screens.MainScreen
+import com.app.switcher5g.ui.splash.SwitcherSplashScreen
+import com.app.switcher5g.ui.splash.SwitcherSplashState
 import com.app.switcher5g.ui.theme.Switcher5GTheme
 import com.app.switcher5g.util.AppLogger
 import com.app.switcher5g.util.AppPreferences
@@ -23,8 +27,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         AppLogger.i("MainActivity", "Activity onCreate triggered")
-
-        val prefs = AppPreferences(applicationContext)
 
         // Handle deep link intent:
         // adb shell am start -a android.intent.action.VIEW -d "switcher5g://switch?mode=NR_ONLY"
@@ -44,9 +46,25 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val appPrefs = remember { AppPreferences(applicationContext) }
+            var isSplashFinished by remember { mutableStateOf(SwitcherSplashState.hasShownThisSession) }
+
             Switcher5GTheme(prefs = appPrefs) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    MainScreen(prefs = appPrefs)
+                    Crossfade(
+                        targetState = isSplashFinished,
+                        animationSpec = tween(durationMillis = 400),
+                        label = "splash_to_main_crossfade",
+                    ) { finished ->
+                        if (!finished) {
+                            SwitcherSplashScreen(
+                                onSplashComplete = {
+                                    isSplashFinished = true
+                                },
+                            )
+                        } else {
+                            MainScreen(prefs = appPrefs)
+                        }
+                    }
                 }
             }
         }

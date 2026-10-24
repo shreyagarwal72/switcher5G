@@ -1,32 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Switcher 5G Themed (Material You) Monochrome Icon: Android 13+ tints this with wallpaper colors. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Outer Signal Arc -->
+    <!-- Central 5G Core: Numeric 5 and G -->
+    <!-- Digit "5" -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,22 C36.33,22 22,36.33 22,54 C22,71.67 36.33,86 54,86 C71.67,86 86,71.67 86,54 C86,36.33 71.67,22 54,22 Z M54,78 C40.75,78 30,67.25 30,54 C30,40.75 40.75,30 54,30 C67.25,30 78,40.75 78,54 C78,67.25 67.25,78 54,78 Z" />
+        android:fillColor="#FF000000"
+        android:pathData="M 32,38 L 47,38 L 47,44 L 38,44 L 38,49 C 39,48.4 40.5,48 42.5,48 C 46.2,48 49,50.8 49,55 C 49,59.2 45.8,62 41.5,62 C 37,62 34,58.8 33.6,54.5 L 39.2,54.5 C 39.5,56.5 40.5,57.5 41.6,57.5 C 43,57.5 44.2,56.5 44.2,55 C 44.2,53.5 43,52.5 41.5,52.5 C 40,52.5 39,53.2 38.2,54 L 33,52.5 Z" />
 
-    <!-- Inner Wave Arc -->
+    <!-- Letter "G" -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,34 C42.95,34 34,42.95 34,54 C34,65.05 42.95,74 54,74 C65.05,74 74,65.05 74,54 C74,42.95 65.05,34 54,34 Z M54,67 C46.82,67 41,61.18 41,54 C41,46.82 46.82,41 54,41 C61.18,41 67,46.82 67,54 C67,61.18 61.18,67 54,67 Z" />
+        android:fillColor="#FF000000"
+        android:pathData="M 68,43.5 L 63.5,46.5 C 62,44.5 59.8,43.5 57,43.5 C 52,43.5 48.5,47.5 48.5,53 C 48.5,58.5 52,62.5 57.5,62.5 C 62.5,62.5 66,59.5 66.5,55 L 57.5,55 L 57.5,50.5 L 71.5,50.5 L 71.5,55 C 70.8,62 65,67 57.5,67 C 49.2,67 43.5,61 43.5,53 C 43.5,45 49.2,39 57,39 C 61.5,39 65.5,40.8 68,43.5 Z" />
 
-    <!-- Center Tower Pole -->
+    <!-- Outer Parabolic Cellular Wave Arc 1 (Right Emission) -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M51,44 L57,44 L57,72 L51,72 Z M43,49 L65,49 L65,53 L43,53 Z M47,57 L61,57 L61,60 L47,60 Z" />
+        android:fillColor="#FF000000"
+        android:pathData="M 74,37 C 80.2,43.2 84,51.6 84,61 L 80,61 C 80,52.7 76.6,45.2 71.2,39.8 Z" />
 
-    <!-- Beacon -->
+    <!-- Outer Parabolic Cellular Wave Arc 2 (Far Right) -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,37 C56.76,37 59,39.24 59,42 C59,44.76 56.76,47 54,47 C51.24,47 49,44.76 49,42 C49,39.24 51.24,37 54,37 Z" />
+        android:fillColor="#FF000000"
+        android:pathData="M 80,31 C 88,38.8 93,49.4 93,61 L 89,61 C 89,50.5 84.5,40.9 77.2,33.8 Z" />
 
-    <!-- 5G Badge -->
+    <!-- Left Parabolic Cellular Wave Arc 1 -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M36,32 H44 V35 H39 V37 H44 V42 H36 V39 H41 V38 H36 Z M60,32 H68 V35 H63 V39 H66 V37 H68 V42 H60 Z" />
+        android:fillColor="#FF000000"
+        android:pathData="M 26,61 L 22,61 C 22,51.6 25.8,43.2 32,37 L 34.8,39.8 C 29.4,45.2 26,52.7 26,61 Z" />
+
+    <!-- Left Parabolic Cellular Wave Arc 2 -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M 19,61 L 15,61 C 15,49.4 20,38.8 28,31 L 30.8,33.8 C 23.5,40.9 19,50.5 19,61 Z" />
+
+    <!-- Radiating Radio Anchor Base (Expressive Mast Footing) -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M 52,69 L 56,69 L 57.5,78 L 62,78 L 62,82 L 46,82 L 46,78 L 50.5,78 Z" />
+
+    <!-- Beacon Pulse Micro-Star / Diamond at Top -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M 54,23 L 56.5,27.5 L 61,30 L 56.5,32.5 L 54,37 L 51.5,32.5 L 47,30 L 51.5,27.5 Z" />
 </vector>
