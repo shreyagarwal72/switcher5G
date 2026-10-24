@@ -201,7 +201,6 @@ fun HomeScreenContent(prefs: AppPreferences) {
             scrollBehavior = scrollBehavior,
             scrollState = scrollState,
             actions = {
-                PetalLoadingBadge(visible = isSwitching || isScanningSims, size = 36.dp)
                 val badgeLabel = when {
                     shizukuReady -> "Shizuku"
                     rootReady -> "Root"
@@ -308,10 +307,13 @@ fun HomeScreenContent(prefs: AppPreferences) {
                         badgeShape = PetalMaterialShapes.Pentagon,
                         variant = PetalBadgeVariant.PRIMARY,
                         headerTrailing = {
-                            if (isScanningSims) {
-                                PetalContainedLoadingIndicator(size = 40.dp)
-                            } else {
-                                FilledTonalIconButton(onClick = { scanSims() }) {
+                            FilledTonalIconButton(
+                                onClick = { scanSims() },
+                                enabled = !isScanningSims,
+                            ) {
+                                if (isScanningSims) {
+                                    PetalLoadingIndicator(size = 20.dp)
+                                } else {
                                     Icon(Icons.Rounded.Refresh, contentDescription = "Scan SIMs")
                                 }
                             }
