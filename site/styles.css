@@ -140,14 +140,14 @@ code{background:var(--sc-highest);padding:.12em .42em;border-radius:8px;overflow
 @media (min-width:900px){.nav{display:flex}.header-actions .only-mobile{display:none}}
 
 /* ---------- Floating pill nav bar (mobile) ---------- */
-.dock{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:70;display:flex;gap:2px;padding:6px;border-radius:var(--r-pill);
+.dock{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:70;display:flex;gap:4px;padding:6px;border-radius:var(--r-pill);
   background:color-mix(in srgb,var(--sc) 92%,transparent);backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);
-  box-shadow:0 0 0 1.5px color-mix(in srgb,var(--primary) 18%,transparent),var(--shadow-2);max-width:calc(100vw - 20px)}
-.dock a,.dock button{display:flex;align-items:center;gap:0;height:52px;min-width:52px;justify-content:center;padding:0 14px;border:0;border-radius:var(--r-pill);background:transparent;color:var(--on-surface-variant);
-  text-decoration:none;font:700 .92rem var(--font-display);cursor:pointer;transition:background-color .25s,border-radius .4s var(--ease),transform .4s var(--ease),color .2s}
+  box-shadow:0 0 0 1.5px color-mix(in srgb,var(--primary) 18%,transparent),var(--shadow-2);max-width:calc(100vw - 16px);box-sizing:border-box}
+.dock a,.dock button{display:flex;align-items:center;gap:0;height:48px;min-width:44px;justify-content:center;padding:0 12px;border:0;border-radius:var(--r-pill);background:transparent;color:var(--on-surface-variant);
+  text-decoration:none;font:700 .92rem var(--font-display);cursor:pointer;transition:background-color .25s,border-radius .4s var(--ease),transform .4s var(--ease),color .2s;flex:0 0 auto}
 .dock .label{max-width:0;overflow:hidden;white-space:nowrap;opacity:0;transition:max-width .45s var(--ease),opacity .25s,margin .45s var(--ease)}
-.dock a[aria-current="page"]{background:var(--primary-container);color:var(--on-primary-container);padding:0 18px}
-.dock a[aria-current="page"] .label{max-width:80px;opacity:1;margin-left:8px}
+.dock a[aria-current="page"]{background:var(--primary-container);color:var(--on-primary-container);padding:0 14px}
+.dock a[aria-current="page"] .label{max-width:140px;opacity:1;margin-left:6px;overflow:visible}
 .dock a:active,.dock button:active{border-radius:16px;transform:scale(.92)}
 @media (min-width:900px){.dock{display:none}body{padding-bottom:0}}
 
