@@ -1,0 +1,5 @@
+# PLACEHOLDER: replace the domain below with your real one
+User-agent: *
+Allow: /
+
+Sitemap: https://switcher5g.example.com/sitemap.xml

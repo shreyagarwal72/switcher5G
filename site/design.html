@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en" data-page="design" data-theme-mode="light" data-palette="tide" data-amoled="false">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Design language | Switcher 5G</title>
+<meta name="description" content="How Switcher 5G's Material 3 Expressive design works: shapes, connected groups, pill buttons, loading indicator, palettes and motion. With live demos.">
+<link rel="canonical" href="https://switcher5g.example.com/design">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="theme-color" content="#ebf3f0">
+<meta name="color-scheme" content="light dark">
+<!-- PLACEHOLDER: verification tokens. Uncomment and paste your real values.
+<meta name="google-site-verification" content="YOUR_GOOGLE_TOKEN">
+<meta name="msvalidate.01" content="YOUR_BING_TOKEN">
+-->
+<link rel="manifest" href="/site.webmanifest">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/icon-32.png">
+<link rel="apple-touch-icon" href="/assets/icons/icon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Switcher 5G">
+<meta property="og:title" content="Design language | Switcher 5G">
+<meta property="og:description" content="How Switcher 5G's Material 3 Expressive design works: shapes, connected groups, pill buttons, loading indicator, palettes and motion. With live demos.">
+<meta property="og:url" content="https://switcher5g.example.com/design">
+<meta property="og:image" content="https://switcher5g.example.com/assets/banner.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Switcher 5G: switch between 5G SA, 5G NSA and 4G LTE on Android">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Design language | Switcher 5G">
+<meta name="twitter:description" content="How Switcher 5G's Material 3 Expressive design works: shapes, connected groups, pill buttons, loading indicator, palettes and motion. With live demos.">
+<meta name="twitter:image" content="https://switcher5g.example.com/assets/banner.png">
+<link rel="preload" href="/assets/fonts/outfit.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Critical CSS: paint the right background and the loader before styles.css arrives */
+html{background:#ebf3f0}@media(prefers-color-scheme:dark){html:not([data-theme-mode="light"]){background:#0d1513}}
+body{margin:0}.page-loader{position:fixed;inset:0;z-index:300;display:grid;place-items:center;background:inherit}
+</style>
+<script>
+/* Apply saved theme before first paint to avoid a flash. */
+(function(){try{var d=document.documentElement,g=function(k){return localStorage.getItem(k)},m=g("s5g-mode")||"system",
+dark=m==="dark"||(m==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);
+d.setAttribute("data-theme-mode",dark?"dark":"light");d.setAttribute("data-palette",g("s5g-palette")||"tide");
+d.setAttribute("data-amoled",g("s5g-amoled")==="true"?"true":"false");
+if(dark)d.style.background=g("s5g-amoled")==="true"?"#000":"#0d1513";}catch(e){}window.__s5gT0=performance.now();})();
+</script>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/pages.css">
+
+
+<noscript><style>.page-loader{display:none!important}</style></noscript>
+</head>
+<body>
+<div class="page-loader" id="page-loader" role="status"><div class="loader loader--lg"></div><span class="sr-only">Loading</span></div>
+
+<main id="main" tabindex="-1">
+<section class="page-hero"><div class="container"><h1>Design language</h1><p class="lead">Switcher 5G follows Material 3 Expressive and borrows its components from Petal. Everything below is live, so tap, press and switch themes to see it work.</p></div></section>
+<section class="section--tight"><div class="container">
+<ul class="toc"><li><a href="#shapes">Shapes</a></li><li><a href="#containment">Containment</a></li><li><a href="#buttons">Buttons</a></li><li><a href="#loading">Loading</a></li><li><a href="#color">Color</a></li><li><a href="#motion">Motion</a></li></ul>
+
+<h2 id="shapes" style="margin-top:56px">Shaped icon badges</h2>
+<p class="lead">Icons sit on expressive shapes instead of plain circles. The app draws them with <code>RoundedPolygon</code>. This site uses the same four shapes as CSS clip paths.</p>
+<div class="demo"><div class="demo-box"><div class="shape-row"><div style="text-align:center"><span class="shape shape--cookie shape--lg" aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20v-4M9 20v-8M14 20V8M19 20V4"/></svg></span><p class="meta" style="margin:6px 0 0">Cookie</p></div><div style="text-align:center"><span class="shape shape--sunny shape--lg" aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span><p class="meta" style="margin:6px 0 0">Sunny</p></div><div style="text-align:center"><span class="shape shape--clover shape--lg" aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 3h7l4 4v14H7z"/><rect x="10" y="11" width="5" height="6" rx="1.5"/></svg></span><p class="meta" style="margin:6px 0 0">Clover</p></div><div style="text-align:center"><span class="shape shape--flower shape--lg" aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="8" height="8" rx="3"/><rect x="13" y="3" width="8" height="8" rx="3"/><rect x="3" y="13" width="8" height="8" rx="3"/><path d="M17 14v6M14 17h6"/></svg></span><p class="meta" style="margin:6px 0 0">Flower</p></div></div><p>Cookie, sunny, clover and flower. Each screen picks a shape to tell sections apart.</p></div></div>
+
+<h2 id="containment" style="margin-top:56px">Connected containment</h2>
+<p class="lead">Related rows join into one group. The outer corners are 28dp. Corners between rows are only 6dp, so they read as one object with seams.</p>
+<div class="demo">
+ <div class="demo-box"><h3>Corner radius</h3><div class="radius-demo"><div>Top row: 28 outside, 6 inside</div><div>Middle row: 6 all round</div><div>Bottom row: 6 inside, 28 outside</div></div></div>
+ <div class="demo-box"><h3>Toggle button group</h3><p>Pick-one settings use a connected group instead of chips or sliders. The chosen button becomes a full pill.</p>
+  <div class="demo-stage"><div class="tbg" data-tbg role="group" aria-label="Network mode demo" style="width:100%"><button type="button" aria-pressed="true">5G SA</button><button type="button" aria-pressed="false">5G NSA</button><button type="button" aria-pressed="false">4G LTE</button></div></div></div>
+</div>
+
+<h2 id="buttons" style="margin-top:56px">Pill buttons that morph</h2>
+<p class="lead">Buttons are full pills. When you press one, the corners tighten to a rounded square and spring back on release.</p>
+<div class="demo"><div class="demo-box"><div class="demo-stage"><button class="btn" type="button" data-toast="Filled button pressed">Filled</button><button class="btn btn--tonal" type="button" data-toast="Tonal button pressed">Tonal</button><button class="btn btn--outline" type="button" data-toast="Outlined button pressed">Outlined</button><button class="btn btn--text" type="button" data-toast="Text button pressed">Text</button></div><p>Press and hold to see the morph. It also works with the keyboard: hold Space or Enter.</p></div></div>
+
+<h2 id="loading" style="margin-top:56px">Contained loading indicator</h2>
+<p class="lead">One loader is used everywhere: a shape that morphs through cookie, sunny, clover and flower inside a rounded container. It replaces spinners and progress bars.</p>
+<div class="demo">
+ <div class="demo-box"><h3>Sizes</h3><div class="demo-stage"><div class="loader loader--sm" style="background:var(--primary-container)"></div><div class="loader"></div><div class="loader loader--lg"></div></div></div>
+ <div class="demo-box"><h3>In a button</h3><p>Buttons swap their icon for a small loader while they work.</p><div class="demo-stage"><button class="btn" type="button" data-loader-demo><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg><span class="loader loader--sm" aria-hidden="true"></span><span>Start download</span></button></div></div>
+</div>
+
+<h2 id="color" style="margin-top:56px">Color: palettes, modes and AMOLED</h2>
+<p class="lead">Four palettes ship with the app: Tide (default), Zen, Ember and Forest. Each has a light and a dark scheme, plus a pure black AMOLED option. Every text pair meets WCAG AA contrast.</p>
+<div class="demo"><div class="demo-box"><h3>Try a palette</h3><div class="swatches" role="group" aria-label="Palette"><button class="swatch" type="button" data-palette="tide" aria-pressed="false"><span class="shape shape--cookie" data-swatch="tide" aria-hidden="true"></span>Tide</button><button class="swatch" type="button" data-palette="zen" aria-pressed="false"><span class="shape shape--sunny" data-swatch="zen" aria-hidden="true"></span>Zen</button><button class="swatch" type="button" data-palette="ember" aria-pressed="false"><span class="shape shape--clover" data-swatch="ember" aria-hidden="true"></span>Ember</button><button class="swatch" type="button" data-palette="forest" aria-pressed="false"><span class="shape shape--flower" data-swatch="forest" aria-hidden="true"></span>Forest</button></div>
+ <div class="tbg" role="group" aria-label="Theme mode"><button type="button" data-mode="light" aria-pressed="false">Light</button><button type="button" data-mode="dark" aria-pressed="false">Dark</button><button type="button" data-mode="system" aria-pressed="false">Auto</button></div></div>
+ <div class="demo-box"><h3>Color roles</h3><div class="pal-grid">
+  <div class="pal-chip" style="background:var(--primary);color:var(--on-primary)">Primary</div>
+  <div class="pal-chip" style="background:var(--primary-container);color:var(--on-primary-container)">Primary container</div>
+  <div class="pal-chip" style="background:var(--secondary-container);color:var(--on-secondary-container)">Secondary container</div>
+  <div class="pal-chip" style="background:var(--tertiary-container);color:var(--on-tertiary-container)">Tertiary container</div>
+  <div class="pal-chip" style="background:var(--sc-highest);color:var(--on-surface)">Surface</div></div></div></div>
+<p>The site stores your choice in the <code>data-theme-mode</code>, <code>data-palette</code> and <code>data-amoled</code> attributes on the page, driven by CSS variables. In the app, Android 12+ can also use Material You colors from your wallpaper.</p>
+
+<h2 id="motion" style="margin-top:56px">Spring motion</h2>
+<p class="lead">Things move with a little overshoot, like a spring, then settle. Press the button to see it. If your device is set to reduce motion, the site skips these animations.</p>
+<div class="demo"><div class="demo-box"><div class="demo-stage" style="overflow:hidden"><span class="shape shape--flower" id="spring-ball" aria-hidden="true" style="transition:translate .7s var(--ease)"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span></div>
+ <button class="btn btn--tonal" type="button" id="spring-btn">Move it</button></div>
+ <div class="demo-box"><h3>Predictive back and depth blur</h3><p>In the app, swiping back shows a live preview of the screen behind with rounded corners and a soft blur. Turn it off in Settings if you prefer a plain transition.</p></div></div>
+</div></section>
+</main>
+<script>
+(function(){var b=document.getElementById("spring-btn"),s=document.getElementById("spring-ball"),on=false;
+b.addEventListener("click",function(){on=!on;s.style.translate=on?"min(60vw,260px) 0":"0 0";});})();
+</script>
+
+<noscript><p style="padding:24px;text-align:center">Switcher 5G&rsquo;s site works best with JavaScript on. Pages: <a href="/">Home</a>, <a href="/download">Download</a>, <a href="/changelog">Changelog</a>, <a href="/faq">FAQ</a>, <a href="/support">Support</a>, <a href="/privacy">Privacy</a>.</p></noscript>
+<script src="/page.js" defer></script>
+<script src="/app.js" defer></script>
+</body>
+</html>

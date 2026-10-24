@@ -1,0 +1,29 @@
+{
+  "name": "Switcher 5G",
+  "short_name": "Switcher 5G",
+  "description": "Switch between 5G SA, 5G NSA and 4G LTE on Android.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ebf3f0",
+  "theme_color": "#006960",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "utilities",
+    "productivity"
+  ]
+}

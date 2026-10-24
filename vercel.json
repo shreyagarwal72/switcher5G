@@ -1,0 +1,67 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/site/index.html"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/site/assets/:path*"
+    },
+    {
+      "source": "/(styles|pages)\\.css",
+      "destination": "/site/$1.css"
+    },
+    {
+      "source": "/(app|page|changelog)\\.js",
+      "destination": "/site/$1.js"
+    },
+    {
+      "source": "/(robots\\.txt|sitemap\\.xml|site\\.webmanifest|favicon\\.ico)",
+      "destination": "/site/$1"
+    },
+    {
+      "source": "/:page(index|download|changelog|faq|support|privacy|terms|licenses|design|architecture|code-of-conduct)",
+      "destination": "/site/:page.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/CHANGELOG.md",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    }
+  ]
+}

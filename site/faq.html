@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en" data-page="faq" data-theme-mode="light" data-palette="tide" data-amoled="false">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FAQ | Switcher 5G</title>
+<meta name="description" content="Answers about Switcher 5G: Shizuku setup, root, why a mode might not apply, carrier and device support, and safety.">
+<link rel="canonical" href="https://switcher5g.example.com/faq">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="theme-color" content="#ebf3f0">
+<meta name="color-scheme" content="light dark">
+<!-- PLACEHOLDER: verification tokens. Uncomment and paste your real values.
+<meta name="google-site-verification" content="YOUR_GOOGLE_TOKEN">
+<meta name="msvalidate.01" content="YOUR_BING_TOKEN">
+-->
+<link rel="manifest" href="/site.webmanifest">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/icon-32.png">
+<link rel="apple-touch-icon" href="/assets/icons/icon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Switcher 5G">
+<meta property="og:title" content="FAQ | Switcher 5G">
+<meta property="og:description" content="Answers about Switcher 5G: Shizuku setup, root, why a mode might not apply, carrier and device support, and safety.">
+<meta property="og:url" content="https://switcher5g.example.com/faq">
+<meta property="og:image" content="https://switcher5g.example.com/assets/banner.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Switcher 5G: switch between 5G SA, 5G NSA and 4G LTE on Android">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FAQ | Switcher 5G">
+<meta name="twitter:description" content="Answers about Switcher 5G: Shizuku setup, root, why a mode might not apply, carrier and device support, and safety.">
+<meta name="twitter:image" content="https://switcher5g.example.com/assets/banner.png">
+<link rel="preload" href="/assets/fonts/outfit.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Critical CSS: paint the right background and the loader before styles.css arrives */
+html{background:#ebf3f0}@media(prefers-color-scheme:dark){html:not([data-theme-mode="light"]){background:#0d1513}}
+body{margin:0}.page-loader{position:fixed;inset:0;z-index:300;display:grid;place-items:center;background:inherit}
+</style>
+<script>
+/* Apply saved theme before first paint to avoid a flash. */
+(function(){try{var d=document.documentElement,g=function(k){return localStorage.getItem(k)},m=g("s5g-mode")||"system",
+dark=m==="dark"||(m==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);
+d.setAttribute("data-theme-mode",dark?"dark":"light");d.setAttribute("data-palette",g("s5g-palette")||"tide");
+d.setAttribute("data-amoled",g("s5g-amoled")==="true"?"true":"false");
+if(dark)d.style.background=g("s5g-amoled")==="true"?"#000":"#0d1513";}catch(e){}window.__s5gT0=performance.now();})();
+</script>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/pages.css">
+
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the difference between 5G SA, 5G NSA and 4G LTE?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "5G NSA (non-standalone) uses 5G radio with an LTE network helping in the background. Most carriers started here. 5G SA (standalone) uses a full 5G core network on its own. It can give lower latency, but only works if your carrier has turned it on. 4G LTE keeps the phone off 5G completely.In the app these map to NR_ONLY (SA), NR_LTE (NSA) and LTE_ONLY."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I set up Shizuku?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Install the Shizuku app and open it.On Android 11 or newer, turn on Developer options, then Wireless debugging, pair, and tap Start in Shizuku. On older versions, or without Wi-Fi, start it from a computer with the ADB command Shizuku shows.Open Switcher 5G and tap Request Shizuku Permission. Allow it.Pick a mode and tap Apply.The setup dialog inside Switcher 5G can copy the ADB command for you, including a version for when you are already inside adb shell."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Shizuku stopped working after I restarted my phone. Why?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Shizuku started through Wireless debugging or ADB stops when the phone reboots. Start it again from the Shizuku app. If you have root, Shizuku can start itself on boot, which avoids this."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I use root instead?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "If your phone is rooted with Magisk, KernelSU or APatch, set the engine to Root (or leave it on Auto) and tap Grant Root (su) Access. Approve the superuser prompt. Then choose your SIM slot and mode."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "I tap a mode but nothing changes. Why might a mode not apply?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Engine not ready. Shizuku is not running, permission was not granted, or root was denied.Carrier does not support it. Many networks do not offer 5G SA. The phone accepts the setting but stays on NSA or LTE.Wrong SIM. On dual-SIM phones, check that the right slot is selected.Phone firmware blocks it. Some phones ignore the request. Try the RadioInfo engine and set the type there.If it still fails, send us a bug report. See the support page."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which carriers and phones work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Switcher 5G asks Android to change the preferred network type, so any phone that allows that can work. Whether you actually get 5G SA depends on your carrier, your plan and your phone\u2019s modem. Release 1.0.5 added fixes for Airtel and Vodafone Idea in India, and for Samsung Galaxy phones running One UI 8.5. If your device or carrier misbehaves, tell us on Telegram so it can be fixed."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it safe? Can it brick my phone?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The app only changes the preferred network type, the same setting that the hidden RadioInfo menu changes. It does not flash modem files or touch system partitions. It is reversible. If you lose signal after switching to 5G SA, switch to 5G NSA or 4G LTE.It is still an advanced tool. Your carrier and phone maker do not officially support this method, and results vary. See the terms."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it work on two SIMs?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The app scans your active subscriptions and lets you choose SIM 1 or SIM 2. It can also auto-detect the SIM that carries mobile data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I add the Quick Settings tile or the widget?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Swipe down twice, tap the pencil (edit) icon, and drag a Switcher 5G tile into your panel. For the widget, long-press the home screen, open Widgets, and add 5G Switcher Widget. Widget buttons switch in the background and need Shizuku or root."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "The RadioInfo menu does not open on my phone.",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Different makers hide it under different names. Switcher 5G tries the standard RadioInfo, TestingSettings, Qualcomm MobileNetworkSettings, MediaTek EngineerMode and Samsung ServiceModeApp screens. You can also dial *#*#4636#*#*. If none open, your phone maker removed it. Use Shizuku or root instead."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I trigger a switch from Termux or ADB?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Send a broadcast:am broadcast -a com.app.switcher5g.SET_NETWORK_MODE --es mode \"NR_ONLY\"Use NR_ONLY, NR_LTE or LTE_ONLY. There is also a deep link: switcher5g://switch?mode=NR_ONLY."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Will 5G SA use more battery?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It depends on your signal and carrier. Weak 5G coverage can drain more battery than LTE. If battery matters more than speed, use 4G LTE or 5G NSA in weak areas."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does the app collect my data?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. There is no telemetry, no account and no analytics. The only network request the app makes is an optional check for new releases. Details are on the privacy page."
+      }
+    }
+  ]
+}</script>
+<noscript><style>.page-loader{display:none!important}</style></noscript>
+</head>
+<body>
+<div class="page-loader" id="page-loader" role="status"><div class="loader loader--lg"></div><span class="sr-only">Loading</span></div>
+
+<main id="main" tabindex="-1">
+<section class="page-hero"><div class="container"><h1>Frequently asked questions</h1><p class="lead">Setup, troubleshooting and safety. Use the arrow keys to move between questions.</p></div></section>
+<section class="section--tight"><div class="container" style="max-width:52rem;margin-left:max(var(--gap),calc((100% - var(--maxw))/2))">
+<div class="accordion">
+<div class="acc-item" id="faq-1"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-1-panel" id="faq-1-btn"><span>What is the difference between 5G SA, 5G NSA and 4G LTE?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-1-panel" role="region" aria-labelledby="faq-1-btn"><div><div class="acc-body"><p><strong>5G NSA</strong> (non-standalone) uses 5G radio with an LTE network helping in the background. Most carriers started here. <strong>5G SA</strong> (standalone) uses a full 5G core network on its own. It can give lower latency, but only works if your carrier has turned it on. <strong>4G LTE</strong> keeps the phone off 5G completely.</p><p>In the app these map to <code>NR_ONLY</code> (SA), <code>NR_LTE</code> (NSA) and <code>LTE_ONLY</code>.</p></div></div></div></div>
+<div class="acc-item" id="faq-2"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-2-panel" id="faq-2-btn"><span>How do I set up Shizuku?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-2-panel" role="region" aria-labelledby="faq-2-btn"><div><div class="acc-body"><ol><li>Install the <a href="https://shizuku.rikka.app/" rel="noopener">Shizuku app</a> and open it.</li><li>On Android 11 or newer, turn on Developer options, then Wireless debugging, pair, and tap <strong>Start</strong> in Shizuku. On older versions, or without Wi-Fi, start it from a computer with the ADB command Shizuku shows.</li><li>Open Switcher 5G and tap <strong>Request Shizuku Permission</strong>. Allow it.</li><li>Pick a mode and tap <strong>Apply</strong>.</li></ol><p>The setup dialog inside Switcher 5G can copy the ADB command for you, including a version for when you are already inside <code>adb shell</code>.</p></div></div></div></div>
+<div class="acc-item" id="faq-3"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-3-panel" id="faq-3-btn"><span>Shizuku stopped working after I restarted my phone. Why?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-3-panel" role="region" aria-labelledby="faq-3-btn"><div><div class="acc-body"><p>Shizuku started through Wireless debugging or ADB stops when the phone reboots. Start it again from the Shizuku app. If you have root, Shizuku can start itself on boot, which avoids this.</p></div></div></div></div>
+<div class="acc-item" id="faq-4"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-4-panel" id="faq-4-btn"><span>How do I use root instead?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-4-panel" role="region" aria-labelledby="faq-4-btn"><div><div class="acc-body"><p>If your phone is rooted with Magisk, KernelSU or APatch, set the engine to <strong>Root</strong> (or leave it on Auto) and tap <strong>Grant Root (su) Access</strong>. Approve the superuser prompt. Then choose your SIM slot and mode.</p></div></div></div></div>
+<div class="acc-item" id="faq-5"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-5-panel" id="faq-5-btn"><span>I tap a mode but nothing changes. Why might a mode not apply?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-5-panel" role="region" aria-labelledby="faq-5-btn"><div><div class="acc-body"><ul><li><strong>Engine not ready.</strong> Shizuku is not running, permission was not granted, or root was denied.</li><li><strong>Carrier does not support it.</strong> Many networks do not offer 5G SA. The phone accepts the setting but stays on NSA or LTE.</li><li><strong>Wrong SIM.</strong> On dual-SIM phones, check that the right slot is selected.</li><li><strong>Phone firmware blocks it.</strong> Some phones ignore the request. Try the RadioInfo engine and set the type there.</li></ul><p>If it still fails, send us a bug report. See the <a href="/support">support page</a>.</p></div></div></div></div>
+<div class="acc-item" id="faq-6"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-6-panel" id="faq-6-btn"><span>Which carriers and phones work?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-6-panel" role="region" aria-labelledby="faq-6-btn"><div><div class="acc-body"><p>Switcher 5G asks Android to change the preferred network type, so any phone that allows that can work. Whether you actually get 5G SA depends on your carrier, your plan and your phone&rsquo;s modem. Release 1.0.5 added fixes for Airtel and Vodafone Idea in India, and for Samsung Galaxy phones running One UI 8.5. If your device or carrier misbehaves, tell us on Telegram so it can be fixed.</p></div></div></div></div>
+<div class="acc-item" id="faq-7"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-7-panel" id="faq-7-btn"><span>Is it safe? Can it brick my phone?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-7-panel" role="region" aria-labelledby="faq-7-btn"><div><div class="acc-body"><p>The app only changes the preferred network type, the same setting that the hidden RadioInfo menu changes. It does not flash modem files or touch system partitions. It is reversible. If you lose signal after switching to 5G SA, switch to 5G NSA or 4G LTE.</p><p>It is still an advanced tool. Your carrier and phone maker do not officially support this method, and results vary. See the <a href="/terms">terms</a>.</p></div></div></div></div>
+<div class="acc-item" id="faq-8"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-8-panel" id="faq-8-btn"><span>Does it work on two SIMs?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-8-panel" role="region" aria-labelledby="faq-8-btn"><div><div class="acc-body"><p>Yes. The app scans your active subscriptions and lets you choose SIM 1 or SIM 2. It can also auto-detect the SIM that carries mobile data.</p></div></div></div></div>
+<div class="acc-item" id="faq-9"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-9-panel" id="faq-9-btn"><span>How do I add the Quick Settings tile or the widget?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-9-panel" role="region" aria-labelledby="faq-9-btn"><div><div class="acc-body"><p>Swipe down twice, tap the pencil (edit) icon, and drag a Switcher 5G tile into your panel. For the widget, long-press the home screen, open Widgets, and add <strong>5G Switcher Widget</strong>. Widget buttons switch in the background and need Shizuku or root.</p></div></div></div></div>
+<div class="acc-item" id="faq-10"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-10-panel" id="faq-10-btn"><span>The RadioInfo menu does not open on my phone.</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-10-panel" role="region" aria-labelledby="faq-10-btn"><div><div class="acc-body"><p>Different makers hide it under different names. Switcher 5G tries the standard RadioInfo, TestingSettings, Qualcomm MobileNetworkSettings, MediaTek EngineerMode and Samsung ServiceModeApp screens. You can also dial <code>*#*#4636#*#*</code>. If none open, your phone maker removed it. Use Shizuku or root instead.</p></div></div></div></div>
+<div class="acc-item" id="faq-11"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-11-panel" id="faq-11-btn"><span>Can I trigger a switch from Termux or ADB?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-11-panel" role="region" aria-labelledby="faq-11-btn"><div><div class="acc-body"><p>Yes. Send a broadcast:</p><pre><code>am broadcast -a com.app.switcher5g.SET_NETWORK_MODE --es mode "NR_ONLY"</code></pre><p>Use <code>NR_ONLY</code>, <code>NR_LTE</code> or <code>LTE_ONLY</code>. There is also a deep link: <code>switcher5g://switch?mode=NR_ONLY</code>.</p></div></div></div></div>
+<div class="acc-item" id="faq-12"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-12-panel" id="faq-12-btn"><span>Will 5G SA use more battery?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-12-panel" role="region" aria-labelledby="faq-12-btn"><div><div class="acc-body"><p>It depends on your signal and carrier. Weak 5G coverage can drain more battery than LTE. If battery matters more than speed, use 4G LTE or 5G NSA in weak areas.</p></div></div></div></div>
+<div class="acc-item" id="faq-13"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="faq-13-panel" id="faq-13-btn"><span>Does the app collect my data?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="faq-13-panel" role="region" aria-labelledby="faq-13-btn"><div><div class="acc-body"><p>No. There is no telemetry, no account and no analytics. The only network request the app makes is an optional check for new releases. Details are on the <a href="/privacy">privacy page</a>.</p></div></div></div></div>
+</div>
+<div class="card card--primary" style="margin-top:28px"><h2 style="font-size:1.5rem">Still stuck?</h2><p>Tell us your phone, Android version, carrier and the engine you used. We will help.</p><a class="btn" href="/support">Get support</a></div>
+</div></section>
+</main>
+
+<noscript><p style="padding:24px;text-align:center">Switcher 5G&rsquo;s site works best with JavaScript on. Pages: <a href="/">Home</a>, <a href="/download">Download</a>, <a href="/changelog">Changelog</a>, <a href="/faq">FAQ</a>, <a href="/support">Support</a>, <a href="/privacy">Privacy</a>.</p></noscript>
+<script src="/page.js" defer></script>
+<script src="/app.js" defer></script>
+</body>
+</html>

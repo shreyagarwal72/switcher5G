@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" data-page="privacy" data-theme-mode="light" data-palette="tide" data-amoled="false">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Privacy policy | Switcher 5G</title>
+<meta name="description" content="Switcher 5G has no telemetry, no accounts and no data leaves your device except the optional update check. Full privacy policy.">
+<link rel="canonical" href="https://switcher5g.example.com/privacy">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="theme-color" content="#ebf3f0">
+<meta name="color-scheme" content="light dark">
+<!-- PLACEHOLDER: verification tokens. Uncomment and paste your real values.
+<meta name="google-site-verification" content="YOUR_GOOGLE_TOKEN">
+<meta name="msvalidate.01" content="YOUR_BING_TOKEN">
+-->
+<link rel="manifest" href="/site.webmanifest">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/icon-32.png">
+<link rel="apple-touch-icon" href="/assets/icons/icon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Switcher 5G">
+<meta property="og:title" content="Privacy policy | Switcher 5G">
+<meta property="og:description" content="Switcher 5G has no telemetry, no accounts and no data leaves your device except the optional update check. Full privacy policy.">
+<meta property="og:url" content="https://switcher5g.example.com/privacy">
+<meta property="og:image" content="https://switcher5g.example.com/assets/banner.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Switcher 5G: switch between 5G SA, 5G NSA and 4G LTE on Android">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Privacy policy | Switcher 5G">
+<meta name="twitter:description" content="Switcher 5G has no telemetry, no accounts and no data leaves your device except the optional update check. Full privacy policy.">
+<meta name="twitter:image" content="https://switcher5g.example.com/assets/banner.png">
+<link rel="preload" href="/assets/fonts/outfit.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Critical CSS: paint the right background and the loader before styles.css arrives */
+html{background:#ebf3f0}@media(prefers-color-scheme:dark){html:not([data-theme-mode="light"]){background:#0d1513}}
+body{margin:0}.page-loader{position:fixed;inset:0;z-index:300;display:grid;place-items:center;background:inherit}
+</style>
+<script>
+/* Apply saved theme before first paint to avoid a flash. */
+(function(){try{var d=document.documentElement,g=function(k){return localStorage.getItem(k)},m=g("s5g-mode")||"system",
+dark=m==="dark"||(m==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);
+d.setAttribute("data-theme-mode",dark?"dark":"light");d.setAttribute("data-palette",g("s5g-palette")||"tide");
+d.setAttribute("data-amoled",g("s5g-amoled")==="true"?"true":"false");
+if(dark)d.style.background=g("s5g-amoled")==="true"?"#000":"#0d1513";}catch(e){}window.__s5gT0=performance.now();})();
+</script>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/pages.css">
+
+
+<noscript><style>.page-loader{display:none!important}</style></noscript>
+</head>
+<body>
+<div class="page-loader" id="page-loader" role="status"><div class="loader loader--lg"></div><span class="sr-only">Loading</span></div>
+
+<main id="main" tabindex="-1">
+<section class="page-hero"><div class="container"><h1>Privacy policy</h1><p class="lead">Plain language, no fine print.</p><p class="meta" style="margin-top:14px">Last updated 24 October 2026</p></div></section>
+<section class="section--tight"><div class="container"><div class="prose">
+<div class="callout callout--info"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 5 6v6c0 4.500 3 7.600 7 9 4-1.400 7-4.500 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg><div><p><strong>Short version.</strong> The app has no telemetry, no accounts and no ads. Nothing leaves your phone except an optional check for new releases.</p></div></div>
+<h2>The app</h2>
+<ul>
+ <li><strong>No telemetry or analytics.</strong> The app contains no tracking or crash-reporting libraries.</li>
+ <li><strong>No accounts.</strong> You never sign in.</li>
+ <li><strong>Your settings stay on the phone.</strong> Mode, SIM choice, theme and similar preferences are stored locally. You can export and import a backup file yourself.</li>
+ <li><strong>Optional update check.</strong> When enabled, the app asks the GitHub Releases API for the latest version. GitHub can see your IP address, as with any web request. Turn this off in Settings and the app makes no network requests of its own.</li>
+ <li><strong>Signal readings stay on screen.</strong> Signal strength, band and SIM details are read from Android to show on your dashboard. They are not sent anywhere.</li>
+</ul>
+<h2>Permissions, and why</h2>
+<table><thead><tr><th scope="col">Permission</th><th scope="col">Used for</th></tr></thead><tbody>
+<tr><th scope="row"><code>INTERNET</code></th><td>The optional update check and downloading an update you approve.</td></tr>
+<tr><th scope="row"><code>READ_PHONE_STATE</code></th><td>Finding your active SIMs and showing live signal data.</td></tr>
+<tr><th scope="row"><code>ACCESS_NETWORK_STATE</code></th><td>Knowing whether you are online before checking for updates.</td></tr>
+<tr><th scope="row"><code>REQUEST_INSTALL_PACKAGES</code></th><td>Installing an update APK after you tap to confirm.</td></tr>
+</tbody></table>
+<p>Shizuku and root access are separate permissions you grant through the Shizuku app or your superuser manager. Switcher 5G uses them only to change your preferred network type.</p>
+<h2>Android backup</h2>
+<p>The app allows Android&rsquo;s own backup. If you have Google backup or a similar service on, your phone may include Switcher 5G&rsquo;s settings. That is controlled by your phone, not by this project.</p>
+<h2>This website</h2>
+<ul>
+ <li>No cookies, no analytics and no ad scripts.</li>
+ <li>Your theme, palette and AMOLED choice are saved in your browser&rsquo;s local storage so the site remembers them. Clear site data to remove them.</li>
+ <li>The download card calls the GitHub Releases API from your browser to show the latest version.</li>
+ <li>Fonts and images load from this site. Our hosting provider may keep standard server logs, such as IP address and requested page, for security and operations.</li>
+</ul>
+<h2>Third-party links</h2>
+<p>Links to GitHub, Telegram and the Shizuku site lead to services with their own privacy policies.</p>
+<h2>Changes and contact</h2>
+<p>If this policy changes, the date above changes and the change appears in the <a href="/changelog">changelog</a> when it affects the app. Questions: <a href="https://t.me/championworkspace" rel="noopener">Telegram @championworkspace</a>. <span class="placeholder">PLACEHOLDER: add a contact email if you want one</span></p>
+</div></div></section>
+</main>
+
+<noscript><p style="padding:24px;text-align:center">Switcher 5G&rsquo;s site works best with JavaScript on. Pages: <a href="/">Home</a>, <a href="/download">Download</a>, <a href="/changelog">Changelog</a>, <a href="/faq">FAQ</a>, <a href="/support">Support</a>, <a href="/privacy">Privacy</a>.</p></noscript>
+<script src="/page.js" defer></script>
+<script src="/app.js" defer></script>
+</body>
+</html>

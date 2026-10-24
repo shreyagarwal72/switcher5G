@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en" data-page="architecture" data-theme-mode="light" data-palette="tide" data-amoled="false">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Architecture | Switcher 5G</title>
+<meta name="description" content="How Switcher 5G works inside: the switching engines, the Shizuku user service, Quick Settings tile and widget flow, and preferences.">
+<link rel="canonical" href="https://switcher5g.example.com/architecture">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="theme-color" content="#ebf3f0">
+<meta name="color-scheme" content="light dark">
+<!-- PLACEHOLDER: verification tokens. Uncomment and paste your real values.
+<meta name="google-site-verification" content="YOUR_GOOGLE_TOKEN">
+<meta name="msvalidate.01" content="YOUR_BING_TOKEN">
+-->
+<link rel="manifest" href="/site.webmanifest">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/icon-32.png">
+<link rel="apple-touch-icon" href="/assets/icons/icon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Switcher 5G">
+<meta property="og:title" content="Architecture | Switcher 5G">
+<meta property="og:description" content="How Switcher 5G works inside: the switching engines, the Shizuku user service, Quick Settings tile and widget flow, and preferences.">
+<meta property="og:url" content="https://switcher5g.example.com/architecture">
+<meta property="og:image" content="https://switcher5g.example.com/assets/banner.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Switcher 5G: switch between 5G SA, 5G NSA and 4G LTE on Android">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Architecture | Switcher 5G">
+<meta name="twitter:description" content="How Switcher 5G works inside: the switching engines, the Shizuku user service, Quick Settings tile and widget flow, and preferences.">
+<meta name="twitter:image" content="https://switcher5g.example.com/assets/banner.png">
+<link rel="preload" href="/assets/fonts/outfit.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Critical CSS: paint the right background and the loader before styles.css arrives */
+html{background:#ebf3f0}@media(prefers-color-scheme:dark){html:not([data-theme-mode="light"]){background:#0d1513}}
+body{margin:0}.page-loader{position:fixed;inset:0;z-index:300;display:grid;place-items:center;background:inherit}
+</style>
+<script>
+/* Apply saved theme before first paint to avoid a flash. */
+(function(){try{var d=document.documentElement,g=function(k){return localStorage.getItem(k)},m=g("s5g-mode")||"system",
+dark=m==="dark"||(m==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);
+d.setAttribute("data-theme-mode",dark?"dark":"light");d.setAttribute("data-palette",g("s5g-palette")||"tide");
+d.setAttribute("data-amoled",g("s5g-amoled")==="true"?"true":"false");
+if(dark)d.style.background=g("s5g-amoled")==="true"?"#000":"#0d1513";}catch(e){}window.__s5gT0=performance.now();})();
+</script>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/pages.css">
+
+
+<noscript><style>.page-loader{display:none!important}</style></noscript>
+</head>
+<body>
+<div class="page-loader" id="page-loader" role="status"><div class="loader loader--lg"></div><span class="sr-only">Loading</span></div>
+
+<main id="main" tabindex="-1">
+<section class="page-hero"><div class="container"><h1>Architecture</h1><p class="lead">A short tour of how one tap becomes a network mode change.</p></div></section>
+<section class="section--tight"><div class="container">
+<ul class="toc"><li><a href="#engines">Engines</a></li><li><a href="#service">Shizuku service</a></li><li><a href="#tile">Tile and widget</a></li><li><a href="#prefs">Preferences</a></li></ul>
+<div class="diagram diagram-scroll"><svg viewBox="0 0 960 560" role="img" aria-labelledby="dg-t dg-d"><title id="dg-t">How a mode switch travels through Switcher 5G</title><desc id="dg-d">Entry points (app, tile, widget, broadcast) feed the network mode manager. It tries Shizuku, then root, then RadioInfo. Shizuku calls a user service running as the shell user, which calls the phone's telephony API.</desc>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1l8 4-8 4z" class="arrowhead"/></marker></defs>
+<text x="24" y="34" font-size="15" class="t-m">1. You trigger a switch</text>
+<text x="360" y="34" font-size="15" class="t-m">2. The manager picks an engine</text>
+<text x="700" y="34" font-size="15" class="t-m">3. Android changes the mode</text>
+<g><rect class="box box-p" x="24" y="56" width="250" height="64" rx="22"/><text x="149" y="94" text-anchor="middle" font-size="19" font-weight="650" class="t-p">App screen</text>
+<rect class="box box-p" x="24" y="132" width="250" height="64" rx="22"/><text x="149" y="170" text-anchor="middle" font-size="19" font-weight="650" class="t-p">Quick Settings tile</text>
+<rect class="box box-p" x="24" y="208" width="250" height="64" rx="22"/><text x="149" y="246" text-anchor="middle" font-size="19" font-weight="650" class="t-p">Home screen widget</text>
+<rect class="box box-p" x="24" y="284" width="250" height="64" rx="22"/><text x="149" y="311" text-anchor="middle" font-size="19" font-weight="650" class="t-p">ADB / Termux broadcast</text><text x="149" y="334" text-anchor="middle" font-size="13" class="t-p">or switcher5g:// link</text></g>
+<g><rect class="box box-s" x="360" y="140" width="240" height="120" rx="30"/><text x="480" y="188" text-anchor="middle" font-size="21" font-weight="700" class="t-s">NetworkModeManager</text><text x="480" y="214" text-anchor="middle" font-size="14" class="t-s">switchTo(mode, subId)</text><text x="480" y="236" text-anchor="middle" font-size="14" class="t-s">tries engines in order</text></g>
+<g><rect class="box box-t" x="360" y="320" width="240" height="56" rx="20"/><text x="480" y="354" text-anchor="middle" font-size="18" font-weight="650" class="t-t">Root (su shell)</text>
+<rect class="box box-t" x="360" y="392" width="240" height="56" rx="20"/><text x="480" y="426" text-anchor="middle" font-size="18" font-weight="650" class="t-t">RadioInfo menu</text>
+<rect class="box box-t" x="360" y="56" width="240" height="56" rx="20"/><text x="480" y="90" text-anchor="middle" font-size="18" font-weight="650" class="t-t">Shizuku (first choice)</text></g>
+<g><rect class="box box-p" x="700" y="56" width="236" height="120" rx="30"/><text x="818" y="96" text-anchor="middle" font-size="19" font-weight="700" class="t-p">Shizuku user service</text><text x="818" y="122" text-anchor="middle" font-size="14" class="t-p">own process, runs as shell</text><text x="818" y="144" text-anchor="middle" font-size="14" class="t-p">IUserService (AIDL)</text>
+<rect class="box box-s" x="700" y="216" width="236" height="96" rx="30"/><text x="818" y="256" text-anchor="middle" font-size="19" font-weight="700" class="t-s">Android telephony</text><text x="818" y="282" text-anchor="middle" font-size="14" class="t-s">preferred network type</text>
+<rect class="box" x="700" y="392" width="236" height="56" rx="20"/><text x="818" y="426" text-anchor="middle" font-size="16" font-weight="650">You pick it by hand</text></g>
+<path class="line flow" d="M274 164 L350 190" marker-end="url(#ah)"/><path class="line flow" d="M274 240 L350 214" marker-end="url(#ah)"/><path class="line flow" d="M274 316 L350 238" marker-end="url(#ah)"/><path class="line flow" d="M274 88 L350 170" marker-end="url(#ah)"/>
+<path class="line" d="M480 140V114" marker-end="url(#ah)"/><path class="line" d="M480 260V318" marker-end="url(#ah)"/><path class="line" d="M480 376V390" marker-end="url(#ah)"/>
+<path class="line" d="M600 84H696" marker-end="url(#ah)"/><path class="line" d="M818 176V214" marker-end="url(#ah)"/>
+<path class="line" d="M600 348 C650 348 650 280 698 268" marker-end="url(#ah)"/><path class="line" d="M600 420H696" marker-end="url(#ah)"/>
+<text x="24" y="500" font-size="14" class="t-m">If Shizuku is not ready, the manager tries root. If root is missing too, it opens RadioInfo so you can set the type yourself.</text>
+<text x="24" y="524" font-size="14" class="t-m">Widget buttons need Shizuku or root, because they run in the background and never open a screen.</text></svg></div>
+<div class="prose">
+<h2 id="engines">Switching engines</h2>
+<p>Every switch goes through one class, <code>NetworkModeManager</code>. It takes a mode (<code>NR_ONLY</code>, <code>NR_LTE</code> or <code>LTE_ONLY</code>) and an optional SIM subscription ID. The <strong>activation method</strong> in Settings decides which engine runs:</p>
+<ul>
+ <li><strong>Auto and Direct ADB:</strong> try Shizuku, then root, then open RadioInfo. Direct ADB mainly helps you start Shizuku: the app copies the command for you.</li>
+ <li><strong>Shizuku:</strong> only the Shizuku service. Fails clearly if it is not running or not authorized.</li>
+ <li><strong>Root:</strong> runs the switch through <code>su</code>. Includes carrier-specific network types and keeps the allowed-types mask wide, so 2G, 3G and LTE stay available alongside 5G.</li>
+ <li><strong>RadioInfo:</strong> opens the phone&rsquo;s hidden testing screen so you can choose the type yourself. The app looks for the AOSP, Qualcomm, MediaTek and Samsung variants.</li>
+</ul>
+<h2 id="service">The Shizuku user service</h2>
+<p>Changing the network type needs a permission normal apps do not have. Shizuku can start a small process for us that runs as the <code>shell</code> user, which does have it. That process is <code>NetworkModeUserService</code>, and the app talks to it through an AIDL interface with four calls:</p>
+<div class="codeblock"><pre style="margin:0"><code>interface IUserService {
+  String setNetworkMode(int subId, String mode); // "OK:" prefix means success
+  int getDefaultDataSubId();                      // -1 if unknown
+  int[] getAvailableSubIds();                     // active SIMs
+  void destroy();
+}</code></pre></div>
+<p>The service calls the telephony API with fallbacks for phones that restrict it, including Samsung One UI. The app binds to the service when needed and unbinds when done.</p>
+<h2 id="tile">Quick Settings tiles and the widget</h2>
+<ol>
+ <li><strong>Tap.</strong> The tile or widget button receives the tap.</li>
+ <li><strong>Choose the engine.</strong> It uses your saved activation method if that engine is ready. Otherwise it picks Shizuku, then root.</li>
+ <li><strong>Switch off the main thread.</strong> The work runs in a coroutine, and the tile shows &ldquo;Switching&hellip;&rdquo; while it waits.</li>
+ <li><strong>Report back.</strong> The tile updates its label (SA, NSA or LTE) and a short message appears. On failure the old state returns.</li>
+</ol>
+<p>There are four tiles: a <strong>Power Switcher</strong> that cycles SA, NSA and LTE on each tap, a <strong>2-mode toggle</strong> between two modes you choose, a <strong>Root</strong> tile and a <strong>Manual 5G Settings</strong> tile that opens RadioInfo. The widget has one button per mode and never opens a screen.</p>
+<h2 id="prefs">Preferences</h2>
+<p>Settings live in <code>SharedPreferences</code> on the phone. They include the activation method, default mode, the two toggle-tile modes, theme mode, AMOLED, palette, color style, font, auto-scan SIMs, auto-check updates, animations, predictive back and depth blur. Settings can be exported to and imported from a JSON backup file. Nothing is uploaded.</p>
+</div></div></section>
+</main>
+
+<noscript><p style="padding:24px;text-align:center">Switcher 5G&rsquo;s site works best with JavaScript on. Pages: <a href="/">Home</a>, <a href="/download">Download</a>, <a href="/changelog">Changelog</a>, <a href="/faq">FAQ</a>, <a href="/support">Support</a>, <a href="/privacy">Privacy</a>.</p></noscript>
+<script src="/page.js" defer></script>
+<script src="/app.js" defer></script>
+</body>
+</html>

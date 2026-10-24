@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en" data-page="index" data-theme-mode="light" data-palette="tide" data-amoled="false">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Switcher 5G: switch between 5G SA, 5G NSA and 4G LTE</title>
+<meta name="description" content="Free, open-source Android app to switch between 5G SA, 5G NSA and 4G LTE in one tap. Works with Shizuku, root, ADB or RadioInfo. Quick Settings tile and widget included.">
+<link rel="canonical" href="https://switcher5g.example.com/">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="theme-color" content="#ebf3f0">
+<meta name="color-scheme" content="light dark">
+<!-- PLACEHOLDER: verification tokens. Uncomment and paste your real values.
+<meta name="google-site-verification" content="YOUR_GOOGLE_TOKEN">
+<meta name="msvalidate.01" content="YOUR_BING_TOKEN">
+-->
+<link rel="manifest" href="/site.webmanifest">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/icon-32.png">
+<link rel="apple-touch-icon" href="/assets/icons/icon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Switcher 5G">
+<meta property="og:title" content="Switcher 5G: switch between 5G SA, 5G NSA and 4G LTE">
+<meta property="og:description" content="Free, open-source Android app to switch between 5G SA, 5G NSA and 4G LTE in one tap. Works with Shizuku, root, ADB or RadioInfo. Quick Settings tile and widget included.">
+<meta property="og:url" content="https://switcher5g.example.com/">
+<meta property="og:image" content="https://switcher5g.example.com/assets/banner.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Switcher 5G: switch between 5G SA, 5G NSA and 4G LTE on Android">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Switcher 5G: switch between 5G SA, 5G NSA and 4G LTE">
+<meta name="twitter:description" content="Free, open-source Android app to switch between 5G SA, 5G NSA and 4G LTE in one tap. Works with Shizuku, root, ADB or RadioInfo. Quick Settings tile and widget included.">
+<meta name="twitter:image" content="https://switcher5g.example.com/assets/banner.png">
+<link rel="preload" href="/assets/fonts/outfit.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Critical CSS: paint the right background and the loader before styles.css arrives */
+html{background:#ebf3f0}@media(prefers-color-scheme:dark){html:not([data-theme-mode="light"]){background:#0d1513}}
+body{margin:0}.page-loader{position:fixed;inset:0;z-index:300;display:grid;place-items:center;background:inherit}
+</style>
+<script>
+/* Apply saved theme before first paint to avoid a flash. */
+(function(){try{var d=document.documentElement,g=function(k){return localStorage.getItem(k)},m=g("s5g-mode")||"system",
+dark=m==="dark"||(m==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);
+d.setAttribute("data-theme-mode",dark?"dark":"light");d.setAttribute("data-palette",g("s5g-palette")||"tide");
+d.setAttribute("data-amoled",g("s5g-amoled")==="true"?"true":"false");
+if(dark)d.style.background=g("s5g-amoled")==="true"?"#000":"#0d1513";}catch(e){}window.__s5gT0=performance.now();})();
+</script>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/pages.css">
+
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Switcher 5G",
+  "operatingSystem": "Android 8.0+",
+  "applicationCategory": "UtilitiesApplication",
+  "description": "Free, open-source Android app that switches your phone between 5G SA, 5G NSA and 4G LTE using Shizuku, root, ADB or the RadioInfo menu.",
+  "softwareVersion": "2.0.0",
+  "license": "https://opensource.org/licenses/MIT",
+  "url": "https://switcher5g.example.com/",
+  "downloadUrl": "https://switcher5g.example.com/download",
+  "image": "https://switcher5g.example.com/assets/icons/icon-512.png",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Shrey Agarwal",
+    "url": "https://github.com/shreyagarwal72"
+  },
+  "codeRepository": "https://github.com/shreyagarwal72/switcher5G",
+  "sameAs": [
+    "https://github.com/shreyagarwal72/switcher5G",
+    "https://t.me/championworkspace"
+  ]
+}</script>
+<noscript><style>.page-loader{display:none!important}</style></noscript>
+</head>
+<body>
+<div class="page-loader" id="page-loader" role="status"><div class="loader loader--lg"></div><span class="sr-only">Loading</span></div>
+
+<main id="main" tabindex="-1">
+<section class="hero"><div class="container hero__grid">
+ <div>
+  <h1>Pick your network in one tap.</h1>
+  <p class="lead">Switcher 5G is a free, open-source Android app that moves your phone between 5G SA, 5G NSA and 4G LTE. It uses Shizuku, root, ADB or the hidden RadioInfo menu.</p>
+  <div class="hero__actions">
+   <a class="btn btn--lg" href="/download" data-release-btn><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg><span class="loader loader--sm" aria-hidden="true"></span><span>Download <span data-release-version>v2.0.0</span></span></a>
+   <a class="btn btn--lg btn--tonal" href="https://github.com/shreyagarwal72/switcher5G" rel="noopener"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 19c-4 1.3-4-2-6-2.5m12 4.5v-3.2a2.8 2.8 0 0 0-.8-2.2c2.700-.3 5.500-1.300 5.500-6a4.600 4.600 0 0 0-1.300-3.200 4.300 4.300 0 0 0-.1-3.200s-1-.3-3.400 1.300a11.700 11.700 0 0 0-6.200 0C6.800 2.800 5.800 3.100 5.800 3.100a4.300 4.300 0 0 0-.1 3.200A4.600 4.600 0 0 0 4.400 9.500c0 4.600 2.800 5.600 5.500 6a2.800 2.800 0 0 0-.8 2.200V21"/></svg>View source</a>
+  </div>
+  <div class="hero__meta"><span class="chip chip--primary"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>Android 8.0 or newer</span><span class="chip"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 5 6v6c0 4.500 3 7.600 7 9 4-1.400 7-4.500 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg>No telemetry</span><span class="chip"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg>MIT license</span></div>
+  <div class="mode-demo" aria-labelledby="demo-title">
+   <p id="demo-title" class="sr-only">Preview of the three network modes</p>
+   <div class="tbg" id="mode-demo" role="group" aria-label="Preview a network mode">
+    <button type="button" data-m="sa" aria-pressed="true">5G SA</button>
+    <button type="button" data-m="nsa" aria-pressed="false">5G NSA</button>
+    <button type="button" data-m="lte" aria-pressed="false">4G LTE</button>
+   </div>
+   <div class="mode-readout" aria-live="polite"><span class="shape shape--flower shape--sm" aria-hidden="true" style="font:700 .95rem var(--font-display)"><span id="mode-readout-badge">5G</span></span><div><strong id="mode-readout-title">5G SA (NR only)</strong><span id="mode-readout-sub">Standalone 5G. Phone uses only the 5G core network.</span></div></div>
+  </div>
+ </div>
+ <div class="hero__stage">
+  <div class="hero__blob" aria-hidden="true"></div><div class="hero__blob hero__blob--2" aria-hidden="true"></div>
+  <div class="phone"><div class="phone__screen">
+   <div class="carousel" role="region" aria-roledescription="carousel" aria-label="App screenshots" tabindex="0">
+    <div class="carousel__track"><div class="carousel__slide" role="group" aria-roledescription="slide" aria-label="1 of 3: Dashboard"><img src="/assets/screens/dashboard.webp" width="540" height="1196" alt="Switcher 5G dashboard screen: mode selector and live telemetry" fetchpriority="high" decoding="async"></div><div class="carousel__slide" role="group" aria-roledescription="slide" aria-label="2 of 3: Setup"><img src="/assets/screens/setup.webp" width="540" height="1196" alt="Switcher 5G setup screen: shizuku and root activation" loading="lazy" decoding="async"></div><div class="carousel__slide" role="group" aria-roledescription="slide" aria-label="3 of 3: Settings"><img src="/assets/screens/settings.webp" width="540" height="1196" alt="Switcher 5G settings screen: themes, palettes and behavior" loading="lazy" decoding="async"></div></div>
+    <button class="carousel__nav carousel__nav--prev" type="button" aria-label="Previous screenshot"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7"/></svg></button>
+    <button class="carousel__nav carousel__nav--next" type="button" aria-label="Next screenshot"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7"/></svg></button>
+    <div class="carousel__ui"><button class="carousel__dot" type="button" aria-label="Show screenshot 1" aria-current="true"></button><button class="carousel__dot" type="button" aria-label="Show screenshot 2" aria-current="false"></button><button class="carousel__dot" type="button" aria-label="Show screenshot 3" aria-current="false"></button></div>
+   </div>
+  </div></div>
+ </div>
+</div></section>
+
+<section class="section" id="features"><div class="container">
+ <div class="section-head"><h2>Everything you need to control your connection</h2><p>Built for people who want 5G SA when it works and a fast way back when it does not.</p></div>
+ <div class="grid grid--features"><article class="feature"><span class="shape shape--cookie " aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span><h3>One-tap mode switching</h3><p>Switch between 5G SA, 5G NSA and 4G LTE from one screen. No digging through hidden menus.</p></article><article class="feature"><span class="shape shape--sunny " aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg></span><h3>Four ways to switch</h3><p>Shizuku, root, direct ADB or the RadioInfo menu. Auto mode tries them in order, so it just works.</p></article><article class="feature"><span class="shape shape--clover " aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="8" height="8" rx="3"/><rect x="13" y="3" width="8" height="8" rx="3"/><rect x="3" y="13" width="8" height="8" rx="3"/><path d="M17 14v6M14 17h6"/></svg></span><h3>Quick Settings tile and widget</h3><p>Change mode from the status bar or your home screen. Three tiles and a widget, no app launch needed.</p></article><article class="feature"><span class="shape shape--flower " aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 3h7l4 4v14H7z"/><rect x="10" y="11" width="5" height="6" rx="1.5"/></svg></span><h3>Dual-SIM selection</h3><p>Pick SIM 1 or SIM 2, or let the app find the SIM that carries your data.</p></article><article class="feature"><span class="shape shape--cookie " aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20v-4M9 20v-8M14 20V8M19 20V4"/></svg></span><h3>Live signal readout</h3><p>Watch RSRP, RSRQ, band and signal level update while you switch. See what each mode does to your connection.</p></article><article class="feature"><span class="shape shape--sunny " aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7"/><path d="M21 5v14" opacity=".4"/></svg></span><h3>Predictive back and depth blur</h3><p>Swipe back to preview the previous screen, with rounded corners and a soft blur behind. Both can be turned off.</p></article><article class="feature"><span class="shape shape--clover " aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.3-1.1-1.5-1.1-2.7 0-1 .8-1.6 1.8-1.6H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="15" cy="7.5" r="1"/></svg></span><h3>Material You colors</h3><p>Follows your wallpaper on Android 12+. Or choose from curated palettes, AMOLED black and seven fonts.</p></article><article class="feature"><span class="shape shape--flower " aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 10 3 2-3 2M12 15h5"/></svg></span><h3>Scriptable</h3><p>Trigger a switch from Termux or ADB with a broadcast or a <code>switcher5g://</code> link.</p></article></div>
+</div></section>
+
+<section class="section" id="how"><div class="container">
+ <div class="section-head"><h2>Set up in three steps</h2><p>Most people are switching modes in under two minutes.</p></div>
+ <ol class="steps">
+  <li><h3>Install the app</h3><p>Download the APK from the <a href="/download">download page</a> and install it. Allow installs from your browser or file manager when Android asks.</p></li>
+  <li><h3>Authorize Shizuku or root</h3><p>Start Shizuku with Wireless debugging and grant permission, or approve the superuser prompt if your phone is rooted.</p></li>
+  <li><h3>Tap a mode</h3><p>Choose 5G SA, 5G NSA or 4G LTE, then tap Apply. Add the tile or widget to switch without opening the app.</p></li>
+ </ol>
+</div></section>
+
+<section class="section" id="compatibility"><div class="container">
+ <div class="section-head"><h2>Compatibility and requirements</h2><p>Switching needs one engine. Pick whichever suits your phone.</p></div>
+ <div class="compat">
+  <div class="group" role="list" aria-label="Requirements">
+   <div class="group-row" role="listitem"><span class="shape shape--cookie shape--sm" aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg></span><div><h3>Android 8.0 or newer</h3><p>Predictive back needs Android 14. Dynamic colors need Android 12.</p></div></div>
+   <div class="group-row" role="listitem"><span class="shape shape--sunny shape--sm" aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 3h7l4 4v14H7z"/><rect x="10" y="11" width="5" height="6" rx="1.5"/></svg></span><div><h3>A SIM and a plan that allows 5G</h3><p>The app sets your preference. Your carrier decides what the network offers.</p></div></div>
+   <div class="group-row" role="listitem"><span class="shape shape--clover shape--sm" aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M16 7l3 3"/></svg></span><div><h3>Shizuku notes</h3><p>Wireless debugging start works on Android 11+. After a reboot, start Shizuku again unless you have root.</p></div></div>
+  </div>
+  <div class="table-wrap"><table>
+   <caption class="sr-only">Which engine can do what</caption>
+   <thead><tr><th scope="col">Engine</th><th scope="col">What you need</th><th scope="col">Switches modes</th></tr></thead>
+   <tbody>
+    <tr><th scope="row">Shizuku</th><td>Shizuku app running, permission granted. No root.</td><td><span class="ok"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12.500 4.500 4.500L19 7.500"/></svg>All three, from app, tile and widget</span></td></tr>
+    <tr><th scope="row">Root</th><td>Magisk, KernelSU or APatch with su granted.</td><td><span class="ok"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12.500 4.500 4.500L19 7.500"/></svg>All three, from app, tile and widget</span></td></tr>
+    <tr><th scope="row">Direct ADB</th><td>A computer, LADB or Termux to start Shizuku, or to send a broadcast.</td><td><span class="maybe"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>Starts Shizuku, then works like Shizuku</span></td></tr>
+    <tr><th scope="row">RadioInfo</th><td>A phone that still has the hidden testing menu.</td><td><span class="maybe"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>You pick the type by hand in the menu</span></td></tr>
+   </tbody></table></div>
+ </div>
+</div></section>
+
+<section class="section" id="screenshots"><div class="container">
+ <div class="section-head"><h2>See it in use</h2></div>
+ <div class="gallery"><figure class="shot"><img src="/assets/screens/dashboard.webp" width="540" height="1196" alt="Switcher 5G dashboard screen" loading="lazy" decoding="async"><figcaption>Dashboard<span>Mode selector and live telemetry</span></figcaption></figure><figure class="shot"><img src="/assets/screens/setup.webp" width="540" height="1196" alt="Switcher 5G setup screen" loading="lazy" decoding="async"><figcaption>Setup<span>Shizuku and root activation</span></figcaption></figure><figure class="shot"><img src="/assets/screens/settings.webp" width="540" height="1196" alt="Switcher 5G settings screen" loading="lazy" decoding="async"><figcaption>Settings<span>Themes, palettes and behavior</span></figcaption></figure></div>
+ <p class="placeholder-note"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg> <!-- PLACEHOLDER --> Placeholder: these are the screenshots from the repo&rsquo;s <code>docs/images</code> folder. Replace the files in <code>assets/screens/</code> to update them.</p>
+</div></section>
+
+<section class="section" id="download-card"><div class="container">
+ <div class="dl-card">
+  <div>
+   <h2>Get the latest version</h2>
+   <p data-release-status role="status">Checking GitHub for the latest release&hellip;</p>
+   <div class="dl-card__actions"><a class="btn btn--lg" href="https://github.com/shreyagarwal72/switcher5G/releases/latest" data-release-btn data-release-link><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg><span class="loader loader--sm" aria-hidden="true"></span><span>Download APK</span></a><a class="btn btn--lg btn--tonal" href="/download">Install guide</a></div>
+  </div>
+  <dl><div><dt>Version</dt><dd data-release-version>v2.0.0</dd></div><div><dt>Released</dt><dd data-release-date>24 Oct 2026</dd></div><div><dt>Size</dt><dd data-release-size>See release page</dd></div><div><dt>Requires</dt><dd>Android 8.0+</dd></div></dl>
+ </div>
+</div></section>
+
+<section class="section" id="faq-teaser"><div class="container faq-teaser">
+ <div class="section-head"><h2>Common questions</h2><p>Setup, safety and why a mode might not stick.</p><a class="btn btn--tonal" href="/faq">Read all answers</a></div>
+ <div class="accordion">
+<div class="acc-item" id="t-1"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="t-1-panel" id="t-1-btn"><span>What is the difference between 5G SA, 5G NSA and 4G LTE?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="t-1-panel" role="region" aria-labelledby="t-1-btn"><div><div class="acc-body"><p><strong>5G NSA</strong> (non-standalone) uses 5G radio with an LTE network helping in the background. Most carriers started here. <strong>5G SA</strong> (standalone) uses a full 5G core network on its own. It can give lower latency, but only works if your carrier has turned it on. <strong>4G LTE</strong> keeps the phone off 5G completely.</p><p>In the app these map to <code>NR_ONLY</code> (SA), <code>NR_LTE</code> (NSA) and <code>LTE_ONLY</code>.</p></div></div></div></div>
+<div class="acc-item" id="t-2"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="t-2-panel" id="t-2-btn"><span>How do I set up Shizuku?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="t-2-panel" role="region" aria-labelledby="t-2-btn"><div><div class="acc-body"><ol><li>Install the <a href="https://shizuku.rikka.app/" rel="noopener">Shizuku app</a> and open it.</li><li>On Android 11 or newer, turn on Developer options, then Wireless debugging, pair, and tap <strong>Start</strong> in Shizuku. On older versions, or without Wi-Fi, start it from a computer with the ADB command Shizuku shows.</li><li>Open Switcher 5G and tap <strong>Request Shizuku Permission</strong>. Allow it.</li><li>Pick a mode and tap <strong>Apply</strong>.</li></ol><p>The setup dialog inside Switcher 5G can copy the ADB command for you, including a version for when you are already inside <code>adb shell</code>.</p></div></div></div></div>
+<div class="acc-item" id="t-3"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="t-3-panel" id="t-3-btn"><span>Shizuku stopped working after I restarted my phone. Why?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="t-3-panel" role="region" aria-labelledby="t-3-btn"><div><div class="acc-body"><p>Shizuku started through Wireless debugging or ADB stops when the phone reboots. Start it again from the Shizuku app. If you have root, Shizuku can start itself on boot, which avoids this.</p></div></div></div></div>
+<div class="acc-item" id="t-4"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="t-4-panel" id="t-4-btn"><span>How do I use root instead?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="t-4-panel" role="region" aria-labelledby="t-4-btn"><div><div class="acc-body"><p>If your phone is rooted with Magisk, KernelSU or APatch, set the engine to <strong>Root</strong> (or leave it on Auto) and tap <strong>Grant Root (su) Access</strong>. Approve the superuser prompt. Then choose your SIM slot and mode.</p></div></div></div></div>
+<div class="acc-item" id="t-5"><h3><button class="acc-btn" type="button" aria-expanded="false" aria-controls="t-5-panel" id="t-5-btn"><span>I tap a mode but nothing changes. Why might a mode not apply?</span><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+<div class="acc-panel" id="t-5-panel" role="region" aria-labelledby="t-5-btn"><div><div class="acc-body"><ul><li><strong>Engine not ready.</strong> Shizuku is not running, permission was not granted, or root was denied.</li><li><strong>Carrier does not support it.</strong> Many networks do not offer 5G SA. The phone accepts the setting but stays on NSA or LTE.</li><li><strong>Wrong SIM.</strong> On dual-SIM phones, check that the right slot is selected.</li><li><strong>Phone firmware blocks it.</strong> Some phones ignore the request. Try the RadioInfo engine and set the type there.</li></ul><p>If it still fails, send us a bug report. See the <a href="/support">support page</a>.</p></div></div></div></div>
+</div>
+</div></section>
+
+<section class="section" id="community"><div class="container">
+ <div class="section-head"><h2>Join in</h2><p>Ask for help, report a carrier that misbehaves, or send a fix.</p></div>
+ <div class="cta-row">
+  <a class="link-card" href="https://t.me/championworkspace" rel="noopener"><span class="shape shape--sunny " aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m21 3-9.500 18-2.500-7.500L1.500 11z"/><path d="M21 3 9 13.500"/></svg></span><div><strong>Telegram @championworkspace</strong><span>Support, updates and announcements</span></div></a>
+  <a class="link-card" href="https://github.com/shreyagarwal72/switcher5G" rel="noopener"><span class="shape shape--clover " aria-hidden="true"><svg class="icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 19c-4 1.3-4-2-6-2.5m12 4.5v-3.2a2.8 2.8 0 0 0-.8-2.2c2.700-.3 5.500-1.300 5.500-6a4.600 4.600 0 0 0-1.300-3.200 4.300 4.300 0 0 0-.1-3.200s-1-.3-3.400 1.300a11.700 11.700 0 0 0-6.200 0C6.800 2.800 5.800 3.100 5.800 3.100a4.300 4.300 0 0 0-.1 3.200A4.600 4.600 0 0 0 4.400 9.500c0 4.600 2.800 5.600 5.500 6a2.800 2.800 0 0 0-.8 2.200V21"/></svg></span><div><strong>GitHub</strong><span>Source code, issues and pull requests</span></div></a>
+ </div>
+</div></section>
+</main>
+
+<noscript><p style="padding:24px;text-align:center">Switcher 5G&rsquo;s site works best with JavaScript on. Pages: <a href="/">Home</a>, <a href="/download">Download</a>, <a href="/changelog">Changelog</a>, <a href="/faq">FAQ</a>, <a href="/support">Support</a>, <a href="/privacy">Privacy</a>.</p></noscript>
+<script src="/page.js" defer></script>
+<script src="/app.js" defer></script>
+</body>
+</html>
