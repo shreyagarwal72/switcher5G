@@ -1,43 +1,73 @@
 package com.app.switcher5g.screens
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.telephony.TelephonyManager
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.rounded.CellTower
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.PermDeviceInformation
+import androidx.compose.material.icons.rounded.Public
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.Send
+import androidx.compose.material.icons.rounded.SimCard
+import androidx.compose.material.icons.rounded.SystemUpdate
+import androidx.compose.material.icons.rounded.Android
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.app.switcher5g.network.ShizukuHelper
-import com.app.switcher5g.ui.components.FancyCircularOrbLoader
-import com.app.switcher5g.ui.components.FancyLinearLoadingBar
-import com.app.switcher5g.ui.components.LinearRipplingWavyProgressIndicator
-import com.app.switcher5g.ui.components.bouncyClickable
+import com.app.switcher5g.ui.components.PetalBadgeVariant
+import com.app.switcher5g.ui.components.PetalButton
+import com.app.switcher5g.ui.components.PetalButtonStyle
+import com.app.switcher5g.ui.components.PetalContainedLoadingIndicator
+import com.app.switcher5g.ui.components.PetalGroupItem
+import com.app.switcher5g.ui.components.PetalGroupPosition
+import com.app.switcher5g.ui.components.PetalGroupRow
+import com.app.switcher5g.ui.components.PetalScreenScaffold
+import com.app.switcher5g.ui.components.PetalSection
 import com.app.switcher5g.ui.components.entrance
+import com.app.switcher5g.ui.components.rememberPetalHeaderScrollBehavior
+import com.app.switcher5g.ui.theme.PetalMaterialShapes
+import com.app.switcher5g.ui.components.PetalShapedContainer
 import com.app.switcher5g.update.UpdateInfo
 import com.app.switcher5g.update.UpdateManager
 import com.app.switcher5g.util.MarkdownUtils
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(modifier: Modifier = Modifier) {
+fun AboutScreen(
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -52,192 +82,177 @@ fun AboutScreen(modifier: Modifier = Modifier) {
     val telephonyManager = remember { context.getSystemService(TelephonyManager::class.java) }
     val networkOperatorName = remember { telephonyManager?.networkOperatorName.orEmpty().ifBlank { "Cellular Radio" } }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp)
-            .padding(bottom = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        // Clean Professional Top Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 2.dp)
-                .entrance(0),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Info,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp),
-            )
-            Text(
-                text = "About",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+    fun openLink(url: String) {
+        runCatching {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
+    }
 
-        // App Header Banner
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(1)
-                .shadow(6.dp, RoundedCornerShape(28.dp)),
-            shape = RoundedCornerShape(28.dp),
+    val scrollBehavior = rememberPetalHeaderScrollBehavior()
+
+    PetalScreenScaffold(
+        title = "About",
+        scrollBehavior = scrollBehavior,
+        onNavigateBack = onNavigateBack,
+        modifier = modifier,
+    ) {
+        // ---- Hero --------------------------------------------------------------------------
+        PetalGroupItem(
+            position = PetalGroupPosition.SINGLE,
+            modifier = Modifier.entrance(0),
         ) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.surfaceContainerHigh,
-                                MaterialTheme.colorScheme.surfaceVariant,
-                            ),
-                        ),
-                    )
-                    .padding(20.dp),
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
+                PetalShapedContainer(
+                    shape = PetalMaterialShapes.Cookie12Sided.toShape(),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    size = 96.dp,
                 ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.size(72.dp),
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.CellTower,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(40.dp),
-                            )
-                        }
-                    }
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Switcher 5G",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 26.sp,
-                            ),
-                        )
-                        Text(
-                            text = "Version $appVersion — Material 3 Expressive",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-
-                    Text(
-                        text = "5G Standalone (SA), 5G Non-Standalone (NSA), and 4G LTE network mode switcher for Android.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
+                    Icon(
+                        imageVector = Icons.Rounded.CellTower,
+                        contentDescription = null,
+                        modifier = Modifier.size(46.dp),
                     )
                 }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(
+                        text = "Switcher 5G",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = "Version $appVersion",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+                Text(
+                    text = "5G Standalone (SA), 5G Non-Standalone (NSA), and 4G LTE network mode switcher for Android.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
             }
         }
 
-        // Updates Card
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(2),
-            shape = RoundedCornerShape(24.dp),
+        // ---- Updates -----------------------------------------------------------------------
+        PetalSection(
+            title = "Updates",
+            modifier = Modifier.entrance(1),
         ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            Icons.Rounded.SystemUpdate,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                        Text(
-                            text = "Updates",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        )
-                    }
-
-                    if (isCheckingUpdate) {
-                        FancyCircularOrbLoader(size = 22.dp, color = MaterialTheme.colorScheme.primary)
-                    } else {
-                        OutlinedButton(
-                            onClick = {
-                                scope.launch {
-                                    isCheckingUpdate = true
-                                    val info = UpdateManager.checkForUpdates(currentVersion = appVersion)
-                                    updateInfo = info
-                                    isCheckingUpdate = false
-                                }
-                            },
-                            modifier = Modifier.bouncyClickable {},
-                        ) {
-                            Text("Check Updates")
+            row { position ->
+                PetalGroupRow(
+                    icon = Icons.Rounded.SystemUpdate,
+                    title = "Check for updates",
+                    subtitle = when {
+                        isCheckingUpdate -> "Checking for updates…"
+                        updateInfo == null -> "You are on v$appVersion"
+                        else -> "Last checked just now"
+                    },
+                    position = position,
+                    badgeShape = PetalMaterialShapes.Sunny,
+                    trailing = {
+                        if (isCheckingUpdate) {
+                            PetalContainedLoadingIndicator(size = 44.dp)
+                        } else {
+                            PetalButton(
+                                onClick = {
+                                    scope.launch {
+                                        isCheckingUpdate = true
+                                        val info = UpdateManager.checkForUpdates(currentVersion = appVersion)
+                                        updateInfo = info
+                                        isCheckingUpdate = false
+                                    }
+                                },
+                                style = PetalButtonStyle.TONAL,
+                                height = 40.dp,
+                            ) {
+                                Text("Check")
+                            }
                         }
-                    }
-                }
+                    },
+                )
+            }
 
-                if (isCheckingUpdate) {
-                    FancyLinearLoadingBar(
-                        progress = null,
-                        label = "Checking for updates…",
-                    )
-                }
-
-                updateInfo?.let { info ->
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = if (info.hasUpdate) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.fillMaxWidth(),
+            val info = updateInfo
+            if (info != null) {
+                row { position ->
+                    PetalGroupItem(
+                        position = position,
+                        color = if (info.hasUpdate) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            com.app.switcher5g.ui.components.petalGroupColor()
+                        },
                     ) {
                         Column(
-                            modifier = Modifier.padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
+                            val onColor = if (info.hasUpdate) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            }
                             Text(
-                                text = if (info.hasUpdate) "Update Available: v${info.latestVersion}" else "App is up to date (v${info.latestVersion})",
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                color = if (info.hasUpdate) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                                text = if (info.hasUpdate) {
+                                    "Update available: v${info.latestVersion}"
+                                } else {
+                                    "App is up to date (v${info.latestVersion})"
+                                },
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = onColor,
                             )
 
                             if (info.releaseNotes.isNotBlank()) {
                                 Text(
                                     text = MarkdownUtils.parseMarkdown(info.releaseNotes),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = if (info.hasUpdate) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = if (info.hasUpdate) onColor else MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
 
                             if (info.hasUpdate && info.isAvailable) {
                                 if (isDownloadingUpdate) {
-                                    LinearRipplingWavyProgressIndicator(
-                                        progress = downloadProgress,
-                                        label = "Downloading update…",
-                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        PetalContainedLoadingIndicator(
+                                            size = 48.dp,
+                                            progress = { downloadProgress },
+                                        )
+                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Text(
+                                                text = "Downloading update…",
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.Bold,
+                                                color = onColor,
+                                            )
+                                            Text(
+                                                text = "${(downloadProgress * 100).toInt()}%",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = onColor,
+                                            )
+                                        }
+                                    }
                                 } else {
-                                    Button(
+                                    PetalButton(
                                         onClick = {
                                             scope.launch {
                                                 isDownloadingUpdate = true
@@ -250,28 +265,15 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                                                 isDownloadingUpdate = false
                                             }
                                         },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .bouncyClickable {},
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary,
-                                        ),
+                                        modifier = Modifier.fillMaxWidth(),
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Download,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp),
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "Download & Install Update (v${info.latestVersion})",
-                                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                                        )
+                                        Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Download & install v${info.latestVersion}")
                                     }
                                 }
                             } else if (!info.hasUpdate) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
@@ -282,8 +284,8 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                                         modifier = Modifier.size(18.dp),
                                     )
                                     Text(
-                                        text = "You are running the latest release version.",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                        text = "You are running the latest release.",
+                                        style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
@@ -294,180 +296,98 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        // System Info Card
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(3),
-            shape = RoundedCornerShape(24.dp),
+        // ---- System info -------------------------------------------------------------------
+        val shizukuActive = remember { ShizukuHelper.hasPermission() }
+        PetalSection(
+            title = "System",
+            modifier = Modifier.entrance(2),
         ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon(
-                        Icons.Rounded.PermDeviceInformation,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.tertiary,
-                    )
-                    Text(
-                        text = "System Info",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    )
-                }
-
-                InfoRow(label = "Device", value = deviceModel)
-                InfoRow(label = "Android", value = androidVersion)
-                InfoRow(label = "Carrier", value = networkOperatorName)
-                InfoRow(label = "Shizuku Status", value = if (ShizukuHelper.hasPermission()) "Active & Authorized" else "Disconnected")
+            row { position ->
+                InfoRow(Icons.Rounded.PermDeviceInformation, "Device", deviceModel, position, PetalMaterialShapes.Cookie6Sided)
             }
-        }
-
-        // Telegram & Community Support Card
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(4),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)),
-        ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon(
-                        Icons.Rounded.Send,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                    Text(
-                        text = "Telegram Support & Community",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-
-                Text(
-                    text = "Join @championworkspace on Telegram for direct support, updates, feature requests, and community discussions.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+            row { position ->
+                InfoRow(Icons.Rounded.Android, "Android", androidVersion, position, PetalMaterialShapes.Clover4Leaf, PetalBadgeVariant.SECONDARY)
+            }
+            row { position ->
+                InfoRow(Icons.Rounded.SimCard, "Carrier", networkOperatorName, position, PetalMaterialShapes.Pentagon, PetalBadgeVariant.TERTIARY)
+            }
+            row { position ->
+                InfoRow(
+                    icon = Icons.Rounded.Security,
+                    label = "Shizuku",
+                    value = if (shizukuActive) "Active & authorized" else "Disconnected",
+                    position = position,
+                    shape = PetalMaterialShapes.Gem,
+                    variant = if (shizukuActive) PetalBadgeVariant.PRIMARY else PetalBadgeVariant.SURFACE_TONAL,
                 )
-
-                Button(
-                    onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/championworkspace"))
-                        context.startActivity(intent)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .bouncyClickable {},
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                ) {
-                    Icon(Icons.Rounded.Send, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Join Telegram Channel (@championworkspace)", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold))
-                }
             }
         }
 
-        // Open Source & Links Card
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(5),
-            shape = RoundedCornerShape(24.dp),
+        // ---- Community & links -------------------------------------------------------------
+        PetalSection(
+            title = "Community & source",
+            modifier = Modifier.entrance(3),
         ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon(
-                        Icons.Rounded.Code,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                    Text(
-                        text = "Open Source & Links",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    )
-                }
-
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    OutlinedButton(
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/championworkspace"))
-                            context.startActivity(intent)
-                        },
-                        modifier = Modifier.bouncyClickable {},
-                    ) {
-                        Icon(Icons.Rounded.Send, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Telegram", style = MaterialTheme.typography.labelMedium)
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/shreyagarwal72/switcher5G"))
-                            context.startActivity(intent)
-                        },
-                        modifier = Modifier.bouncyClickable {},
-                    ) {
-                        Icon(Icons.Rounded.Code, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("GitHub", style = MaterialTheme.typography.labelMedium)
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app"))
-                            context.startActivity(intent)
-                        },
-                        modifier = Modifier.bouncyClickable {},
-                    ) {
-                        Icon(Icons.Rounded.Security, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Shizuku", style = MaterialTheme.typography.labelMedium)
-                    }
-                }
+            row { position ->
+                PetalGroupRow(
+                    icon = Icons.Rounded.Send,
+                    title = "Telegram",
+                    subtitle = "@championworkspace: support, updates and feature requests",
+                    position = position,
+                    onClick = { openLink("https://t.me/championworkspace") },
+                    badgeShape = PetalMaterialShapes.Flower,
+                )
+            }
+            row { position ->
+                PetalGroupRow(
+                    icon = Icons.Rounded.Code,
+                    title = "GitHub",
+                    subtitle = "Source code and releases",
+                    position = position,
+                    onClick = { openLink("https://github.com/shreyagarwal72/switcher5G") },
+                    badgeShape = PetalMaterialShapes.Burst,
+                    variant = PetalBadgeVariant.SECONDARY,
+                )
+            }
+            row { position ->
+                PetalGroupRow(
+                    icon = Icons.Rounded.Public,
+                    title = "Shizuku",
+                    subtitle = "Get Shizuku for in-app switching",
+                    position = position,
+                    onClick = { openLink("https://shizuku.rikka.app") },
+                    badgeShape = PetalMaterialShapes.SoftBurst,
+                    variant = PetalBadgeVariant.TERTIARY,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-    }
+private fun InfoRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String,
+    position: PetalGroupPosition,
+    shape: com.app.switcher5g.ui.theme.ExpressiveShapeHolder,
+    variant: PetalBadgeVariant = PetalBadgeVariant.PRIMARY,
+) {
+    PetalGroupRow(
+        icon = icon,
+        title = label,
+        position = position,
+        badgeShape = shape,
+        variant = variant,
+        trailing = {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.End,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+        },
+    )
 }

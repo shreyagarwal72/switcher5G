@@ -4,6 +4,25 @@ All notable changes to **Switcher 5G** are documented in this file.
 
 ---
 
+## [2.0.0] - 2026-10-24
+
+### 🎨 Material 3 Expressive & Petal Redesign
+* **Petal Collapsing Header**: New collapsing header across every screen (`PetalHeader` / `PetalScreenScaffold`) with smooth back-button morphing, fluid scroll physics, and animated screen titles.
+* **Grouped Containment Architecture**: Replaced standalone cards with connected list rows featuring modern rounded outer corners (`28dp` top/bottom, `6dp` inner) and Material 3 Expressive shaped icon badges (`PetalGroupRow`, `PetalGroupToggleRow`, `PetalGroupControlRow`, `PetalSection`).
+* **Connected Choice Toggle Groups**: Replaced old filter chips, radio sliders, and dropdowns with connected choice toggle button groups (`PetalChoiceButtonGroup` / `PetalButtonGroupItem`) across all settings (activation mode, theme selection, font picker, and network modes).
+* **Predictive Back Navigation & Live Gesture Transitions**:
+  * Implemented `PetalPredictiveHost` with real-time gesture tracking, progressive scaling, corner radius clipping, and back-stack morphing.
+  * Added optional depth blur & scrim dimming for underlying screens during back swipes (customizable via Settings).
+* **Unified Petal Loading Indicators**:
+  * Streamlined all loaders across the entire application into Petal's contained loading indicator (`PetalContainedLoadingIndicator` & `PetalWebsiteLoadingIndicator`).
+  * Removed legacy uncontained progress bars and redundant circular spinner components.
+* **Expressive Buttons & Dialog Overhauls**:
+  * Replaced stock Material buttons with tactile `PetalButton` components supporting primary, tonal, secondary, and destructive styles.
+  * Modernized `ShizukuSetupDialog`, `Manual5gFirstTimeDialog`, `CellularSignalMonitorCard`, and `UpdateAvailableDialog` to match the expressive design system.
+* **Settings & Preferences**: Added toggles for predictive back navigation and depth blur animation with full JSON export/import backup support.
+
+---
+
 ## [1.0.5] - 2026-09-19
 
 ### 🎨 Material 3 Expressive UI & Petal Integration

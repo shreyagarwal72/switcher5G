@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.app.switcher5g.ui.theme.PetalMaterialShapes
 import com.app.switcher5g.update.UpdateInfo
 import com.app.switcher5g.update.UpdateManager
 import kotlinx.coroutines.launch
@@ -35,11 +36,11 @@ fun UpdateAvailableDialog(
     AlertDialog(
         onDismissRequest = { if (!isDownloading) onDismissRequest() },
         icon = {
-            Icon(
-                imageVector = Icons.Rounded.SystemUpdate,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp),
+            PetalShapedIcon(
+                icon = Icons.Rounded.SystemUpdate,
+                shape = PetalMaterialShapes.Cookie9Sided,
+                size = 60.dp,
+                iconSize = 30.dp,
             )
         },
         title = {
@@ -62,7 +63,7 @@ fun UpdateAvailableDialog(
                 )
 
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -75,20 +76,28 @@ fun UpdateAvailableDialog(
                 }
 
                 if (isDownloading) {
-                    Column(
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        LinearProgressIndicator(
+                        // Determinate: the contained indicator morphs in step with the download.
+                        PetalContainedLoadingIndicator(
+                            size = 48.dp,
                             progress = { downloadProgress },
-                            modifier = Modifier.fillMaxWidth().height(6.dp),
-                            color = MaterialTheme.colorScheme.primary,
                         )
-                        Text(
-                            text = "Downloading update… ${(downloadProgress * 100).toInt()}%",
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                            color = MaterialTheme.colorScheme.primary,
-                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = "Downloading update…",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = "${(downloadProgress * 100).toInt()}%",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
                     }
                 }
             }
@@ -111,7 +120,7 @@ fun UpdateAvailableDialog(
                 modifier = Modifier.bouncyClickable {},
             ) {
                 if (isDownloading) {
-                    FancyCircularOrbLoader(size = 16.dp)
+                    PetalLoadingIndicator(size = 18.dp)
                 } else {
                     Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(16.dp))
                 }

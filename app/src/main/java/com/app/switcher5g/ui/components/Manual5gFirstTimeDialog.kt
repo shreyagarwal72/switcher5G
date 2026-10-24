@@ -1,5 +1,6 @@
 package com.app.switcher5g.ui.components
 
+import com.app.switcher5g.ui.theme.PetalMaterialShapes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -33,11 +34,11 @@ fun Manual5gFirstTimeDialog(
     AlertDialog(
         onDismissRequest = onDismissRequest,
         icon = {
-            Icon(
-                imageVector = Icons.Rounded.NetworkCheck,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp),
+            PetalShapedIcon(
+                icon = Icons.Rounded.NetworkCheck,
+                shape = PetalMaterialShapes.Clover4Leaf,
+                size = 60.dp,
+                iconSize = 30.dp,
             )
         },
         title = {

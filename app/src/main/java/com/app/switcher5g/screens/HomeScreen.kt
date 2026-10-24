@@ -27,11 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.app.switcher5g.network.NetworkMode
 import com.app.switcher5g.network.NetworkModeManager
 import com.app.switcher5g.network.RootHelper
@@ -42,81 +37,44 @@ import com.app.switcher5g.util.ActivationMethod
 import com.app.switcher5g.util.AppPreferences
 import kotlinx.coroutines.launch
 
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.app.switcher5g.ui.predictive.PetalScreenHost
+import com.app.switcher5g.ui.theme.PetalMaterialShapes
+
 @Composable
 fun MainScreen(
     prefs: AppPreferences,
     modifier: Modifier = Modifier,
 ) {
-    val navController = rememberNavController()
-    val backStack by navController.currentBackStackEntryAsState()
-    val currentRoute = backStack?.destination?.route ?: "home"
-
-    fun routeIndex(route: String?): Int = when (route) {
-        "home" -> 0
-        "settings" -> 1
-        "about" -> 2
-        else -> 0
-    }
+    var route by rememberSaveable { mutableStateOf("home") }
+    val routeOrder = remember { listOf("home", "settings", "about") }
 
     Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        NavHost(
-            navController = navController,
-            startDestination = "home",
-            modifier = Modifier.fillMaxSize(),
-            enterTransition = {
-                val isForward = routeIndex(targetState.destination.route) > routeIndex(initialState.destination.route)
-                val initialOffset = if (isForward) { fullWidth: Int -> fullWidth } else { fullWidth: Int -> -fullWidth / 3 }
-                slideInHorizontally(
-                    initialOffsetX = initialOffset,
-                    animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)
-                ) + fadeIn(tween(300)) + scaleIn(initialScale = 0.94f, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing))
+        // Home is the root; Settings and About stack above it with Petal's predictive back and
+        // depth blur (the real Home surface shows blurred behind the departing screen).
+        PetalScreenHost(
+            route = route,
+            rootRoute = "home",
+            routeOrder = routeOrder,
+            onBack = { route = "home" },
+            predictiveEnabled = prefs.predictiveBack,
+            blurEnabled = prefs.depthBlur,
+            root = { HomeScreenContent(prefs = prefs) },
+            overlay = { target ->
+                when (target) {
+                    "settings" -> SettingsScreen(prefs = prefs, onNavigateBack = { route = "home" })
+                    "about" -> AboutScreen(onNavigateBack = { route = "home" })
+                }
             },
-            exitTransition = {
-                val isForward = routeIndex(targetState.destination.route) > routeIndex(initialState.destination.route)
-                val targetOffset = if (isForward) { fullWidth: Int -> -fullWidth / 3 } else { fullWidth: Int -> fullWidth }
-                slideOutHorizontally(
-                    targetOffsetX = targetOffset,
-                    animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)
-                ) + fadeOut(tween(250)) + scaleOut(targetScale = 0.94f, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing))
-            },
-            popEnterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth -> -fullWidth / 3 },
-                    animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)
-                ) + fadeIn(tween(300)) + scaleIn(initialScale = 0.94f, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing))
-            },
-            popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)
-                ) + fadeOut(tween(250)) + scaleOut(targetScale = 0.94f, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing))
-            },
-        ) {
-            composable("home") {
-                HomeScreenContent(prefs = prefs)
-            }
-            composable("settings") {
-                SettingsScreen(prefs = prefs)
-            }
-            composable("about") {
-                AboutScreen()
-            }
-        }
+        )
 
-        // Petal's floating bar applies its own navigation-bar inset and bottom margin.
         StrideFloatingNav(
-            currentRoute = currentRoute,
-            onNavigate = { route -> navController.navigateSingleTop(route) },
+            currentRoute = route,
+            onNavigate = { target -> route = target },
             modifier = Modifier.align(Alignment.BottomCenter),
         )
-    }
-}
-
-private fun NavHostController.navigateSingleTop(route: String) {
-    navigate(route) {
-        popUpTo(graph.startDestinationId) { saveState = true }
-        launchSingleTop = true
-        restoreState = true
     }
 }
 
@@ -200,393 +158,302 @@ fun HomeScreenContent(prefs: AppPreferences) {
         )
     }
 
-    NetworkModeSwitchLoadingOverlay(
-        isSwitching = isSwitching,
-        modeName = selectedMode.label(),
-    )
+    if (isSwitching) {
+        SwitchingDialog(modeName = selectedMode.label())
+    }
 
     val scrollState = rememberScrollState()
+    val scrollBehavior = rememberPetalHeaderScrollBehavior()
+
+    fun scanSims() {
+        scope.launch {
+            isScanningSims = true
+            val ids = manager.getAvailableSubIds()
+            availableSubIds = ids
+            if (ids.isNotEmpty() && selectedSubId == null) selectedSubId = ids[0]
+            isScanningSims = false
+        }
+    }
 
     ExpressivePullToRefreshBox(
         isRefreshing = isScanningSims,
-        canPull = { scrollState.value == 0 },
-        onRefresh = {
-            scope.launch {
-                isScanningSims = true
-                val ids = manager.getAvailableSubIds()
-                availableSubIds = ids
-                if (ids.isNotEmpty() && selectedSubId == null) selectedSubId = ids[0]
-                isScanningSims = false
-            }
-        },
+        canPull = { scrollState.value == 0 && scrollBehavior.state.collapsedFraction < 0.01f },
+        onRefresh = { scanSims() },
         modifier = Modifier.fillMaxSize(),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 20.dp, vertical = 12.dp)
-                .padding(bottom = 96.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            RefreshProgressBar(
-                isRefreshing = isSwitching || isScanningSims,
-                label = if (isSwitching) "Executing network mode switch…" else "Scanning active SIM cards…",
-                modifier = Modifier.entrance(0),
-            )
-
-            // Top Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 2.dp)
-                    .entrance(0),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "Switcher 5G",
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-
-                // Setup / Status Pill Badge
+        PetalScreenScaffold(
+            title = "Switcher 5G",
+            scrollBehavior = scrollBehavior,
+            scrollState = scrollState,
+            actions = {
+                PetalLoadingBadge(visible = isSwitching || isScanningSims, size = 36.dp)
                 val badgeLabel = when {
-                    shizukuReady -> "Shizuku Active"
-                    rootReady -> "Root Active"
-                    else -> "Setup / ADB"
+                    shizukuReady -> "Shizuku"
+                    rootReady -> "Root"
+                    else -> "Setup"
                 }
                 Surface(
+                    onClick = { showSetupDialog = true },
                     shape = CircleShape,
                     color = if (isPrivileged) MaterialTheme.colorScheme.primaryContainer
                     else MaterialTheme.colorScheme.tertiaryContainer,
-                    modifier = Modifier
-                        .bouncyClickable(scaleDown = 0.92f) { showSetupDialog = true }
-                        .shadow(4.dp, CircleShape),
+                    modifier = Modifier.padding(horizontal = 8.dp),
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        val tint = if (isPrivileged) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onTertiaryContainer
                         Icon(
                             imageVector = if (isPrivileged) Icons.Rounded.CheckCircle else Icons.Rounded.Security,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = if (isPrivileged) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                            tint = tint,
                         )
                         Text(
                             text = badgeLabel,
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                            color = if (isPrivileged) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = tint,
                         )
                     }
-                }
-            }
-
-            // ONE-TIME Setup Banner (Appears only 1 time on Home Screen until dismissed)
-            if (!prefs.hasDismissedSetupCard && !isPrivileged) {
-                ElevatedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .entrance(1),
-                    shape = RoundedCornerShape(20.dp),
-                ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            Icons.Rounded.Security,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.tertiary,
-                        )
-                        Column {
-                            Text(
-                                text = "Setup Shizuku or ADB",
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                            )
-                            Text(
-                                text = "Optional for 1-tap in-app switching, or use Root/RadioInfo standalone.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        TextButton(onClick = { showSetupDialog = true }) {
-                            Text("Setup")
-                        }
-                        IconButton(
-                            onClick = { prefs.hasDismissedSetupCard = true },
-                            modifier = Modifier.size(28.dp),
-                        ) {
-                            Icon(
-                                Icons.Rounded.Close,
-                                contentDescription = "Dismiss Banner",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // Live Cellular Signal Telemetry Card
-        CellularSignalMonitorCard(
-            subId = selectedSubId,
-            modifier = Modifier.entrance(2),
-        )
-
-        // Target SIM Subscription Card
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(3),
-            shape = RoundedCornerShape(24.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            Icons.Rounded.SimCard,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.tertiary,
-                        )
-                        Text(
-                            text = "SIM Subscription",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        )
-                    }
-
-                    if (isScanningSims) {
-                        FancyCircularOrbLoader(size = 24.dp, color = MaterialTheme.colorScheme.primary)
-                    } else {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    isScanningSims = true
-                                    val ids = manager.getAvailableSubIds()
-                                    availableSubIds = ids
-                                    if (ids.isNotEmpty() && selectedSubId == null) selectedSubId = ids[0]
-                                    isScanningSims = false
-                                }
-                            },
-                        ) {
-                            Icon(Icons.Rounded.Refresh, contentDescription = "Scan SIMs")
-                        }
-                    }
-                }
-
-                Text(
-                    text = "Active Subscription ID: ${selectedSubId ?: "Auto-Detect"}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                // SIM Slot Choice Chips
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    InputChip(
-                        selected = selectedSubId == null,
-                        onClick = { selectedSubId = null },
-                        label = { Text("Auto-Detect SIM") },
-                    )
-                    availableSubIds.forEach { subId ->
-                        InputChip(
-                            selected = selectedSubId == subId,
-                            onClick = { selectedSubId = subId },
-                            label = { Text("SIM Slot (Sub $subId)") },
-                        )
-                    }
-                }
-            }
-        }
-
-        // Preferred Network Mode Custom Slider Section
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(4),
-            shape = RoundedCornerShape(24.dp),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Text(
-                    text = "Preferred Network Mode",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-
-                val networkOptions = remember { listOf("2G", "3G", "4G LTE", "5G NSA", "5G SA") }
-                val currentOptionIndex = when (selectedMode) {
-                    NetworkMode.LTE_ONLY -> 2
-                    NetworkMode.NR_LTE -> 3
-                    NetworkMode.NR_ONLY -> 4
-                }
-
-                NetworkModeSlider(
-                    options = networkOptions,
-                    selected = currentOptionIndex,
-                    onSelect = { index ->
-                        selectedMode = when (index) {
-                            0, 1, 2 -> NetworkMode.LTE_ONLY
-                            3 -> NetworkMode.NR_LTE
-                            4 -> NetworkMode.NR_ONLY
-                            else -> NetworkMode.NR_LTE
-                        }
-                    },
-                    enabled = !isSwitching,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
-
-        // Standalone Apply Button (Works with Shizuku, Root, or RadioInfo Testing Menu!)
-        Button(
-            enabled = !isSwitching,
-            onClick = {
-                isSwitching = true
-                statusText = "Applying network mode switch…"
-                scope.launch {
-                    val res = manager.switchTo(selectedMode, overrideSubId = selectedSubId, method = prefs.activationMethod)
-                    statusText = when (res) {
-                        is SwitchResult.Success -> {
-                            prefs.currentActiveMode = selectedMode
-                            "✅ ${res.message}"
-                        }
-                        is SwitchResult.Failure -> "⚠️ ${res.reason}"
-                    }
-                    isSwitching = false
                 }
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .entrance(5)
-                .bouncyClickable(scaleDown = 0.94f) {},
-            shape = RoundedCornerShape(16.dp),
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            // One-time setup banner
+            if (!prefs.hasDismissedSetupCard && !isPrivileged) {
+                PetalGroupItem(
+                    position = PetalGroupPosition.SINGLE,
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    modifier = Modifier.entrance(0),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        PetalShapedIcon(
+                            icon = Icons.Rounded.Security,
+                            shape = PetalMaterialShapes.Cookie6Sided,
+                            variant = PetalBadgeVariant.TERTIARY,
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Set up Shizuku or ADB",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            )
+                            Text(
+                                "Optional for 1-tap in-app switching, or use Root / RadioInfo standalone.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            PetalButton(
+                                onClick = { showSetupDialog = true },
+                                style = PetalButtonStyle.FILLED,
+                                height = 36.dp,
+                            ) { Text("Setup") }
+                            IconButton(onClick = { prefs.hasDismissedSetupCard = true }) {
+                                Icon(
+                                    Icons.Rounded.Close,
+                                    contentDescription = "Dismiss banner",
+                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Live telemetry
+            CellularSignalMonitorCard(
+                subId = selectedSubId,
+                modifier = Modifier.entrance(1),
+            )
+
+            // SIM selection
+            PetalSection(title = "SIM subscription", modifier = Modifier.entrance(2)) {
+                row { position ->
+                    PetalGroupControlRow(
+                        icon = Icons.Rounded.SimCard,
+                        title = "Target SIM",
+                        subtitle = "Active subscription: ${selectedSubId ?: "Auto-detect"}",
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Pentagon,
+                        variant = PetalBadgeVariant.TERTIARY,
+                        headerTrailing = {
+                            if (isScanningSims) {
+                                PetalContainedLoadingIndicator(size = 40.dp)
+                            } else {
+                                FilledTonalIconButton(onClick = { scanSims() }) {
+                                    Icon(Icons.Rounded.Refresh, contentDescription = "Scan SIMs")
+                                }
+                            }
+                        },
+                    ) {
+                        PetalChoiceButtonGroup(
+                            options = buildList {
+                                add(PetalButtonGroupItem<Int?>(null, "Auto"))
+                                availableSubIds.forEach { add(PetalButtonGroupItem<Int?>(it, "SIM $it")) }
+                            },
+                            selected = selectedSubId,
+                            onSelect = { selectedSubId = it },
+                        )
+                    }
+                }
+            }
+
+            // Network mode
+            PetalSection(title = "Preferred network mode", modifier = Modifier.entrance(3)) {
+                row { position ->
+                    PetalGroupControlRow(
+                        icon = Icons.Rounded.NetworkCheck,
+                        title = selectedMode.label(),
+                        subtitle = selectedMode.description(),
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Sunny,
+                    ) {
+                        PetalChoiceButtonGroup(
+                            options = listOf(
+                                PetalButtonGroupItem(NetworkMode.LTE_ONLY, "4G LTE"),
+                                PetalButtonGroupItem(NetworkMode.NR_LTE, "5G NSA"),
+                                PetalButtonGroupItem(NetworkMode.NR_ONLY, "5G SA"),
+                            ),
+                            selected = selectedMode,
+                            onSelect = { selectedMode = it },
+                            enabled = !isSwitching,
+                            minHeight = 52.dp,
+                        )
+                    }
+                }
+            }
+
+            // Apply
+            PetalButton(
+                enabled = !isSwitching,
+                onClick = {
+                    isSwitching = true
+                    statusText = "Applying network mode switch…"
+                    scope.launch {
+                        val res = manager.switchTo(selectedMode, overrideSubId = selectedSubId, method = prefs.activationMethod)
+                        statusText = when (res) {
+                            is SwitchResult.Success -> {
+                                prefs.currentActiveMode = selectedMode
+                                "✅ ${res.message}"
+                            }
+                            is SwitchResult.Failure -> "⚠️ ${res.reason}"
+                        }
+                        isSwitching = false
+                    }
+                },
+                height = 56.dp,
+                modifier = Modifier.fillMaxWidth().entrance(4),
             ) {
                 if (isSwitching) {
-                    FancyCircularOrbLoader(size = 20.dp)
+                    PetalLoadingIndicator(size = 24.dp)
                 } else {
                     Icon(Icons.Rounded.Bolt, contentDescription = null)
                 }
+                Spacer(Modifier.width(8.dp))
                 Text(
-                    text = if (isSwitching) "Applying Network Mode…" else "Apply Network Mode",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                )
-            }
-        }
-
-        // Manual 5G & Band Lock Section
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(5),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OutlinedButton(
-                onClick = {
-                    if (!prefs.hasSeenManual5gDialog) {
-                        showManual5gDialog = true
-                    } else {
-                        com.app.switcher5g.network.Manual5gSwitchHelper.openRadioInfo(context)
-                    }
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp)
-                    .bouncyClickable {},
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Icon(Icons.Rounded.NetworkCheck, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Radio Info",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    text = if (isSwitching) "Applying network mode…" else "Apply network mode",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                 )
             }
 
-            OutlinedButton(
-                onClick = {
-                    com.app.switcher5g.network.Manual5gSwitchHelper.openBandSelection(context)
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp)
-                    .bouncyClickable {},
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Icon(Icons.Rounded.SettingsCell, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Lock Bands",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                )
-            }
-        }
-
-        // Status Card
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .entrance(6),
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ) {
+            // Manual tools
             Row(
-                modifier = Modifier.padding(14.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().entrance(5),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(
-                    imageVector = if (statusText.startsWith("✅")) Icons.Rounded.CheckCircle else Icons.Rounded.Info,
-                    contentDescription = null,
-                    tint = if (statusText.startsWith("✅")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary,
-                )
-                Text(
-                    text = statusText,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-                )
+                PetalButton(
+                    onClick = {
+                        if (!prefs.hasSeenManual5gDialog) showManual5gDialog = true
+                        else com.app.switcher5g.network.Manual5gSwitchHelper.openRadioInfo(context)
+                    },
+                    style = PetalButtonStyle.TONAL,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Icon(Icons.Rounded.NetworkCheck, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Radio Info")
+                }
+                PetalButton(
+                    onClick = { com.app.switcher5g.network.Manual5gSwitchHelper.openBandSelection(context) },
+                    style = PetalButtonStyle.TONAL,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Icon(Icons.Rounded.SettingsCell, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Lock Bands")
+                }
+            }
+
+            // Status
+            PetalGroupItem(
+                position = PetalGroupPosition.SINGLE,
+                modifier = Modifier.entrance(6),
+            ) {
+                val ok = statusText.startsWith("✅")
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    PetalShapedIcon(
+                        icon = if (ok) Icons.Rounded.CheckCircle else Icons.Rounded.Info,
+                        shape = PetalMaterialShapes.Cookie4Sided,
+                        variant = if (ok) PetalBadgeVariant.PRIMARY else PetalBadgeVariant.TERTIARY,
+                        size = 40.dp,
+                        iconSize = 20.dp,
+                    )
+                    Text(
+                        text = statusText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
             }
         }
+    }
+}
 
+/** Modal shown while the privileged switch runs; blocks input behind it. */
+@Composable
+private fun SwitchingDialog(modeName: String) {
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(32.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(18.dp),
+            ) {
+                PetalContainedLoadingIndicator(size = 80.dp)
+                Text(
+                    "Applying network mode",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    "Switching to $modeName…",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }

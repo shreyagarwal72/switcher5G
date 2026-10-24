@@ -39,7 +39,14 @@ Builds:
     gradle:
       - yes
 
+  - versionName: 2.0.0
+    versionCode: 6
+    commit: v2.0.0
+    subdir: app
+    gradle:
+      - yes
+
 AutoUpdateMode: Version %v
 UpdateCheckMode: Tags
-CurrentVersion: 1.0.2
-CurrentCode: 3
+CurrentVersion: 2.0.0
+CurrentCode: 6

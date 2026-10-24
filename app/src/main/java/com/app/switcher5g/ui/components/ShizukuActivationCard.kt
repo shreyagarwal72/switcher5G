@@ -181,7 +181,7 @@ fun ShizukuActivationCard(
                     modifier = Modifier.bouncyClickable {},
                 ) {
                     if (isChecking) {
-                        FancyCircularOrbLoader(size = 16.dp)
+                        PetalLoadingIndicator(size = 18.dp)
                     } else {
                         Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                     }
@@ -238,20 +238,13 @@ fun ShizukuActivationCard(
                         }
                     }
 
-                    // Command selector chips using FlowRow
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        commands.forEachIndexed { idx, pair ->
-                            FilterChip(
-                                selected = idx == selectedCommandIndex,
-                                onClick = { selectedCommandIndex = idx },
-                                label = { Text(pair.first, style = MaterialTheme.typography.labelSmall) },
-                            )
-                        }
-                    }
+                    // Command selector: Petal connected toggle button group
+                    PetalChoiceButtonGroup(
+                        labels = commands.map { it.first },
+                        selectedIndex = selectedCommandIndex,
+                        onSelectIndex = { selectedCommandIndex = it },
+                        minHeight = 40.dp,
+                    )
 
                     // Command snippet box
                     Surface(

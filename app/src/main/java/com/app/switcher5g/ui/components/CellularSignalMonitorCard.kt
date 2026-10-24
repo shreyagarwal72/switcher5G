@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.app.switcher5g.ui.theme.PetalMaterialShapes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -127,12 +128,9 @@ fun CellularSignalMonitorCard(
         label = "pulseScale",
     )
 
-    ElevatedCard(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
+    PetalGroupItem(
+        position = PetalGroupPosition.SINGLE,
+        modifier = modifier,
     ) {
         Column(
             modifier = Modifier
@@ -152,9 +150,9 @@ fun CellularSignalMonitorCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(46.dp)
                             .scale(if (isRefreshing) pulseScale else 1f)
-                            .clip(CircleShape)
+                            .clip(PetalMaterialShapes.Sunny.toShape())
                             .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -162,7 +160,7 @@ fun CellularSignalMonitorCard(
                             imageVector = Icons.Rounded.SignalCellularAlt,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(22.dp),
                         )
                     }
 
@@ -180,15 +178,23 @@ fun CellularSignalMonitorCard(
                     }
                 }
 
-                IconButton(
-                    onClick = { refreshSignalInfo() },
-                    modifier = Modifier.size(32.dp),
+                Box(
+                    modifier = Modifier.size(44.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Refresh,
-                        contentDescription = "Refresh Signal",
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
+                    if (isRefreshing) {
+                        PetalContainedLoadingIndicator(size = 40.dp)
+                    } else {
+                        FilledTonalIconButton(
+                            onClick = { refreshSignalInfo() },
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Refresh,
+                                contentDescription = "Refresh Signal",
+                            )
+                        }
+                    }
                 }
             }
 
@@ -231,9 +237,9 @@ fun CellularSignalMonitorCard(
                     .fillMaxWidth()
                     .background(
                         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(20.dp),
                     )
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -274,7 +280,7 @@ private fun MetricPill(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
     ) {
         Column(

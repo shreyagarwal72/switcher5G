@@ -112,7 +112,7 @@ fun ShizukuSetupDialog(
                 modifier = Modifier.bouncyClickable {},
             ) {
                 if (isChecking) {
-                    FancyCircularOrbLoader(size = 16.dp)
+                    PetalLoadingIndicator(size = 18.dp)
                 } else {
                     Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                 }
@@ -306,33 +306,19 @@ fun ShizukuSetupDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                // Command Selector Chips (FlowRow guarantees non-overflow text wrapping)
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    FilterChip(
-                        selected = !isInsideShell,
-                        onClick = { isInsideShell = false },
-                        label = { Text("From PC (adb shell)", style = MaterialTheme.typography.labelSmall) },
-                    )
-                    FilterChip(
-                        selected = isInsideShell,
-                        onClick = { isInsideShell = true },
-                        label = { Text("Inside Shell ($)", style = MaterialTheme.typography.labelSmall) },
-                    )
-                    FilterChip(
-                        selected = selectedPathIndex == 0,
-                        onClick = { selectedPathIndex = 0 },
-                        label = { Text("/sdcard path", style = MaterialTheme.typography.labelSmall) },
-                    )
-                    FilterChip(
-                        selected = selectedPathIndex == 1,
-                        onClick = { selectedPathIndex = 1 },
-                        label = { Text("/data/user path", style = MaterialTheme.typography.labelSmall) },
-                    )
-                }
+                // Command selectors: Petal connected toggle button groups
+                PetalChoiceButtonGroup(
+                    labels = listOf("From PC", "Inside shell"),
+                    selectedIndex = if (isInsideShell) 1 else 0,
+                    onSelectIndex = { isInsideShell = it == 1 },
+                    minHeight = 40.dp,
+                )
+                PetalChoiceButtonGroup(
+                    labels = listOf("/sdcard", "/data/user"),
+                    selectedIndex = selectedPathIndex,
+                    onSelectIndex = { selectedPathIndex = it },
+                    minHeight = 40.dp,
+                )
 
                 // Command Snippet Box
                 Surface(

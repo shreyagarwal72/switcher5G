@@ -111,6 +111,22 @@ class AppPreferences(private val context: Context) {
             prefs.edit().putBoolean(KEY_HAS_SEEN_MANUAL_5G_DIALOG, value).apply()
         }
 
+    /** Petal predictive-back: live gesture preview (scale, corner clip, parallax) on back swipes. */
+    var predictiveBack: Boolean
+        get() = predictiveBackState
+        set(value) {
+            predictiveBackState = value
+            prefs.edit().putBoolean(KEY_PREDICTIVE_BACK, value).apply()
+        }
+
+    /** Petal depth blur: blurs and dims the screen behind during back gestures and transitions. */
+    var depthBlur: Boolean
+        get() = depthBlurState
+        set(value) {
+            depthBlurState = value
+            prefs.edit().putBoolean(KEY_DEPTH_BLUR, value).apply()
+        }
+
     // Reactive Compose States
     var activationMethodState by mutableStateOf(readActivationMethod())
         private set
@@ -149,6 +165,12 @@ class AppPreferences(private val context: Context) {
         private set
 
     var hasSeenManual5gDialogState by mutableStateOf(readHasSeenManual5gDialog())
+        private set
+
+    var predictiveBackState by mutableStateOf(prefs.getBoolean(KEY_PREDICTIVE_BACK, true))
+        private set
+
+    var depthBlurState by mutableStateOf(prefs.getBoolean(KEY_DEPTH_BLUR, true))
         private set
 
     private fun readActivationMethod(): ActivationMethod {
@@ -267,6 +289,8 @@ class AppPreferences(private val context: Context) {
         json.put("useDynamicTheme", useDynamicTheme)
         json.put("enableAnimations", enableAnimations)
         json.put("hasSeenManual5gDialog", hasSeenManual5gDialog)
+        json.put("predictiveBack", predictiveBack)
+        json.put("depthBlur", depthBlur)
         return json.toString(2)
     }
 
@@ -321,6 +345,12 @@ class AppPreferences(private val context: Context) {
             if (json.has("hasSeenManual5gDialog")) {
                 hasSeenManual5gDialog = json.getBoolean("hasSeenManual5gDialog")
             }
+            if (json.has("predictiveBack")) {
+                predictiveBack = json.getBoolean("predictiveBack")
+            }
+            if (json.has("depthBlur")) {
+                depthBlur = json.getBoolean("depthBlur")
+            }
             true
         } catch (_: Throwable) {
             false
@@ -345,5 +375,7 @@ class AppPreferences(private val context: Context) {
         private const val KEY_USE_DYNAMIC_THEME = "use_dynamic_theme"
         private const val KEY_ENABLE_ANIMATIONS = "enable_animations"
         private const val KEY_HAS_SEEN_MANUAL_5G_DIALOG = "has_seen_manual_5g_dialog"
+        private const val KEY_PREDICTIVE_BACK = "predictive_back"
+        private const val KEY_DEPTH_BLUR = "depth_blur"
     }
 }
