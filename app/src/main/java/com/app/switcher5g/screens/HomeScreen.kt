@@ -108,49 +108,50 @@ fun HomeScreenContent(prefs: AppPreferences) {
             if (ids.isNotEmpty()) selectedSubId = ids[0]
             isScanningSims = false
         }
-        if (prefs.checkForUpdatesOnStart) {
-            val appVer = com.app.switcher5g.util.AppInfo.getAppVersionName(context)
-            val info = com.app.switcher5g.update.UpdateManager.checkForUpdates(appVer)
-            if (info != null && info.hasUpdate) {
+        if (prefs.autoCheckUpdates) {
+            val currentVer = com.app.switcher5g.util.AppInfo.getAppVersionName(context)
+            val info = com.app.switcher5g.update.UpdateManager.checkForUpdates(currentVer)
+            if (info.hasUpdate) {
                 updateInfo = info
                 showUpdateDialog = true
             }
         }
     }
 
+    DisposableEffect(Unit) {
+        val unregisterShizuku = ShizukuHelper.registerListeners { _, permission ->
+            shizukuReady = permission
+        }
+        onDispose {
+            unregisterShizuku()
+            manager.unbind()
+        }
+    }
+
     fun applyMode(mode: NetworkMode) {
         selectedMode = mode
         isSwitching = true
+        statusText = "Applying network mode switch…"
         scope.launch {
-            val effectiveMethod = when (prefs.activationMethod) {
-                ActivationMethod.AUTO -> when {
-                    shizukuReady -> ActivationMethod.SHIZUKU
-                    rootReady -> ActivationMethod.ROOT
-                    else -> ActivationMethod.MANUAL
+            val res = manager.switchTo(mode, overrideSubId = selectedSubId, method = prefs.activationMethod)
+            statusText = when (res) {
+                is SwitchResult.Success -> {
+                    prefs.currentActiveMode = mode
+                    "✅ ${res.message}"
                 }
-                else -> prefs.activationMethod
-            }
-
-            val result = when (effectiveMethod) {
-                ActivationMethod.SHIZUKU, ActivationMethod.AUTO ->
-                    manager.switchModeWithShizuku(mode, selectedSubId)
-                ActivationMethod.ROOT ->
-                    manager.switchModeWithRoot(mode, selectedSubId)
-                ActivationMethod.MANUAL -> {
-                    if (!prefs.hasSeenManual5gDialog) {
-                        showManual5gDialog = true
-                    } else {
-                        Manual5gSwitchHelper.openRadioInfo(context)
-                    }
-                    SwitchResult.Success("Opening system network settings…")
-                }
-            }
-
-            statusText = when (result) {
-                is SwitchResult.Success -> "✅ ${result.message}"
-                is SwitchResult.Error -> "❌ ${result.error}"
+                is SwitchResult.Failure -> "⚠️ ${res.reason}"
             }
             isSwitching = false
+        }
+    }
+
+    fun scanSims() {
+        scope.launch {
+            isScanningSims = true
+            val ids = manager.getAvailableSubIds()
+            availableSubIds = ids
+            if (ids.isNotEmpty() && selectedSubId == null) selectedSubId = ids[0]
+            isScanningSims = false
         }
     }
 
@@ -160,97 +161,128 @@ fun HomeScreenContent(prefs: AppPreferences) {
 
     if (showSetupDialog) {
         ShizukuSetupDialog(
-            onDismiss = {
-                showSetupDialog = false
+            onDismissRequest = { showSetupDialog = false },
+            onStatusUpdated = {
                 shizukuReady = ShizukuHelper.hasPermission()
-                rootReady = RootHelper.isRootGranted()
+                scope.launch {
+                    if (RootHelper.isRootAvailable()) {
+                        rootReady = RootHelper.isRootGranted()
+                    }
+                }
             },
         )
     }
 
     if (showManual5gDialog) {
         Manual5gFirstTimeDialog(
-            onDismiss = { showManual5gDialog = false },
-            onContinue = {
-                showManual5gDialog = false
-                prefs.hasSeenManual5gDialog = true
-                Manual5gSwitchHelper.openRadioInfo(context)
-            },
+            onDismissRequest = { showManual5gDialog = false },
+            onDontShowAgain = { dontShow -> if (dontShow) prefs.hasSeenManual5gDialog = true },
         )
     }
 
     if (showUpdateDialog && updateInfo != null) {
         UpdateAvailableDialog(
             updateInfo = updateInfo!!,
-            onDismiss = { showUpdateDialog = false },
+            onDismissRequest = { showUpdateDialog = false },
         )
     }
 
-    val scrollBehavior = rememberPetalHeaderScrollBehavior()
     val scrollState = rememberScrollState()
+    val scrollBehavior = rememberPetalHeaderScrollBehavior()
 
     ExpressivePullToRefreshBox(
         isRefreshing = isScanningSims,
-        onRefresh = {
-            isScanningSims = true
-            shizukuReady = ShizukuHelper.hasPermission()
-            rootReady = RootHelper.isRootGranted()
-            scope.launch {
-                val ids = manager.getAvailableSubIds()
-                availableSubIds = ids
-                if (ids.isNotEmpty() && (selectedSubId == null || selectedSubId !in ids)) {
-                    selectedSubId = ids[0]
-                }
-                isScanningSims = false
-            }
-        },
-        scrollState = scrollState,
+        canPull = { scrollState.value == 0 && scrollBehavior.state.collapsedFraction < 0.01f },
+        onRefresh = { scanSims() },
         modifier = Modifier.fillMaxSize(),
     ) {
         PetalScreenScaffold(
             title = "Switcher 5G",
             scrollBehavior = scrollBehavior,
             scrollState = scrollState,
+            actions = {
+                PetalLoadingBadge(visible = isSwitching || isScanningSims, size = 36.dp)
+                val badgeLabel = when {
+                    shizukuReady -> "Shizuku"
+                    rootReady -> "Root"
+                    else -> "Setup"
+                }
+                Surface(
+                    onClick = { showSetupDialog = true },
+                    shape = CircleShape,
+                    color = if (isPrivileged) MaterialTheme.colorScheme.primaryContainer
+                    else MaterialTheme.colorScheme.tertiaryContainer,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        val tint = if (isPrivileged) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onTertiaryContainer
+                        Icon(
+                            imageVector = if (isPrivileged) Icons.Rounded.CheckCircle else Icons.Rounded.Security,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = tint,
+                        )
+                        Text(
+                            text = badgeLabel,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = tint,
+                        )
+                    }
+                }
+            },
         ) {
-            // 1. Privileged Authorization Status Banner (if not connected)
-            if (!isPrivileged) {
+            // 1. Privileged Authorization Status Banner (if not connected and not dismissed)
+            if (!prefs.hasDismissedSetupCard && !isPrivileged) {
                 PetalGroupItem(
                     position = PetalGroupPosition.SINGLE,
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
                     modifier = Modifier.entrance(0),
-                    onClick = { showSetupDialog = true },
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         PetalShapedIcon(
                             icon = Icons.Rounded.Security,
-                            shape = PetalMaterialShapes.Burst,
-                            variant = PetalBadgeVariant.SECONDARY,
-                            size = 44.dp,
-                            iconSize = 22.dp,
+                            shape = PetalMaterialShapes.Cookie6Sided,
+                            variant = PetalBadgeVariant.TERTIARY,
                         )
-                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Privileged Service Required",
-                                style = MaterialTheme.typography.titleMedium,
+                                "Set up Shizuku or ADB",
+                                style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
                             )
                             Text(
-                                text = "Connect Shizuku or grant Root access for seamless in-app switching without opening system menus.",
+                                "Optional for 1-tap in-app switching, or use Root / RadioInfo standalone.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
                             )
                         }
-                        Icon(
-                            imageVector = Icons.Rounded.ChevronRight,
-                            contentDescription = "Setup",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Column(horizontalAlignment = Alignment.End) {
+                            PetalButton(
+                                onClick = { showSetupDialog = true },
+                                style = PetalButtonStyle.FILLED,
+                                height = 36.dp,
+                            ) { Text("Setup") }
+                            IconButton(onClick = { prefs.hasDismissedSetupCard = true }) {
+                                Icon(
+                                    Icons.Rounded.Close,
+                                    contentDescription = "Dismiss banner",
+                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -273,25 +305,24 @@ fun HomeScreenContent(prefs: AppPreferences) {
                         title = "Active Subscription",
                         subtitle = if (availableSubIds.size > 1) "Select which SIM card to configure" else "Primary SIM Slot",
                         position = position,
-                        badgeShape = PetalMaterialShapes.Cookie6Sided,
+                        badgeShape = PetalMaterialShapes.Pentagon,
                         variant = PetalBadgeVariant.PRIMARY,
-                    ) {
-                        val simOptions = remember(availableSubIds) {
-                            if (availableSubIds.isNotEmpty()) {
-                                availableSubIds.map { subId ->
-                                    PetalButtonGroupItem(value = subId as Int?, label = "SIM $subId")
-                                }
+                        headerTrailing = {
+                            if (isScanningSims) {
+                                PetalContainedLoadingIndicator(size = 40.dp)
                             } else {
-                                listOf(
-                                    PetalButtonGroupItem(value = 1 as Int?, label = "SIM 1"),
-                                    PetalButtonGroupItem(value = 2 as Int?, label = "SIM 2"),
-                                )
+                                FilledTonalIconButton(onClick = { scanSims() }) {
+                                    Icon(Icons.Rounded.Refresh, contentDescription = "Scan SIMs")
+                                }
                             }
-                        }
-
+                        },
+                    ) {
                         PetalChoiceButtonGroup(
-                            options = simOptions,
-                            selected = selectedSubId ?: availableSubIds.firstOrNull() ?: 1,
+                            options = buildList {
+                                add(PetalButtonGroupItem<Int?>(null, "Auto"))
+                                availableSubIds.forEach { add(PetalButtonGroupItem<Int?>(it, "SIM $it")) }
+                            },
+                            selected = selectedSubId,
                             onSelect = { selectedSubId = it },
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -310,12 +341,14 @@ fun HomeScreenContent(prefs: AppPreferences) {
                     ) {
                         PetalChoiceButtonGroup(
                             options = listOf(
-                                PetalButtonGroupItem(value = NetworkMode.NR_ONLY, label = "5G SA"),
-                                PetalButtonGroupItem(value = NetworkMode.NR_LTE, label = "5G NSA"),
-                                PetalButtonGroupItem(value = NetworkMode.LTE_ONLY, label = "4G LTE"),
+                                PetalButtonGroupItem(NetworkMode.LTE_ONLY, "4G LTE"),
+                                PetalButtonGroupItem(NetworkMode.NR_LTE, "5G NSA"),
+                                PetalButtonGroupItem(NetworkMode.NR_ONLY, "5G SA"),
                             ),
                             selected = selectedMode,
                             onSelect = { newMode -> selectedMode = newMode },
+                            enabled = !isSwitching,
+                            minHeight = 52.dp,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -385,7 +418,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
                 modifier = Modifier.entrance(4),
             ) {
                 val ok = statusText.startsWith("✅")
-                val isErr = statusText.startsWith("❌")
+                val isErr = statusText.startsWith("⚠️") || statusText.startsWith("❌")
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -396,7 +429,7 @@ fun HomeScreenContent(prefs: AppPreferences) {
                     PetalShapedIcon(
                         icon = when {
                             ok -> Icons.Rounded.CheckCircle
-                            isErr -> Icons.Rounded.ErrorOutline
+                            isErr -> Icons.Rounded.Warning
                             else -> Icons.Rounded.Info
                         },
                         shape = PetalMaterialShapes.Cookie4Sided,

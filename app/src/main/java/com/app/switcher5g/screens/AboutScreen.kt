@@ -186,50 +186,57 @@ fun AboutScreen(
                         isDownloadingUpdate -> "Downloading ${(downloadProgress * 100).toInt()}%…"
                         updateInfo == null -> "Latest production build installed"
                         updateInfo!!.hasUpdate -> "Update available: v${updateInfo!!.latestVersion}"
-                        else -> "App is up to date"
+                        else -> "App is up to date (v${updateInfo!!.latestVersion})"
                     },
                     position = position,
                     badgeShape = PetalMaterialShapes.Gem,
                     variant = if (updateInfo?.hasUpdate == true) PetalBadgeVariant.SECONDARY else PetalBadgeVariant.PRIMARY,
                 ) {
-                    AnimatedVisibility(
-                        visible = isDownloadingUpdate,
-                        enter = fadeIn() + expandVertically(),
-                        exit = fadeOut() + shrinkVertically(),
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            PetalWebsiteLoadingIndicator(
-                                progress = downloadProgress,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            Text(
-                                text = "Downloading update: ${(downloadProgress * 100).toInt()}%",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
+                    val info = updateInfo
+                    if (info?.releaseNotes?.isNotBlank() == true) {
+                        Text(
+                            text = MarkdownUtils.parseMarkdown(info.releaseNotes),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
 
-                    if (updateInfo?.hasUpdate == true && !isDownloadingUpdate) {
+                    if (isDownloadingUpdate) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            PetalContainedLoadingIndicator(
+                                size = 44.dp,
+                                progress = { downloadProgress },
+                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    text = "Downloading update…",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Text(
+                                    text = "${(downloadProgress * 100).toInt()}%",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    } else if (info?.hasUpdate == true && info.isAvailable) {
                         Spacer(Modifier.height(4.dp))
                         PetalButton(
                             onClick = {
-                                isDownloadingUpdate = true
                                 scope.launch {
-                                    val apk = UpdateManager.downloadUpdate(
+                                    isDownloadingUpdate = true
+                                    downloadProgress = 0f
+                                    UpdateManager.downloadAndInstallApk(
                                         context = context,
-                                        updateInfo = updateInfo!!,
+                                        apkUrl = info.apkUrl,
                                         onProgress = { p -> downloadProgress = p },
                                     )
                                     isDownloadingUpdate = false
-                                    if (apk != null) {
-                                        UpdateManager.installApk(context, apk)
-                                    } else {
-                                        Toast.makeText(context, "Download failed", Toast.LENGTH_SHORT).show()
-                                    }
                                 }
                             },
                             style = PetalButtonStyle.FILLED,
@@ -237,18 +244,18 @@ fun AboutScreen(
                         ) {
                             Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("Download & Install v${updateInfo!!.latestVersion}")
+                            Text("Download & Install v${info.latestVersion}")
                         }
-                    } else if (!isDownloadingUpdate) {
+                    } else {
                         Spacer(Modifier.height(4.dp))
                         PetalButton(
                             onClick = {
                                 isCheckingUpdate = true
                                 scope.launch {
-                                    val info = UpdateManager.checkForUpdates(currentVersion = appVersion)
+                                    val checked = UpdateManager.checkForUpdates(currentVersion = appVersion)
                                     isCheckingUpdate = false
-                                    updateInfo = info
-                                    if (info != null && !info.hasUpdate) {
+                                    updateInfo = checked
+                                    if (!checked.hasUpdate) {
                                         Toast.makeText(context, "You are on the latest version", Toast.LENGTH_SHORT).show()
                                     }
                                 }
