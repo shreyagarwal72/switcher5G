@@ -19,7 +19,7 @@
       "destination": "/site/$1.js"
     },
     {
-      "source": "/(robots\\.txt|sitemap\\.xml|site\\.webmanifest|favicon\\.ico)",
+      "source": "/(robots\\.txt|sitemap\\.xml|site\\.webmanifest|favicon\\.ico|google[a-zA-Z0-9_-]+\\.html)",
       "destination": "/site/$1"
     },
     {
